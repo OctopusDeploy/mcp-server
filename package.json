@@ -1,0 +1,46 @@
+{
+  "author": "Octopus Deploy",
+  "name": "@octopusdeploy/mcp-server",
+  "bugs": {
+    "url": "https://github.com/OctopusDeploy/mcp-server/issues"
+  },
+  "version": "0.0.1",
+  "type": "module",
+  "description": "The Octopus MCP Server provides your AI assistant with powerful tools that allow it to inspect, query, and diagnose problems within your Octopus instance.",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "start": "node dist/index.js",
+    "build": "tsc && shx chmod +x dist/*.js",
+    "dev": "nodemon --exec \"tsc && node dist/index.js\" --ext ts --watch src",
+    "lint": "eslint . --ext .ts"
+  },
+  "keywords": [
+    "octopus deploy",
+    "mcp"
+  ],
+  "homepage": "https://github.com/OctopusDeploy/mcp-server#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OctopusDeploy/mc-server.git"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.5",
+    "@octopusdeploy/api-client": "^3.7.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "@types/node": "^24.3.1",
+    "eslint": "^9.35.0",
+    "globals": "^16.3.0",
+    "jiti": "^2.5.1",
+    "nodemon": "^3.1.10",
+    "shx": "^0.4.0",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.42.0"
+  }
+}
