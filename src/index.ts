@@ -1,5 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { registerTools } from "./tools/index.js";
+import { registerResources } from "./resources/index.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const SEMVER_VERSION = "0.0.1"; // TODO: replace this with GHA
 
@@ -8,6 +13,9 @@ const server = new McpServer({
   description: "Official Octopus Deploy MCP server",
   version: SEMVER_VERSION,
 });
+
+registerResources(server);
+registerTools(server);
 
 console.info(`Starting Octopus Deploy MCP server (version: ${SEMVER_VERSION})`);
 
