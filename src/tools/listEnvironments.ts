@@ -8,7 +8,7 @@ export function registerListEnvironmentsTool(server: McpServer) {
     "list_environments",
     `List environments in a space
   
-  This tool lists all environments in a given space. The space name is required. Optionally filter by partial name match using partialName parameter.`,
+  This tool lists all environments in a given space. The space name is required. Use this tool as early as possible to understand which environments are configured. Optionally filter by partial name match using partialName parameter.`,
     { space: z.string(), partialName: z.string().optional() },
     {
       title: "List all environments in an Octopus Deploy space",

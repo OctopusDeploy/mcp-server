@@ -14,13 +14,13 @@ export function registerGetKubernetesLiveStatusTool(server: McpServer) {
       projectId: z.string().describe("The ID of the project"),
       environmentId: z.string().describe("The ID of the environment"),
       tenantId: z.string().optional().describe("The ID of the tenant (for multi-tenant deployments)"),
-      summaryOnly: z.boolean().optional().describe("Return summary information only")
+      includeDetails: z.boolean().optional().describe("Include detailed information")
     },
     {
       title: "Get Kubernetes live status from Octopus Deploy",
       readOnlyHint: true,
     },
-    async ({ space, projectId, environmentId, tenantId, summaryOnly = false }) => {
+    async ({ space, projectId, environmentId, tenantId, includeDetails = false }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const observabilityRepository = new ObservabilityRepository(client, space);
@@ -29,7 +29,7 @@ export function registerGetKubernetesLiveStatusTool(server: McpServer) {
         projectId,
         environmentId,
         tenantId,
-        summaryOnly
+        !includeDetails
       );
 
       return {
@@ -40,7 +40,7 @@ export function registerGetKubernetesLiveStatusTool(server: McpServer) {
               projectId,
               environmentId,
               tenantId,
-              summaryOnly,
+              summaryOnly: !includeDetails,
               liveStatus: {
                 machineStatuses: liveStatus.MachineStatuses?.map((machine: any) => ({
                   machineId: machine.MachineId,
