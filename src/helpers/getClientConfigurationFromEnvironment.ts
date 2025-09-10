@@ -6,8 +6,12 @@ export interface ConfigurationOptions {
   apiKey?: string;
 }
 
+function isEmpty(value: string | undefined): value is undefined | "" {
+  return !value || value.trim().length === 0 || value.trim().toLowerCase() === "undefined";
+}
+
 function getClientConfiguration(options: ConfigurationOptions = {}): ClientConfiguration {
-  if (!options.instanceURL || !options.apiKey) {
+  if (isEmpty(options.instanceURL) || isEmpty(options.apiKey)) {
     throw new Error(
       "Octopus server URL and API key must be provided either via command line arguments (--server-url, --api-key) or environment variables (OCTOPUS_SERVER_URL, OCTOPUS_API_KEY)."
     );
