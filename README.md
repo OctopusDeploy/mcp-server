@@ -32,14 +32,14 @@ Use the `--toolsets` parameter to enable specific groups of tools:
 npm start
 
 # Enable only specific toolsets
-npm start -- --toolsets core,projects,deployments
+npm start -- --toolsets projects,deployments
 
 # Enable all toolsets explicitly
 npm start -- --toolsets all
 ```
 
 Available toolsets:
-- **core** - Basic operations (`list_spaces`)
+- **core** - Basic operations (always enabled) (`list_spaces`,`list_environments`)
 - **projects** - Project operations (`list_projects`)
 - **deployments** - Deployment operations (`list_deployments`, `get_latest_deployment`)
 - **releases** - Release management (`get_release_by_id`, `list_releases`, `list_releases_for_project`)
