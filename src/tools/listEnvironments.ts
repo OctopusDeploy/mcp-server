@@ -47,6 +47,6 @@ export function registerListEnvironmentsTool(server: McpServer) {
 
 registerToolDefinition({
   toolName: "list_environments",
-  config: { toolset: "projects", readOnly: true },
+  config: { toolset: "core", readOnly: true },
   registerFn: registerListEnvironmentsTool
 });

@@ -20,6 +20,54 @@ Excercise caution and mitigate the risks by using least-privileged accounts when
 TBD
 ```
 
+### Configuration Options
+
+The Octopus MCP Server supports several command-line options to customize which tools are available:
+
+#### Toolsets
+Use the `--toolsets` parameter to enable specific groups of tools:
+
+```bash
+# Enable all toolsets (default)
+npm start
+
+# Enable only specific toolsets
+npm start -- --toolsets core,projects,deployments
+
+# Enable all toolsets explicitly
+npm start -- --toolsets all
+```
+
+Available toolsets:
+- **core** - Basic operations (`list_spaces`)
+- **projects** - Project operations (`list_projects`)
+- **deployments** - Deployment operations (`list_deployments`, `get_latest_deployment`)
+- **releases** - Release management (`get_release_by_id`, `list_releases`, `list_releases_for_project`)
+- **tasks** - Task operations (`get_task_by_id`, `get_task_details`, `get_task_raw`)
+- **tenants** - Multi-tenancy operations (`list_tenants`, `get_tenant_by_id`, `get_tenant_variables`, `get_missing_tenant_variables`)
+- **kubernetes** - Kubernetes operations (`get_kubernetes_live_status`)
+
+#### Read-Only Mode
+The server runs in read-only mode by default for security. All current tools are read-only operations.
+
+```bash
+# Run in read-only mode (default)
+npm start -- --read-only
+
+# Disable read-only mode (currently no effect as all tools are read-only)
+npm start -- --read-only=false
+```
+
+#### Complete Examples
+
+```bash
+# Development setup with only core and project tools
+npm start -- --toolsets core,projects --server-url https://your-octopus.com --api-key YOUR_API_KEY
+
+# Full production setup with all tools
+npm start -- --toolsets all --read-only --server-url https://your-octopus.com --api-key YOUR_API_KEY
+```
+
 ## 🔨 Tools
 
 <details>

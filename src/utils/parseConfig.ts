@@ -24,6 +24,6 @@ export function createToolsetConfig(
 ): ToolsetConfig {
   return {
     enabledToolsets: parseToolsets(toolsetsArg),
-    readOnlyMode: readOnlyArg ?? true // Default to read-only mode as requested
+    readOnlyMode: readOnlyArg ?? true // Default to read-only mode
   };
 }
