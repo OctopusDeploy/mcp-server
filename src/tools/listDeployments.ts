@@ -23,7 +23,6 @@ export function registerListDeploymentsTool(server: McpServer) {
       readOnlyHint: true,
     },
     async ({ space, projects, environments, tenants, channels, taskState, take }) => {
-      console.error("Listing deployments in space:", space);
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const deploymentRepository = new DeploymentRepository(client, space);

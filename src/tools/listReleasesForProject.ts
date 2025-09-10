@@ -21,7 +21,6 @@ export function registerListReleasesForProjectTool(server: McpServer) {
       readOnlyHint: true,
     },
     async ({ space, projectId, skip, take, searchByVersion }) => {
-      console.error("Listing releases for project:", projectId, "in space:", space);
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const releaseRepository = new ReleaseRepository(client, space);

@@ -12,7 +12,6 @@ export function registerListSpacesTool(server: McpServer) {
       readOnlyHint: true,
     },
     async () => {
-      console.error("Listing all spaces");
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const spaceRepository = new SpaceRepository(client);

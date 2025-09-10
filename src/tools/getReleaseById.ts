@@ -16,7 +16,6 @@ export function registerGetReleaseByIdTool(server: McpServer) {
       readOnlyHint: true,
     },
     async ({ space, releaseId }) => {
-      console.error("Getting release by ID:", releaseId, "in space:", space);
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const releaseRepository = new ReleaseRepository(client, space);

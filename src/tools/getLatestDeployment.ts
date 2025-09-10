@@ -17,7 +17,6 @@ export function registerGetLatestDeploymentTool(server: McpServer) {
       readOnlyHint: true,
     },
     async ({ space, projectId }) => {
-      console.error("Getting latest deployment for project:", projectId, "in space:", space);
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       

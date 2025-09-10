@@ -10,6 +10,11 @@ import { registerListReleasesForProjectTool } from "./listReleasesForProject.js"
 import { registerGetTaskByIdTool } from "./getTaskById.js";
 import { registerGetTaskDetailsTool } from "./getTaskDetails.js";
 import { registerGetTaskRawTool } from "./getTaskRaw.js";
+import { registerListTenantsTool } from "./listTenants.js";
+import { registerGetTenantByIdTool } from "./getTenantById.js";
+import { registerGetTenantVariablesTool } from "./getTenantVariables.js";
+import { registerGetMissingTenantVariablesTool } from "./getMissingTenantVariables.js";
+import { registerGetKubernetesLiveStatusTool } from "./getKubernetesLiveStatus.js";
 
 export function registerTools(server: McpServer) {
   registerListSpacesTool(server);
@@ -23,4 +28,9 @@ export function registerTools(server: McpServer) {
   registerGetTaskByIdTool(server);
   registerGetTaskDetailsTool(server);
   registerGetTaskRawTool(server);
+  registerListTenantsTool(server);
+  registerGetTenantByIdTool(server);
+  registerGetTenantVariablesTool(server);
+  registerGetMissingTenantVariablesTool(server);
+  registerGetKubernetesLiveStatusTool(server);
 }

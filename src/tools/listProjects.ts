@@ -15,7 +15,6 @@ export function registerListProjectsTool(server: McpServer) {
       readOnlyHint: true,
     },
     async ({ space, partialName }) => {
-      console.error("Listing projects in space:", space);
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const projectRepository = new ProjectRepository(client, space);

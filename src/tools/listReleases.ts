@@ -19,7 +19,6 @@ export function registerListReleasesTool(server: McpServer) {
       readOnlyHint: true,
     },
     async ({ space, skip, take }) => {
-      console.error("Listing releases in space:", space);
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const releaseRepository = new ReleaseRepository(client, space);
