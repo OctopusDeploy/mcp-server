@@ -2,6 +2,7 @@ import { Client, TenantRepository } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
+import { registerToolDefinition } from "../types/toolConfig.js";
 
 export function registerListTenantsTool(server: McpServer) {
   server.tool(
@@ -50,3 +51,9 @@ export function registerListTenantsTool(server: McpServer) {
     }
   );
 }
+
+registerToolDefinition({
+  toolName: "list_tenants",
+  config: { toolset: "tenants", readOnly: true },
+  registerFn: registerListTenantsTool
+});

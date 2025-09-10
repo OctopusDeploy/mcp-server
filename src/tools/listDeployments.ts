@@ -2,6 +2,7 @@ import { Client, DeploymentRepository, TaskState, type Deployment } from "@octop
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
+import { registerToolDefinition } from "../types/toolConfig.js";
 
 export function registerListDeploymentsTool(server: McpServer) {
   server.tool(
@@ -71,3 +72,9 @@ export function registerListDeploymentsTool(server: McpServer) {
     }
   );
 }
+
+registerToolDefinition({
+  toolName: "list_deployments",
+  config: { toolset: "deployments", readOnly: true },
+  registerFn: registerListDeploymentsTool
+});

@@ -1,6 +1,7 @@
 import { Client, SpaceRepository } from "@octopusdeploy/api-client";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { registerToolDefinition } from "../types/toolConfig.js";
 
 export function registerListSpacesTool(server: McpServer) {
   server.tool(
@@ -36,3 +37,9 @@ export function registerListSpacesTool(server: McpServer) {
     }
   );
 }
+
+registerToolDefinition({
+  toolName: "list_spaces",
+  config: { toolset: "core", readOnly: true },
+  registerFn: registerListSpacesTool
+});

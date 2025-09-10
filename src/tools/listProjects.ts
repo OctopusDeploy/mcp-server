@@ -1,6 +1,7 @@
 import { Client, ProjectRepository, type Project } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { registerToolDefinition } from "../types/toolConfig.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 
 export function registerListProjectsTool(server: McpServer) {
@@ -43,3 +44,9 @@ export function registerListProjectsTool(server: McpServer) {
     }
   );
 }
+
+registerToolDefinition({
+  toolName: "list_projects",
+  config: { toolset: "projects", readOnly: true },
+  registerFn: registerListProjectsTool
+});

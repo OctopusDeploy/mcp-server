@@ -2,6 +2,7 @@ import { Client, EnvironmentRepository, type DeploymentEnvironment } from "@octo
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
+import { registerToolDefinition } from "../types/toolConfig.js";
 
 export function registerListEnvironmentsTool(server: McpServer) {
   server.tool(
@@ -42,3 +43,10 @@ export function registerListEnvironmentsTool(server: McpServer) {
     }
   );
 }
+
+
+registerToolDefinition({
+  toolName: "list_environments",
+  config: { toolset: "projects", readOnly: true },
+  registerFn: registerListEnvironmentsTool
+});

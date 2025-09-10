@@ -1,19 +1,28 @@
 import { type ClientConfiguration } from "@octopusdeploy/api-client";
 import { env } from "process";
 
-export function getClientConfigurationFromEnvironment(): ClientConfiguration {
-  const instanceURL = env["OCTOPUS_SERVER_URL"];
-  const apiKey = env["OCTOPUS_API_KEY"];
+export interface ConfigurationOptions {
+  instanceURL?: string;
+  apiKey?: string;
+}
 
-  if (!instanceURL || !apiKey) {
+function getClientConfiguration(options: ConfigurationOptions = {}): ClientConfiguration {
+  if (!options.instanceURL || !options.apiKey) {
     throw new Error(
-      "Environment variables OCTOPUS_SERVER_URL and OCTOPUS_API_KEY must be set."
+      "Octopus server URL and API key must be provided either via command line arguments (--server-url, --api-key) or environment variables (OCTOPUS_SERVER_URL, OCTOPUS_API_KEY)."
     );
   }
 
   return {
     userAgentApp: "octopus-mcp-server",
-    instanceURL,
-    apiKey,
+    instanceURL: options.instanceURL,
+    apiKey: options.apiKey,
   };
+}
+
+export function getClientConfigurationFromEnvironment(): ClientConfiguration {
+  return getClientConfiguration({
+    instanceURL: env["CLI_SERVER_URL"] || env["OCTOPUS_SERVER_URL"],
+    apiKey: env["CLI_API_KEY"] || env["OCTOPUS_API_KEY"],
+  });
 }

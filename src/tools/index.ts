@@ -1,36 +1,56 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { registerListProjectsTool } from "./listProjects.js";
-import { registerListSpacesTool } from "./listSpaces.js";
-import { registerGetLatestDeploymentTool } from "./getLatestDeployment.js";
-import { registerListEnvironmentsTool } from "./listEnvironments.js";
-import { registerListDeploymentsTool } from "./listDeployments.js";
-import { registerGetReleaseByIdTool } from "./getReleaseById.js";
-import { registerListReleasesTool } from "./listReleases.js";
-import { registerListReleasesForProjectTool } from "./listReleasesForProject.js";
-import { registerGetTaskByIdTool } from "./getTaskById.js";
-import { registerGetTaskDetailsTool } from "./getTaskDetails.js";
-import { registerGetTaskRawTool } from "./getTaskRaw.js";
-import { registerListTenantsTool } from "./listTenants.js";
-import { registerGetTenantByIdTool } from "./getTenantById.js";
-import { registerGetTenantVariablesTool } from "./getTenantVariables.js";
-import { registerGetMissingTenantVariablesTool } from "./getMissingTenantVariables.js";
-import { registerGetKubernetesLiveStatusTool } from "./getKubernetesLiveStatus.js";
+import { 
+  type ToolsetConfig, 
+  type Toolset, 
+  TOOL_REGISTRY, 
+  DEFAULT_TOOLSETS 
+} from "../types/toolConfig.js";
 
-export function registerTools(server: McpServer) {
-  registerListSpacesTool(server);
-  registerListProjectsTool(server);
-  registerListEnvironmentsTool(server);
-  registerListDeploymentsTool(server);
-  registerGetLatestDeploymentTool(server);
-  registerGetReleaseByIdTool(server);
-  registerListReleasesTool(server);
-  registerListReleasesForProjectTool(server);
-  registerGetTaskByIdTool(server);
-  registerGetTaskDetailsTool(server);
-  registerGetTaskRawTool(server);
-  registerListTenantsTool(server);
-  registerGetTenantByIdTool(server);
-  registerGetTenantVariablesTool(server);
-  registerGetMissingTenantVariablesTool(server);
-  registerGetKubernetesLiveStatusTool(server);
+// Import all tool files to trigger their self-registration
+import "./listSpaces.js";
+import "./listProjects.js";
+import "./listEnvironments.js";
+import "./listDeployments.js";
+import "./getLatestDeployment.js";
+import "./getReleaseById.js";
+import "./listReleases.js";
+import "./listReleasesForProject.js";
+import "./getTaskById.js";
+import "./getTaskDetails.js";
+import "./getTaskRaw.js";
+import "./listTenants.js";
+import "./getTenantById.js";
+import "./getTenantVariables.js";
+import "./getMissingTenantVariables.js";
+import "./getKubernetesLiveStatus.js";
+
+function isToolEnabled(toolRegistration: any, config: ToolsetConfig): boolean {
+  if (!toolRegistration) {
+    return false;
+  }
+
+  // Check if toolset is enabled
+  const enabledToolsets = config.enabledToolsets === "all" 
+    ? DEFAULT_TOOLSETS 
+    : (config.enabledToolsets || DEFAULT_TOOLSETS);
+  
+  if (toolRegistration.config.toolset !== "core" && !enabledToolsets.includes(toolRegistration.config.toolset)) {
+    return false;
+  }
+
+  // Check read-only mode
+  if (config.readOnlyMode && !toolRegistration.config.readOnly) {
+    return false;
+  }
+
+  return true;
+}
+
+export function registerTools(server: McpServer, config: ToolsetConfig = {}) {
+  // Iterate through all registered tools and register those that are enabled
+  for (const [toolName, toolRegistration] of TOOL_REGISTRY) {
+    if (isToolEnabled(toolRegistration, config)) {
+      toolRegistration.registerFn(server);
+    }
+  }
 }

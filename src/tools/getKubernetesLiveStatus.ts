@@ -2,6 +2,7 @@ import { Client, ObservabilityRepository } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
+import { registerToolDefinition } from "../types/toolConfig.js";
 
 export function registerGetKubernetesLiveStatusTool(server: McpServer) {
   server.tool(
@@ -14,13 +15,13 @@ export function registerGetKubernetesLiveStatusTool(server: McpServer) {
       projectId: z.string().describe("The ID of the project"),
       environmentId: z.string().describe("The ID of the environment"),
       tenantId: z.string().optional().describe("The ID of the tenant (for multi-tenant deployments)"),
-      includeDetails: z.boolean().optional().describe("Include detailed information")
+      summaryOnly: z.boolean().optional().describe("Return summary information only")
     },
     {
       title: "Get Kubernetes live status from Octopus Deploy",
       readOnlyHint: true,
     },
-    async ({ space, projectId, environmentId, tenantId, includeDetails = false }) => {
+    async ({ space, projectId, environmentId, tenantId, summaryOnly = false }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const observabilityRepository = new ObservabilityRepository(client, space);
@@ -29,7 +30,7 @@ export function registerGetKubernetesLiveStatusTool(server: McpServer) {
         projectId,
         environmentId,
         tenantId,
-        !includeDetails
+        summaryOnly
       );
 
       return {
@@ -40,7 +41,7 @@ export function registerGetKubernetesLiveStatusTool(server: McpServer) {
               projectId,
               environmentId,
               tenantId,
-              summaryOnly: !includeDetails,
+              summaryOnly: summaryOnly,
               liveStatus: {
                 machineStatuses: liveStatus.MachineStatuses?.map((machine: any) => ({
                   machineId: machine.MachineId,
@@ -69,3 +70,9 @@ export function registerGetKubernetesLiveStatusTool(server: McpServer) {
     }
   );
 }
+
+registerToolDefinition({
+  toolName: "get_kubernetes_live_status",
+  config: { toolset: "kubernetes", readOnly: true },
+  registerFn: registerGetKubernetesLiveStatusTool
+});

@@ -2,6 +2,7 @@ import { Client, SpaceServerTaskRepository } from '@octopusdeploy/api-client';
 import { z } from 'zod';
 import { getClientConfigurationFromEnvironment } from '../helpers/getClientConfigurationFromEnvironment.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { registerToolDefinition } from '../types/toolConfig.js';
 
 export interface GetTaskByIdParams {
   space: string;
@@ -53,3 +54,9 @@ export function registerGetTaskByIdTool(server: McpServer) {
     }
   );
 }
+
+registerToolDefinition({
+  toolName: "get_task_by_id",
+  config: { toolset: "tasks", readOnly: true },
+  registerFn: registerGetTaskByIdTool
+});

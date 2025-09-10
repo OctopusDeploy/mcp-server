@@ -2,6 +2,7 @@ import { Client, ReleaseRepository } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
+import { registerToolDefinition } from "../types/toolConfig.js";
 
 export function registerListReleasesForProjectTool(server: McpServer) {
   server.tool(
@@ -60,3 +61,9 @@ export function registerListReleasesForProjectTool(server: McpServer) {
     }
   );
 }
+
+registerToolDefinition({
+  toolName: "list_releases_for_project",
+  config: { toolset: "releases", readOnly: true },
+  registerFn: registerListReleasesForProjectTool
+});

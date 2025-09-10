@@ -2,6 +2,7 @@ import { Client, TenantRepository } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
+import { registerToolDefinition } from "../types/toolConfig.js";
 
 export function registerGetMissingTenantVariablesTool(server: McpServer) {
   server.tool(
@@ -48,3 +49,9 @@ export function registerGetMissingTenantVariablesTool(server: McpServer) {
     }
   );
 }
+
+registerToolDefinition({
+  toolName: "get_missing_tenant_variables",
+  config: { toolset: "tenants", readOnly: true },
+  registerFn: registerGetMissingTenantVariablesTool
+});

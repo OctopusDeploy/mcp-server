@@ -2,11 +2,35 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerTools } from "./tools/index.js";
 import { registerResources } from "./resources/index.js";
+import { Command } from "commander";
 import dotenv from "dotenv";
+import { createToolsetConfig } from "./utils/parseConfig.js";
+import { DEFAULT_TOOLSETS } from "./types/toolConfig.js";
+
+const SEMVER_VERSION = "0.0.1"; // TODO: replace this with GHA
 
 dotenv.config();
 
-const SEMVER_VERSION = "0.0.1"; // TODO: replace this with GHA
+// Parse command line arguments
+const program = new Command();
+program
+  .name("octopus-mcp-server")
+  .description("Octopus Deploy MCP Server")
+  .version(SEMVER_VERSION)
+  .option("-s, --server-url <url>", "Octopus server URL")
+  .option("-k, --api-key <key>", "Octopus API key")
+  .option("--toolsets <toolsets>", `Comma-separated list of toolsets to enable, or "all" (default: all). Available toolsets: ${DEFAULT_TOOLSETS.join(", ")}`)
+  .option("--read-only", "Enable read-only mode (default: enabled)", true)
+  .parse();
+
+const options = program.opts();
+
+// Pass CLI options to tools registration
+process.env.CLI_SERVER_URL = options.serverUrl;
+process.env.CLI_API_KEY = options.apiKey;
+
+// Create toolset configuration
+const toolsetConfig = createToolsetConfig(options.toolsets, options.readOnly);
 
 const server = new McpServer({
   name: "Octopus Deploy",
@@ -15,7 +39,7 @@ const server = new McpServer({
 });
 
 registerResources(server);
-registerTools(server);
+registerTools(server, toolsetConfig);
 
 console.info(`Starting Octopus Deploy MCP server (version: ${SEMVER_VERSION})`);
 

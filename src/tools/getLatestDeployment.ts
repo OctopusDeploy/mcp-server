@@ -2,6 +2,7 @@ import { Client, DeploymentRepository, SpaceServerTaskRepository, type Deploymen
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
+import { registerToolDefinition } from "../types/toolConfig.js";
 
 // TODO: review if this tool is needed, it should be possible for a competent model to retrieve this details by using the underlying tools
 
@@ -91,3 +92,9 @@ export function registerGetLatestDeploymentTool(server: McpServer) {
     }
   );
 }
+
+registerToolDefinition({
+  toolName: "get_latest_deployment",
+  config: { toolset: "deployments", readOnly: true },
+  registerFn: registerGetLatestDeploymentTool
+});
