@@ -11,7 +11,7 @@ export function registerGetKubernetesLiveStatusTool(server: McpServer) {
   
   This tool retrieves the live status of Kubernetes resources for a specific project and environment. Optionally include a tenant ID for multi-tenant deployments.`,
     { 
-      spaceId: z.string().describe("The space name"),
+      spaceName: z.string().describe("The space name"),
       projectId: z.string().describe("The ID of the project"),
       environmentId: z.string().describe("The ID of the environment"),
       tenantId: z.string().optional().describe("The ID of the tenant (for multi-tenant deployments)"),
@@ -21,10 +21,10 @@ export function registerGetKubernetesLiveStatusTool(server: McpServer) {
       title: "Get Kubernetes live status from Octopus Deploy",
       readOnlyHint: true,
     },
-    async ({ spaceId, projectId, environmentId, tenantId, summaryOnly = false }) => {
+    async ({ spaceName, projectId, environmentId, tenantId, summaryOnly = false }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
-      const observabilityRepository = new ObservabilityRepository(client, spaceId);
+      const observabilityRepository = new ObservabilityRepository(client, spaceName);
 
       const liveStatus = await observabilityRepository.getLiveStatus(
         projectId,

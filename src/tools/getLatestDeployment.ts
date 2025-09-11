@@ -12,17 +12,17 @@ export function registerGetLatestDeploymentTool(server: McpServer) {
     `Get details for the latest deployment of a project
     
     This tool finds the most recent deployment for a given project in a space and returns the deployment details along with the server task information.`,
-    { spaceId: z.string(), projectId: z.string() },
+    { spaceName: z.string(), projectId: z.string() },
     {
       title: "Get latest deployment details for an Octopus Deploy project",
       readOnlyHint: true,
     },
-    async ({ spaceId, projectId }) => {
+    async ({ spaceName, projectId }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       
-      const deploymentRepository = new DeploymentRepository(client, spaceId);
-      const serverTaskRepository = new SpaceServerTaskRepository(client, spaceId);
+      const deploymentRepository = new DeploymentRepository(client, spaceName);
+      const serverTaskRepository = new SpaceServerTaskRepository(client, spaceName);
 
       // Get all deployments for the project, sorted by creation date descending
       const deploymentsResponse = await deploymentRepository.list({ 

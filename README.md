@@ -92,7 +92,7 @@ npm start -- --toolsets all --read-only --server-url https://your-octopus.com --
   This tool lists all projects in a given space. The space name is required, if you can't find the space name, ask the user directly for the name of the space. Optionally filter by partial name match using partialName parameter.
 
 **Parameters**: 
-- `spaceId` (string, required): The space ID
+- `spaceName` (string, required): The space name
 - `partialName` (string, optional): Filter by partial name match
 
 </details>
@@ -105,7 +105,7 @@ npm start -- --toolsets all --read-only --server-url https://your-octopus.com --
   This tool lists all environments in a given space. The space name is required. Optionally filter by partial name match using partialName parameter.
 
 **Parameters**: 
-- `spaceId` (string, required): The space ID
+- `spaceName` (string, required): The space name
 - `partialName` (string, optional): Filter by partial name match
 
 </details>
@@ -118,7 +118,7 @@ npm start -- --toolsets all --read-only --server-url https://your-octopus.com --
   This tool lists deployments in a given space. The space name is required. Optional filters include: projects (array of project IDs), environments (array of environment IDs), tenants (array of tenant IDs), channels (array of channel IDs), taskState (one of: Canceled, Cancelling, Executing, Failed, Queued, Success, TimedOut), and take (number of results to return).
 
 **Parameters**: 
-- `spaceId` (string, required): The space ID
+- `spaceName` (string, required): The space name
 - `projects` (array of strings, optional): Array of project IDs to filter by
 - `environments` (array of strings, optional): Array of environment IDs to filter by
 - `tenants` (array of strings, optional): Array of tenant IDs to filter by
@@ -136,7 +136,7 @@ npm start -- --toolsets all --read-only --server-url https://your-octopus.com --
     This tool finds the most recent deployment for a given project in a space and returns the deployment details along with the server task information.
 
 **Parameters**: 
-- `spaceId` (string, required): The space ID
+- `spaceName` (string, required): The space name
 - `projectId` (string, required): The ID of the project
 
 </details>
@@ -147,7 +147,7 @@ npm start -- --toolsets all --read-only --server-url https://your-octopus.com --
 **Description**: Get details for a specific release by its ID
 
 **Parameters**: 
-- `spaceId` (string, required): The space ID
+- `spaceName` (string, required): The space name
 - `releaseId` (string, required): The ID of the release to retrieve
 
 </details>
@@ -160,7 +160,7 @@ npm start -- --toolsets all --read-only --server-url https://your-octopus.com --
   This tool lists all releases in a given space. The space name is required. Optionally provide skip and take parameters for pagination.
 
 **Parameters**: 
-- `spaceId` (string, required): The space ID
+- `spaceName` (string, required): The space name
 - `skip` (number, optional): Number of items to skip for pagination
 - `take` (number, optional): Number of items to take for pagination
 
@@ -174,7 +174,7 @@ npm start -- --toolsets all --read-only --server-url https://your-octopus.com --
   This tool lists all releases for a given project in a space. The space name and project ID are required. Optionally provide skip, take, and searchByVersion parameters.
 
 **Parameters**: 
-- `spaceId` (string, required): The space ID
+- `spaceName` (string, required): The space name
 - `projectId` (string, required): The ID of the project to list releases for
 - `skip` (number, optional): Number of items to skip for pagination
 - `take` (number, optional): Number of items to take for pagination
@@ -188,7 +188,7 @@ npm start -- --toolsets all --read-only --server-url https://your-octopus.com --
 **Description**: Get details for a specific server task by its ID
 
 **Parameters**: 
-- `spaceId` (string, required): The space ID
+- `spaceName` (string, required): The space name
 - `taskId` (string, required): The ID of the task to retrieve
 
 </details>
@@ -199,7 +199,7 @@ npm start -- --toolsets all --read-only --server-url https://your-octopus.com --
 **Description**: Get detailed information for a specific server task by its ID
 
 **Parameters**: 
-- `spaceId` (string, required): The space ID
+- `spaceName` (string, required): The space name
 - `taskId` (string, required): The ID of the task to retrieve
 
 </details>
@@ -210,7 +210,7 @@ npm start -- --toolsets all --read-only --server-url https://your-octopus.com --
 **Description**: Get raw details for a specific server task by its ID
 
 **Parameters**: 
-- `spaceId` (string, required): The space ID
+- `spaceName` (string, required): The space name
 - `taskId` (string, required): The ID of the task to retrieve
 
 </details>
@@ -223,7 +223,7 @@ npm start -- --toolsets all --read-only --server-url https://your-octopus.com --
 This tool lists all deployment targets in a given space. The space name is required. You can optionally filter by various parameters like name, roles, health status, etc.
 
 **Parameters**: 
-- `spaceId` (string, required): The space ID
+- `spaceName` (string, required): The space name
 - `skip` (number, optional): Number of items to skip for pagination
 - `take` (number, optional): Number of items to take for pagination
 - `name` (string, optional): Filter by exact name match
@@ -251,7 +251,7 @@ This tool lists all deployment targets in a given space. The space name is requi
 This tool retrieves detailed information about a specific deployment target using its ID. The space name and target ID are both required.
 
 **Parameters**: 
-- `spaceId` (string, required): The space ID
+- `spaceName` (string, required): The space name
 - `targetId` (string, required): The ID of the deployment target to retrieve
 
 </details>

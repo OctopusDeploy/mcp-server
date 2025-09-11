@@ -11,7 +11,7 @@ export function registerListTenantsTool(server: McpServer) {
   
   This tool lists all tenants in a given space. The space name is required. Optionally provide skip and take parameters for pagination.`,
     { 
-      spaceId: z.string().describe("The space name"),
+      spaceName: z.string().describe("The space name"),
       skip: z.number().optional().describe("Number of items to skip for pagination"),
       take: z.number().optional().describe("Number of items to take for pagination")
     },
@@ -19,10 +19,10 @@ export function registerListTenantsTool(server: McpServer) {
       title: "List all tenants in an Octopus Deploy space",
       readOnlyHint: true,
     },
-    async ({ spaceId, skip, take }) => {
+    async ({ spaceName, skip, take }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
-      const tenantRepository = new TenantRepository(client, spaceId);
+      const tenantRepository = new TenantRepository(client, spaceName);
 
       const tenantsResponse = await tenantRepository.list({ skip, take });
 

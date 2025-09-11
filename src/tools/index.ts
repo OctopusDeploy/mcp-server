@@ -25,6 +25,7 @@ import "./getMissingTenantVariables.js";
 import "./getKubernetesLiveStatus.js";
 import "./listDeploymentTargets.js";
 import './getDeploymentTarget.js';
+import './getDeploymentProcess.js';
 
 function isToolEnabled(toolRegistration: any, config: ToolsetConfig): boolean {
   if (!toolRegistration) {

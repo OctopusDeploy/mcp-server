@@ -7,7 +7,7 @@ import { registerToolDefinition } from "../types/toolConfig.js";
 export function registerListSpacesTool(server: McpServer) {
   server.tool(
     "list_spaces",
-    "List all spaces in the Octopus Deploy instance. Always use this tool first to retrive the Space ID needed for other tools.",
+    "List all spaces in the Octopus Deploy instance. Always use this tool first to check that the requested space exists.",
     { partialName: z.string().optional() },
     {
       title: "List all spaces in an Octopus Deploy instance",

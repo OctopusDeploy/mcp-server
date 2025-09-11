@@ -1,4 +1,4 @@
-import { Client } from "@octopusdeploy/api-client";
+import { Client, resolveSpaceId } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
@@ -12,19 +12,20 @@ export function registerGetDeploymentTargetTool(server: McpServer) {
 
 This tool retrieves detailed information about a specific deployment target using its ID. The space name and target ID are both required.`,
     {
-      spaceId: z.string(),
+      spaceName: z.string(),
       targetId: z.string(),
     },
     {
       title: "Get a specific deployment target from an Octopus Deploy space",
       readOnlyHint: true,
     },
-    async ({ spaceId, targetId }) => {
+    async ({ spaceName, targetId }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
+      const spaceId = await resolveSpaceId(client, spaceName);
 
       const target = await client.get<DeploymentTargetResource>(
-        "~/api/spaces/{spaceId}/machines/{id}",
+        "~/api/{spaceId}/machines/{id}",
         {
           spaceId,
           id: targetId,

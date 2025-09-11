@@ -10,15 +10,15 @@ export function registerListEnvironmentsTool(server: McpServer) {
     `List environments in a space
   
   This tool lists all environments in a given space. The space name is required. Use this tool as early as possible to understand which environments are configured. Optionally filter by partial name match using partialName parameter.`,
-    { spaceId: z.string(), partialName: z.string().optional() },
+    { spaceName: z.string(), partialName: z.string().optional() },
     {
       title: "List all environments in an Octopus Deploy space",
       readOnlyHint: true,
     },
-    async ({ spaceId, partialName }) => {
+    async ({ spaceName, partialName }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
-      const environmentRepository = new EnvironmentRepository(client, spaceId);
+      const environmentRepository = new EnvironmentRepository(client, spaceName);
 
       const environmentsResponse = await environmentRepository.list({ partialName });
       const environments = environmentsResponse.Items.map((environment: DeploymentEnvironment) => ({

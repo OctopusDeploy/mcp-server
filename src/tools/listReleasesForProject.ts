@@ -11,8 +11,8 @@ export function registerListReleasesForProjectTool(server: McpServer) {
   
   This tool lists all releases for a given project in a space. The space name and project ID are required. Optionally provide skip, take, and searchByVersion parameters.`,
     { 
-      spaceId: z.string().describe("The space name"),
-      projectId: z.string().describe("The ID of the project to list releases for"),
+      spaceName: z.string(),
+      projectId: z.string(),
       skip: z.number().optional().describe("Number of items to skip for pagination"),
       take: z.number().optional().describe("Number of items to take for pagination"),
       searchByVersion: z.string().optional().describe("Search releases by version string")
@@ -21,10 +21,10 @@ export function registerListReleasesForProjectTool(server: McpServer) {
       title: "List releases for a project in Octopus Deploy",
       readOnlyHint: true,
     },
-    async ({ spaceId, projectId, skip, take, searchByVersion }) => {
+    async ({ spaceName, projectId, skip, take, searchByVersion }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
-      const releaseRepository = new ReleaseRepository(client, spaceId);
+      const releaseRepository = new ReleaseRepository(client, spaceName);
 
       const releasesResponse = await releaseRepository.listForProject(projectId, { 
         skip, 

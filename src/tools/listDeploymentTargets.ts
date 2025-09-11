@@ -1,4 +1,4 @@
-import { Client, type ResourceCollection } from "@octopusdeploy/api-client";
+import { Client, resolveSpaceId, type ResourceCollection } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
@@ -12,15 +12,15 @@ export function registerListDeploymentTargetsTool(server: McpServer) {
 
 This tool lists all deployment targets in a given space. The space name is required. You can optionally filter by various parameters like name, roles, health status, etc.`,
     {
-      spaceId: z.string(),
+      spaceName: z.string(),
       skip: z.number().optional(),
       take: z.number().optional(),
       name: z.string().optional(),
       ids: z.array(z.string()).optional(),
       partialName: z.string().optional(),
-      roles: z.array(z.string()).optional(),
+      roles: z.array(z.string()).optional().describe("A list of roles / target tags to filter by."),
       isDisabled: z.boolean().optional(),
-      healthStatuses: z.array(z.string()).optional(),
+      healthStatuses: z.array(z.string()).optional().describe("Possible values: Healthy, Unhealthy, Unavailable, Unknown, HasWarnings"),
       commStyles: z.array(z.string()).optional(),
       tenantIds: z.array(z.string()).optional(),
       tenantTags: z.array(z.string()).optional(),
@@ -35,7 +35,7 @@ This tool lists all deployment targets in a given space. The space name is requi
       readOnlyHint: true,
     },
     async ({
-      spaceId,
+      spaceName,
       skip,
       take,
       name,
@@ -55,9 +55,10 @@ This tool lists all deployment targets in a given space. The space name is requi
     }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
+      const spaceId = await resolveSpaceId(client, spaceName);
 
       const response = await client.get<ResourceCollection<DeploymentTargetResource>>(
-        "~/api/spaces/{spaceId}/machines{?skip,take,name,ids,partialName,roles,isDisabled,healthStatuses,commStyles,tenantIds,tenantTags,environmentIds,thumbprint,deploymentId,shellNames,deploymentTargetTypes}",
+        "~/api/{spaceId}/machines{?skip,take,name,ids,partialName,roles,isDisabled,healthStatuses,commStyles,tenantIds,tenantTags,environmentIds,thumbprint,deploymentId,shellNames,deploymentTargetTypes}",
         {
           spaceId,
           skip,

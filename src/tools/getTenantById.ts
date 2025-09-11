@@ -9,17 +9,17 @@ export function registerGetTenantByIdTool(server: McpServer) {
     "get_tenant_by_id",
     "Get details for a specific tenant by its ID",
     { 
-      spaceId: z.string().describe("The space name"),
+      spaceName: z.string().describe("The space name"),
       tenantId: z.string().describe("The ID of the tenant to retrieve")
     },
     {
       title: "Get tenant details by ID from Octopus Deploy",
       readOnlyHint: true,
     },
-    async ({ spaceId, tenantId }) => {
+    async ({ spaceName, tenantId }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
-      const tenantRepository = new TenantRepository(client, spaceId);
+      const tenantRepository = new TenantRepository(client, spaceName);
 
       const tenant = await tenantRepository.get(tenantId);
 
