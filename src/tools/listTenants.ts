@@ -13,18 +13,29 @@ export function registerListTenantsTool(server: McpServer) {
     { 
       spaceName: z.string().describe("The space name"),
       skip: z.number().optional().describe("Number of items to skip for pagination"),
-      take: z.number().optional().describe("Number of items to take for pagination")
+      take: z.number().optional().describe("Number of items to take for pagination"),
+      projectId: z.string().optional().describe("Filter by specific project ID"),
+      tags: z.string().optional().describe("Filter by tenant tags (comma-separated list)"),
+      ids: z.array(z.string()).optional().describe("Filter by specific tenant IDs"),
+      partialName: z.string().optional().describe("Filter by partial tenant name match")
     },
     {
       title: "List all tenants in an Octopus Deploy space",
       readOnlyHint: true,
     },
-    async ({ spaceName, skip, take }) => {
+    async ({ spaceName, skip, take, projectId, tags, ids, partialName }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const tenantRepository = new TenantRepository(client, spaceName);
 
-      const tenantsResponse = await tenantRepository.list({ skip, take });
+      const tenantsResponse = await tenantRepository.list({ 
+        skip, 
+        take, 
+        projectId, 
+        tags, 
+        ids, 
+        partialName 
+      });
 
       return {
         content: [

@@ -9,7 +9,7 @@ export function registerListDeploymentsTool(server: McpServer) {
     "list_deployments",
     `List deployments in a space
   
-  This tool lists deployments in a given space. The space name is required. Optional filters include: projects (array of project IDs), environments (array of environment IDs), tenants (array of tenant IDs), channels (array of channel IDs), taskState (one of: Canceled, Cancelling, Executing, Failed, Queued, Success, TimedOut), and take (number of results to return).`,
+  This tool lists deployments in a given space. The space name is required. When requesting latest deployment consider which deployment state the user is interested in (successful or all). Optional filters include: projects (array of project IDs), environments (array of environment IDs), tenants (array of tenant IDs), channels (array of channel IDs), taskState (one of: Canceled, Cancelling, Executing, Failed, Queued, Success, TimedOut), and take (number of results to return).`,
     { 
       spaceName: z.string(), 
       projects: z.array(z.string()).optional(),
