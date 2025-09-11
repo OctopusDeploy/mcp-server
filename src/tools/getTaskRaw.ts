@@ -5,18 +5,18 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerToolDefinition } from '../types/toolConfig.js';
 
 export interface GetTaskRawParams {
-  space: string;
+  spaceId: string;
   taskId: string;
 }
 
 export async function getTaskRaw(client: Client, params: GetTaskRawParams) {
-  const { space, taskId } = params;
+  const { spaceId, taskId } = params;
   
   if (!taskId) {
     throw new Error("Task ID is required");
   }
 
-  const serverTaskRepository = new SpaceServerTaskRepository(client, space);
+  const serverTaskRepository = new SpaceServerTaskRepository(client, spaceId);
   const response = await serverTaskRepository.getRaw(taskId);
   return response;
 }
@@ -25,13 +25,13 @@ export function registerGetTaskRawTool(server: McpServer) {
   server.tool(
     'get_task_raw',
     'Get raw details for a specific server task by its ID',
-    { space: z.string(), taskId: z.string() },
+    { spaceId: z.string(), taskId: z.string() },
     {
       title: 'Get raw details for a specific server task by its ID',
       readOnlyHint: true,
     },
     async (args) => {
-      const { space, taskId } = args as GetTaskRawParams;
+      const { spaceId, taskId } = args as GetTaskRawParams;
       
       if (!taskId) {
         throw new Error("Task ID is required");
@@ -39,7 +39,7 @@ export function registerGetTaskRawTool(server: McpServer) {
 
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
-      const serverTaskRepository = new SpaceServerTaskRepository(client, space);
+      const serverTaskRepository = new SpaceServerTaskRepository(client, spaceId);
       
       const response = await serverTaskRepository.getRaw(taskId);
       

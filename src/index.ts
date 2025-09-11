@@ -27,8 +27,12 @@ program
 const options = program.opts();
 
 // Pass CLI options to tools registration
-process.env.CLI_SERVER_URL = options.serverUrl;
-process.env.CLI_API_KEY = options.apiKey;
+if (options.serverUrl) {
+  process.env.CLI_SERVER_URL = options.serverUrl;
+}
+if (options.apiKey) {
+  process.env.CLI_API_KEY = options.apiKey;
+}
 
 // Test configuration
 getClientConfigurationFromEnvironment();

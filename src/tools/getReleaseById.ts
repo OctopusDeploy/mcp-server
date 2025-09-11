@@ -9,17 +9,17 @@ export function registerGetReleaseByIdTool(server: McpServer) {
     "get_release_by_id",
     "Get details for a specific release by its ID",
     { 
-      space: z.string().describe("The space name"),
+      spaceId: z.string().describe("The space name"),
       releaseId: z.string().describe("The ID of the release to retrieve")
     },
     {
       title: "Get release details by ID from Octopus Deploy",
       readOnlyHint: true,
     },
-    async ({ space, releaseId }) => {
+    async ({ spaceId, releaseId }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
-      const releaseRepository = new ReleaseRepository(client, space);
+      const releaseRepository = new ReleaseRepository(client, spaceId);
 
       const release = await releaseRepository.get(releaseId);
 

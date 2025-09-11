@@ -1,4 +1,5 @@
 import { Client, SpaceRepository } from "@octopusdeploy/api-client";
+import { z } from "zod";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
@@ -6,18 +7,18 @@ import { registerToolDefinition } from "../types/toolConfig.js";
 export function registerListSpacesTool(server: McpServer) {
   server.tool(
     "list_spaces",
-    "List all spaces in the Octopus Deploy instance",
-    {},
+    "List all spaces in the Octopus Deploy instance. Always use this tool first to retrive the Space ID needed for other tools.",
+    { partialName: z.string().optional() },
     {
       title: "List all spaces in an Octopus Deploy instance",
       readOnlyHint: true,
     },
-    async () => {
+    async ({ partialName }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const spaceRepository = new SpaceRepository(client);
 
-      const spacesResponse = await spaceRepository.list({});
+      const spacesResponse = await spaceRepository.list({ partialName });
       const spaces = spacesResponse.Items.map((space) => ({
         id: space.Id,
         name: space.Name,

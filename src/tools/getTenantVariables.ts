@@ -14,7 +14,7 @@ export function registerGetTenantVariablesTool(server: McpServer) {
   - "common": Get common variables only
   - "project": Get project-specific variables only`,
     { 
-      space: z.string().describe("The space name"),
+      spaceId: z.string().describe("The space name"),
       tenantId: z.string().describe("The ID of the tenant to retrieve variables for"),
       variableType: z.enum(["all", "common", "project"]).describe("Type of variables to retrieve"),
       includeMissingVariables: z.boolean().optional().describe("Include missing variables in the response (for common/project types)")
@@ -23,10 +23,10 @@ export function registerGetTenantVariablesTool(server: McpServer) {
       title: "Get tenant variables from Octopus Deploy",
       readOnlyHint: true,
     },
-    async ({ space, tenantId, variableType, includeMissingVariables = false }) => {
+    async ({ spaceId, tenantId, variableType, includeMissingVariables = false }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
-      const tenantRepository = new TenantRepository(client, space);
+      const tenantRepository = new TenantRepository(client, spaceId);
 
       let variables;
       

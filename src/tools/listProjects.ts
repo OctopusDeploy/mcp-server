@@ -10,15 +10,15 @@ export function registerListProjectsTool(server: McpServer) {
     `List projects in a space
   
   This tool lists all projects in a given space. The space name is required, if you can't find the space name, ask the user directly for the name of the space. Optionally filter by partial name match using partialName parameter.`,
-    { space: z.string(), partialName: z.string().optional() },
+    { spaceId: z.string(), partialName: z.string().optional() },
     {
       title: "List all projects in an Octopus Deploy space",
       readOnlyHint: true,
     },
-    async ({ space, partialName }) => {
+    async ({ spaceId, partialName }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
-      const projectRepository = new ProjectRepository(client, space);
+      const projectRepository = new ProjectRepository(client, spaceId);
 
       const projectsResponse = await projectRepository.list({ partialName });
       const projects = projectsResponse.Items.map((project: Project) => ({

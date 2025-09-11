@@ -7,7 +7,7 @@ export interface ConfigurationOptions {
 }
 
 function isEmpty(value: string | undefined): value is undefined | "" {
-  return !value || value.trim().length === 0 || value.trim().toLowerCase() === "undefined";
+  return !value || value.trim().length === 0;
 }
 
 function getClientConfiguration(options: ConfigurationOptions = {}): ClientConfiguration {

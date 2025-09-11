@@ -7,7 +7,8 @@ export type Toolset =
   | "releases" 
   | "tasks" 
   | "tenants" 
-  | "kubernetes";
+  | "kubernetes"
+  | "machines";
 
 export interface ToolConfig {
   toolset: Toolset;
@@ -38,5 +39,6 @@ export const DEFAULT_TOOLSETS: Toolset[] = [
   "releases",
   "tasks",
   "tenants",
-  "kubernetes"
+  "kubernetes",
+  "machines"
 ];

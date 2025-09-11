@@ -11,7 +11,7 @@ export function registerListDeploymentsTool(server: McpServer) {
   
   This tool lists deployments in a given space. The space name is required. Optional filters include: projects (array of project IDs), environments (array of environment IDs), tenants (array of tenant IDs), channels (array of channel IDs), taskState (one of: Canceled, Cancelling, Executing, Failed, Queued, Success, TimedOut), and take (number of results to return).`,
     { 
-      space: z.string(), 
+      spaceId: z.string(), 
       projects: z.array(z.string()).optional(),
       environments: z.array(z.string()).optional(),
       tenants: z.array(z.string()).optional(),
@@ -23,10 +23,10 @@ export function registerListDeploymentsTool(server: McpServer) {
       title: "List deployments in an Octopus Deploy space",
       readOnlyHint: true,
     },
-    async ({ space, projects, environments, tenants, channels, taskState, take }) => {
+    async ({ spaceId, projects, environments, tenants, channels, taskState, take }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
-      const deploymentRepository = new DeploymentRepository(client, space);
+      const deploymentRepository = new DeploymentRepository(client, spaceId);
 
       const deploymentsResponse = await deploymentRepository.list({ 
         projects,

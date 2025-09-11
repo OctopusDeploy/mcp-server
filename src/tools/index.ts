@@ -23,6 +23,8 @@ import "./getTenantById.js";
 import "./getTenantVariables.js";
 import "./getMissingTenantVariables.js";
 import "./getKubernetesLiveStatus.js";
+import "./listDeploymentTargets.js";
+import './getDeploymentTarget.js';
 
 function isToolEnabled(toolRegistration: any, config: ToolsetConfig): boolean {
   if (!toolRegistration) {

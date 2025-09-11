@@ -11,7 +11,7 @@ export function registerGetMissingTenantVariablesTool(server: McpServer) {
   
   This tool retrieves tenant variables that are missing values. Optionally filter by tenant, project, or environment.`,
     { 
-      space: z.string().describe("The space name"),
+      spaceId: z.string().describe("The space name"),
       tenantId: z.string().optional().describe("Filter by specific tenant ID"),
       projectId: z.string().optional().describe("Filter by specific project ID"),
       environmentId: z.string().optional().describe("Filter by specific environment ID"),
@@ -21,10 +21,10 @@ export function registerGetMissingTenantVariablesTool(server: McpServer) {
       title: "Get missing tenant variables from Octopus Deploy",
       readOnlyHint: true,
     },
-    async ({ space, tenantId, projectId, environmentId, includeDetails = false }) => {
+    async ({ spaceId, tenantId, projectId, environmentId, includeDetails = false }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
-      const tenantRepository = new TenantRepository(client, space);
+      const tenantRepository = new TenantRepository(client, spaceId);
 
       const filterOptions = {
         tenantId,
