@@ -256,6 +256,49 @@ This tool retrieves detailed information about a specific deployment target usin
 
 </details>
 
+<details>
+<summary>get_deployment_process</summary>
+
+**Description**: Get deployment process by ID
+
+This tool retrieves a deployment process by its ID. Each project has a deployment process attached, and releases/deployments can also have frozen processes attached.
+
+**Parameters**: 
+- `spaceName` (string, required): The space name
+- `projectId` (string, optional): The ID of the project to retrieve the deployment process for. If processId is not provided, this parameter is required.
+- `processId` (string, optional): The ID of the deployment process to retrieve. If not provided, the deployment process for the project will be retrieved.
+- `branchName` (string, optional): Optional branch name to get the deployment process for a specific branch (if using version controlled projects). Try `main` or `master` if unsure.
+- `includeDetails` (boolean, optional): Include detailed properties for steps and actions. Defaults to false.
+
+</details>
+
+<details>
+<summary>get_branches</summary>
+
+**Description**: Get Git branches for a version-controlled project
+
+This tool retrieves Git branches for a specific project in a space. The space name and project ID are required. Optionally provide searchByName, skip, and take parameters for filtering and pagination.
+
+**Parameters**: 
+- `spaceName` (string, required): The space name
+- `projectId` (string, required): The ID of the project
+- `searchByName` (string, optional): Filter branches by partial name match
+- `skip` (number, optional): Number of items to skip for pagination
+- `take` (number, optional): Number of items to take for pagination
+
+</details>
+
+<details>
+<summary>get_current_user</summary>
+
+**Description**: Get information about the current authenticated user
+
+This tool retrieves information about the currently authenticated user from the Octopus Deploy API.
+
+**Parameters**: None
+
+</details>
+
 ## Contributing
 
 We are keen to hear how you plan to use Octopus MCP server and what features you would like to see us build. You can reach out to our team directly via `TBD`

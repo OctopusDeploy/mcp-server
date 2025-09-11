@@ -8,7 +8,8 @@ export type Toolset =
   | "tasks" 
   | "tenants" 
   | "kubernetes"
-  | "machines";
+  | "machines"
+  | "context";
 
 export interface ToolConfig {
   toolset: Toolset;
@@ -40,5 +41,6 @@ export const DEFAULT_TOOLSETS: Toolset[] = [
   "tasks",
   "tenants",
   "kubernetes",
-  "machines"
+  "machines",
+  "context"
 ];

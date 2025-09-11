@@ -26,6 +26,8 @@ import "./getKubernetesLiveStatus.js";
 import "./listDeploymentTargets.js";
 import './getDeploymentTarget.js';
 import './getDeploymentProcess.js';
+import './getBranches.js';
+import './getCurrentUser.js';
 
 function isToolEnabled(toolRegistration: any, config: ToolsetConfig): boolean {
   if (!toolRegistration) {
