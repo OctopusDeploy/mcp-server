@@ -1,7 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerTools } from "./tools/index.js";
-import { registerResources } from "./resources/index.js";
 import { Command } from "commander";
 import dotenv from "dotenv";
 import { createToolsetConfig } from "./utils/parseConfig.js";
@@ -46,7 +45,6 @@ const server = new McpServer({
   version: SEMVER_VERSION,
 });
 
-registerResources(server);
 registerTools(server, toolsetConfig);
 
 console.info(`Starting Octopus Deploy MCP server (version: ${SEMVER_VERSION})`);

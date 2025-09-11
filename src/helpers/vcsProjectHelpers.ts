@@ -1,4 +1,4 @@
-import { Client, type ResourceCollection } from "@octopusdeploy/api-client";
+import { type Client, type ResourceCollection } from "@octopusdeploy/api-client";
 import { type GitBranch, type GetProjectBranchesOptions } from "../types/gitBranchTypes.js";
 
 export async function getProjectBranches(

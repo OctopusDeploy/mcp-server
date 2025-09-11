@@ -1,6 +1,6 @@
 import { Client, resolveSpaceId, ProjectRepository } from "@octopusdeploy/api-client";
 import { z } from "zod";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { type DeploymentProcessResource } from "../types/deploymentProcessTypes.js";
@@ -74,6 +74,7 @@ This tool retrieves a deployment process by its ID. Each project has a deploymen
               if (includeDetails) {
                 return action;
               } else {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const { Properties, ...actionWithoutProperties } = action;
                 return actionWithoutProperties;
               }

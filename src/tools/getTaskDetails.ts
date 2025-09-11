@@ -17,7 +17,7 @@ export async function getTaskDetails(client: Client, params: GetTaskDetailsParam
   }
 
   const serverTaskRepository = new SpaceServerTaskRepository(client, spaceName);
-  const response = await serverTaskRepository.getDetails(taskId);spaceName
+  const response = await serverTaskRepository.getDetails(taskId);
   return response;
 }
 

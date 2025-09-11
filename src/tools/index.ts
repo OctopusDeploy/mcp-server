@@ -1,9 +1,9 @@
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { 
   type ToolsetConfig, 
-  type Toolset, 
   TOOL_REGISTRY, 
-  DEFAULT_TOOLSETS 
+  DEFAULT_TOOLSETS, 
+  type ToolRegistration
 } from "../types/toolConfig.js";
 
 // Import all tool files to trigger their self-registration
@@ -29,7 +29,7 @@ import './getDeploymentProcess.js';
 import './getBranches.js';
 import './getCurrentUser.js';
 
-function isToolEnabled(toolRegistration: any, config: ToolsetConfig): boolean {
+function isToolEnabled(toolRegistration: ToolRegistration, config: ToolsetConfig): boolean {
   if (!toolRegistration) {
     return false;
   }
@@ -53,7 +53,7 @@ function isToolEnabled(toolRegistration: any, config: ToolsetConfig): boolean {
 
 export function registerTools(server: McpServer, config: ToolsetConfig = {}) {
   // Iterate through all registered tools and register those that are enabled
-  for (const [toolName, toolRegistration] of TOOL_REGISTRY) {
+  for (const [, toolRegistration] of TOOL_REGISTRY) {
     if (isToolEnabled(toolRegistration, config)) {
       toolRegistration.registerFn(server);
     }

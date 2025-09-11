@@ -21,10 +21,12 @@ export enum PackageRequirement {
 export interface DeploymentStepResource extends ResourceWithId, ResourceWithSlug {
   Id: string;
   Name: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Properties: Record<string, any>;
   Condition: RunCondition;
   StartTrigger: StartTrigger;
   PackageRequirement: PackageRequirement;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Actions: any[];
 }
 

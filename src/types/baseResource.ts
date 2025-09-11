@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-empty-object-type */
+
 export interface ResourceWithId<TLinks = {}> {
     Id: string;
     Links: TLinks;

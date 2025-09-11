@@ -66,8 +66,6 @@ export interface EndpointResource {
     TentacleVersionDetails?: TentacleDetailsResource;
 }
 
-export interface NewEndpointResource extends Omit<EndpointResource, "Id"> {}
-
 export interface MachineResource extends NamedResource, SpaceScopedResource, ResourceWithSlug {
     IsDisabled: boolean;
     MachinePolicyId: string;
@@ -86,7 +84,3 @@ export interface DeploymentTargetResource extends MachineResource {
     TenantIds: string[];
     TenantTags: string[];
 }
-
-export type NewMachineResource = {
-    Endpoint: NewEndpointResource;
-} & Omit<MachineResource, "Id" | "Links" | "Endpoint" | "StatusSummary" | "SpaceId">;

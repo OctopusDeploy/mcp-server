@@ -4,6 +4,14 @@ import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
-  { files: ["src/**/*.{js,mjs,cjs,ts,mts,cts}"], plugins: { js }, extends: ["js/recommended"], languageOptions: { globals: globals.node } },
-  tseslint.configs.recommended,
+  { 
+    files: ["src/**/*.{js,mjs,cjs,ts,mts,cts}"], 
+    plugins: { js }, 
+    extends: ["js/recommended"], 
+    languageOptions: { globals: globals.node }
+  },
+  ...tseslint.configs.recommended.map(config => ({
+    ...config,
+    files: ["src/**/*.ts"]
+  })),
 ]);

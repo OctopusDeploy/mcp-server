@@ -1,6 +1,6 @@
 import { Client, TenantRepository } from "@octopusdeploy/api-client";
 import { z } from "zod";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 
@@ -31,10 +31,11 @@ export function registerGetTenantVariablesTool(server: McpServer) {
       let variables;
       
       switch (variableType) {
-        case "all":
+        case "all": {
           const tenant = await tenantRepository.get(tenantId);
           variables = await tenantRepository.getVariables(tenant);
           break;
+        }
         case "common":
           variables = await tenantRepository.getCommonVariablesById(tenantId, includeMissingVariables);
           break;
