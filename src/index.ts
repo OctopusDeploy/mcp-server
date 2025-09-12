@@ -6,10 +6,11 @@ import dotenv from "dotenv";
 import { createToolsetConfig } from "./utils/parseConfig.js";
 import { DEFAULT_TOOLSETS } from "./types/toolConfig.js";
 import { getClientConfigurationFromEnvironment } from "./helpers/getClientConfigurationFromEnvironment.js";
+import * as fs from "fs";
 
 const SEMVER_VERSION = "0.0.1"; // TODO: replace this with GHA
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 // Parse command line arguments
 const program = new Command();
@@ -47,16 +48,22 @@ const server = new McpServer({
 
 registerTools(server, toolsetConfig);
 
-console.info(`Starting Octopus Deploy MCP server (version: ${SEMVER_VERSION})`);
+//console.error(`Starting Octopus Deploy MCP server (version: ${SEMVER_VERSION})`);
+writeLogToFile(`Starting Octopus Deploy MCP server (version: ${SEMVER_VERSION})`);
 
 // Start server
 async function runServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.info("Octopus Deploy MCP server running on stdio");
+  //console.error("Octopus Deploy MCP server running on stdio");
 }
 
 runServer().catch((error) => {
   console.error("Fatal error running server:", error);
+  writeLogToFile(`Fatal error running server: ${error.message}\n${error.stack}`);
   process.exit(1);
 });
+
+function writeLogToFile(message: string) {
+  fs.appendFileSync("mcp-server-log.txt", message + "\n");
+}

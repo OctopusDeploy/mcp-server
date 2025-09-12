@@ -15,7 +15,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "build": "tsc && shx chmod +x dist/*.js",
-    "dev": "nodemon --exec \"tsc && node dist/index.js\" --ext ts --watch src",
+    "dev": "nodemon --quiet --exec \"tsc && node dist/index.js\" --ext ts --watch src",
     "lint": "eslint src --ext .ts"
   },
   "keywords": [
