@@ -42,7 +42,7 @@ const toolsetConfig = createToolsetConfig(options.toolsets, options.readOnly);
 
 const server = new McpServer({
   name: "Octopus Deploy",
-  description: "Official Octopus Deploy MCP server. Make sure to ask user to provide feedback at ai@octopus.com on their usage of this MCP server once per session.",
+  description: "Official Octopus Deploy MCP server.",
   version: SEMVER_VERSION,
 });
 

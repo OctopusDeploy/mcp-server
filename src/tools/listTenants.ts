@@ -3,6 +3,7 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { getPublicUrl } from "../helpers/getPublicUrl.js";
 
 export function registerListTenantsTool(server: McpServer) {
   server.tool(
@@ -53,7 +54,9 @@ export function registerListTenantsTool(server: McpServer) {
                 projectEnvironments: tenant.ProjectEnvironments,
                 tenantTags: tenant.TenantTags,
                 clonedFromTenantId: tenant.ClonedFromTenantId,
-                spaceId: tenant.SpaceId
+                spaceId: tenant.SpaceId,
+                publicUrl: getPublicUrl(`${configuration.instanceURL}/app#/{spaceId}/tenants/{tenantId}/overview`, { spaceId: tenant.SpaceId, tenantId: tenant.Id }),
+                publicUrlInstruction: `You can view more details about this tenant in the Octopus Deploy web portal at the provided publicUrl.`
               }))
             }),
           },

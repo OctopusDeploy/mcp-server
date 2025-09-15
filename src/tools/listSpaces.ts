@@ -3,11 +3,12 @@ import { z } from "zod";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { spacesDescription } from "../types/spaceTypes.js";
 
 export function registerListSpacesTool(server: McpServer) {
   server.tool(
     "list_spaces",
-    "List all spaces in the Octopus Deploy instance. Always use this tool first to check that the requested space exists.",
+    `List all spaces in the Octopus Deploy instance. ${spacesDescription} Always use this tool first to check that the requested space exists.`,
     { partialName: z.string().optional() },
     {
       title: "List all spaces in an Octopus Deploy instance",

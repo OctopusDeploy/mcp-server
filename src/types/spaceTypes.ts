@@ -1,0 +1,1 @@
+export const spacesDescription = "Spaces is the main organizational unit in Octopus Deploy, Spaces keep the different projects, infrastructure and tenants completely separate. Spaces typically represent team or project boundary, but not customer boundary (use tenants for those).";

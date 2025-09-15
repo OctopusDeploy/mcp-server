@@ -289,6 +289,85 @@ This tool retrieves Git branches for a specific project in a space. The space na
 </details>
 
 <details>
+<summary>list_tenants</summary>
+
+**Description**: List tenants in a space
+  
+  This tool lists all tenants in a given space. The space name is required. Optionally provide skip and take parameters for pagination.
+
+**Parameters**: 
+- `spaceName` (string, required): The space name
+- `skip` (number, optional): Number of items to skip for pagination
+- `take` (number, optional): Number of items to take for pagination
+- `ids` (array of strings, optional): Filter by specific tenant IDs
+- `partialName` (string, optional): Filter by partial tenant name match
+- `projectId` (string, optional): Filter by specific project ID
+- `tags` (string, optional): Filter by tenant tags (comma-separated list)
+
+</details>
+
+<details>
+<summary>get_tenant_by_id</summary>
+
+**Description**: Get details for a specific tenant by its ID
+
+**Parameters**: 
+- `spaceName` (string, required): The space name
+- `tenantId` (string, required): The ID of the tenant to retrieve
+
+</details>
+
+<details>
+<summary>get_tenant_variables</summary>
+
+**Description**: Get tenant variables by type
+  
+  This tool retrieves different types of tenant variables. Use variableType parameter to specify which type:
+  - "all": Get all tenant variables
+  - "common": Get common variables only
+  - "project": Get project-specific variables only
+
+**Parameters**: 
+- `spaceName` (string, required): The space name
+- `tenantId` (string, required): The ID of the tenant to retrieve variables for
+- `variableType` (string, required): Type of variables to retrieve (all, common, project)
+- `includeMissingVariables` (boolean, optional): Include missing variables in the response (for common/project types)
+
+</details>
+
+<details>
+<summary>get_missing_tenant_variables</summary>
+
+**Description**: Get missing tenant variables
+  
+  This tool retrieves tenant variables that are missing values. Optionally filter by tenant, project, or environment.
+
+**Parameters**: 
+- `spaceName` (string, required): The space name
+- `tenantId` (string, optional): Filter by specific tenant ID
+- `projectId` (string, optional): Filter by specific project ID
+- `environmentId` (string, optional): Filter by specific environment ID
+- `includeDetails` (boolean, optional): Include detailed information about missing variables
+
+</details>
+
+<details>
+<summary>get_kubernetes_live_status</summary>
+
+**Description**: Get Kubernetes live status for a project and environment
+  
+  This tool retrieves the live status of Kubernetes resources for a specific project and environment. Optionally include a tenant ID for multi-tenant deployments.
+
+**Parameters**: 
+- `spaceName` (string, required): The space name
+- `projectId` (string, required): The ID of the project
+- `environmentId` (string, required): The ID of the environment
+- `tenantId` (string, optional): The ID of the tenant (for multi-tenant deployments)
+- `summaryOnly` (boolean, optional): Return summary information only
+
+</details>
+
+<details>
 <summary>get_current_user</summary>
 
 **Description**: Get information about the current authenticated user

@@ -1,0 +1,1 @@
+export const tasksDescription = "Tasks represent background operations in Octopus Deploy, such as deployments, health checks, and system maintenance. Each task has a unique ID and can be monitored for status and progress.";

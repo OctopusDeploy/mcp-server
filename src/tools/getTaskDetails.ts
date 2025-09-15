@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getClientConfigurationFromEnvironment } from '../helpers/getClientConfigurationFromEnvironment.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerToolDefinition } from '../types/toolConfig.js';
+import { tasksDescription } from '../types/taskTypes.js';
 
 export interface GetTaskDetailsParams {
   spaceName: string;
@@ -24,7 +25,7 @@ export async function getTaskDetails(client: Client, params: GetTaskDetailsParam
 export function registerGetTaskDetailsTool(server: McpServer) {
   server.tool(
     'get_task_details',
-    'Get detailed information for a specific server task by its ID',
+    `Get detailed information for a specific server task by its ID. ${tasksDescription}`,
     { spaceName: z.string(), taskId: z.string() },
     {
       title: 'Get detailed information for a specific server task by its ID',

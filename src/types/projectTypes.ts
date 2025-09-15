@@ -1,0 +1,1 @@
+export const projectsDescription = "Projects let you manage software applications and services, each with their own deployment process, lifecycles, and variables. Projects are where you define what you are deploying and how it should be deployed.";

@@ -3,13 +3,12 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
+import { projectsDescription } from "../types/projectTypes.js";
 
 export function registerListProjectsTool(server: McpServer) {
   server.tool(
     "list_projects",
-    `List projects in a space
-  
-  This tool lists all projects in a given space. The space name is required, if you can't find the space name, ask the user directly for the name of the space. Optionally filter by partial name match using partialName parameter.`,
+    `This tool lists all projects in a given space. ${projectsDescription} The space name is required, if you can't find the space name, ask the user directly for the name of the space. Optionally filter by partial name match using partialName parameter.`,
     { spaceName: z.string(), partialName: z.string().optional() },
     {
       title: "List all projects in an Octopus Deploy space",

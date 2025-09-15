@@ -1,13 +1,15 @@
-import { Client, TenantRepository } from "@octopusdeploy/api-client";
+import { Client, resolveSpaceId, TenantRepository } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { tenantsDescription } from "../types/tenantsTypes.js";
+import { getPublicUrl } from "../helpers/getPublicUrl.js";
 
 export function registerGetTenantByIdTool(server: McpServer) {
   server.tool(
     "get_tenant_by_id",
-    "Get details for a specific tenant by its ID",
+    `Get details for a specific tenant by its ID. ${tenantsDescription}`,
     { 
       spaceName: z.string().describe("The space name"),
       tenantId: z.string().describe("The ID of the tenant to retrieve")
@@ -34,7 +36,9 @@ export function registerGetTenantByIdTool(server: McpServer) {
               projectEnvironments: tenant.ProjectEnvironments,
               tenantTags: tenant.TenantTags,
               clonedFromTenantId: tenant.ClonedFromTenantId,
-              spaceId: tenant.SpaceId
+              spaceId: tenant.SpaceId,
+              publicUrl: getPublicUrl(`${configuration.instanceURL}/app#/{spaceId}/tenants/{tenantId}/overview`, { spaceId: tenant.SpaceId, tenantId: tenant.Id }),
+              publicUrlInstruction: `You can view more details about this tenant in the Octopus Deploy web portal at the provided publicUrl.`
             }),
           },
         ],
