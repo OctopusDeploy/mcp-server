@@ -3,6 +3,10 @@ on:
   push:
     branches:
       - main
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -11,4 +15,21 @@ jobs:
         id: release
         with:
           release-type: node
-          token: ${{ secrets.INTEGRATIONS_FNM_BOT_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/checkout@v3
+        if: ${{ steps.release.outputs.release_created }}
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v3
+        with:
+          cache: 'npm'
+          node-version: 20
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@octopusdeploy'
+        if: ${{ steps.release.outputs.release_created }}
+      - run: npm ci
+        if: ${{ steps.release.outputs.release_created }}
+      - run: npm publish --access=public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: ${{ steps.release.outputs.release_created }}

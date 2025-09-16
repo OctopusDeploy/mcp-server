@@ -6,9 +6,10 @@ import dotenv from "dotenv";
 import { createToolsetConfig } from "./utils/parseConfig.js";
 import { DEFAULT_TOOLSETS } from "./types/toolConfig.js";
 import { getClientConfigurationFromEnvironment } from "./helpers/getClientConfigurationFromEnvironment.js";
-import * as fs from "fs";
+import { setClientInfo } from "./utils/clientInfo.js";
+import { logger } from "./utils/logger.js";
 
-const SEMVER_VERSION = "0.0.1"; // TODO: replace this with GHA
+export const SEMVER_VERSION = "0.0.1"; // TODO: replace this with GHA
 
 dotenv.config({ quiet: true });
 
@@ -22,9 +23,19 @@ program
   .option("-k, --api-key <key>", "Octopus API key")
   .option("--toolsets <toolsets>", `Comma-separated list of toolsets to enable, or "all" (default: all). Available toolsets: ${DEFAULT_TOOLSETS.join(", ")}`)
   .option("--read-only", "Enable read-only mode (default: enabled)", true)
+  .option("--log-level <level>", "Minimum log level (info, error)", "info")
+  .option("--log-file <path>", "Log file path or filename (default: mcp-server-log.txt)")
+  .option("-q, --quiet", "Disable file logging, only log errors to console", false)
   .parse();
 
 const options = program.opts();
+
+// Configure logger based on command line options
+if (options.logFile) {
+  logger.setLogFilePath(options.logFile);
+}
+logger.setLogLevel(logger.parseLogLevel(options.logLevel));
+logger.setQuietMode(options.quiet);
 
 // Pass CLI options to tools registration
 if (options.serverUrl) {
@@ -46,24 +57,28 @@ const server = new McpServer({
   version: SEMVER_VERSION,
 });
 
+// Set up initialization callback to capture client info
+server.server.oninitialized = () => {
+  const clientInfo = server.server.getClientVersion();
+  if (clientInfo) {
+    setClientInfo(clientInfo.name, clientInfo.version);
+    logger.info(`Client initialized: ${clientInfo.name} v${clientInfo.version}`);
+  } else {
+    logger.info("Client initialized but no client info available");
+  }
+};
+
 registerTools(server, toolsetConfig);
 
-//console.error(`Starting Octopus Deploy MCP server (version: ${SEMVER_VERSION})`);
-writeLogToFile(`Starting Octopus Deploy MCP server (version: ${SEMVER_VERSION})`);
+logger.info(`Starting Octopus Deploy MCP server (version: ${SEMVER_VERSION})`);
 
 // Start server
 async function runServer() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  //console.error("Octopus Deploy MCP server running on stdio");
 }
 
 runServer().catch((error) => {
-  console.error("Fatal error running server:", error);
-  writeLogToFile(`Fatal error running server: ${error.message}\n${error.stack}`);
+  logger.error(`Fatal error running server: ${error.message}\n${error.stack}`);
   process.exit(1);
 });
-
-function writeLogToFile(message: string) {
-  fs.appendFileSync("mcp-server-log.txt", message + "\n");
-}

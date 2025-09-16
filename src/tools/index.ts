@@ -11,7 +11,6 @@ import "./listSpaces.js";
 import "./listProjects.js";
 import "./listEnvironments.js";
 import "./listDeployments.js";
-import "./getLatestDeployment.js";
 import "./getReleaseById.js";
 import "./listReleases.js";
 import "./listReleasesForProject.js";
