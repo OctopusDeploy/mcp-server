@@ -2,21 +2,21 @@
 
 [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) allows the AI assistants you use in your day to day work, like Claude Code, or ChatGPT, to connect to the systems and services you own in a standardized fashion, allowing them to pull information from those systems and services to answer questions and perform tasks.
 
-The Octopus MCP Server provides your AI assistant with powerful tools that allow it to inspect, query, and diagnose problems within your Octopus instance, transforming it into your ultimate devops wingmate. 
+The Octopus MCP Server provides your AI assistant with powerful tools that allow it to inspect, query, and diagnose problems within your Octopus instance, transforming it into your ultimate DevOps wingmate. 
 
 This project should currently be considered unstable, and subject to breaking changes. In the future, we may offer stability; please file an issue if there is a use case where this would be valuable.
 
 ### Octopus Server Compatibility
 
-The MCP Server is developed and tested against versions `2025.3.x` of Octopus Server. Most of the APIs used are stable and exist in prior versions of Octopus and should therefore be generally compatible but we will not be testing or deliberately maintaining compatibility with older versions of Octopus.
+The MCP Server is developed and tested against versions `2025.3.x` of Octopus Server. Most of the APIs used are stable and exist in prior versions of Octopus and should therefore be generally compatible, but we will not be testing or deliberately maintaining compatibility with older versions of Octopus.
 
 ## ⚠️ Security Disclaimer ⚠️
 
-While the Octopus MCP Server at this stage is a read-only tool it **can read full deployment logs, which could include secrets stored in your Octopus Server, such as production keys.** Excercise caution when connecting Octopus MCP to tools and models you do not fully trust.
+While the Octopus MCP Server at this stage is a read-only tool, it **can read full deployment logs, which could include secrets stored in your Octopus Server, such as production keys.** Exercise caution when connecting Octopus MCP to tools and models you do not fully trust.
 
 Running agents in a fully automated fashion could make you vulnerable to exposure via prompt-injection attacks that exfiltrate tokens.
 
-Excercise caution and mitigate the risks by using least-privileged accounts when connecting to Octopus Server.
+Exercise caution and mitigate the risks by using least-privileged accounts when connecting to Octopus Server.
 
 ## 🚀 Installation
 
@@ -89,7 +89,7 @@ npm start -- --toolsets all --read-only --server-url https://your-octopus.com --
 
 **Description**: List projects in a space
   
-  This tool lists all projects in a given space. The space name is required, if you can't find the space name, ask the user directly for the name of the space. Optionally filter by partial name match using partialName parameter.
+  This tool lists all projects in a given space. The space name is required; if you can't find the space name, ask the user directly for the name of the space. Optionally filter by partial name match using partialName parameter.
 
 **Parameters**: 
 - `spaceName` (string, required): The space name
@@ -411,7 +411,7 @@ You may want to investigate what specific changes were made between versions 202
 
 #### Data Analysis
 
-The nature of the current AI chat tools and MCP protocol itself make it impractical to analyze large amounts of data. Most MCP clients currently do not support chaining tool calls (using output of one tool as input to the next one) and instead fallback to copying the results token by token, which frequently leads to hallucinations. If you are looking to process historical data from your Octopus instance for analysis purposes we recommend to use the API directly or to write your own MCP client that is capable of processing the tool call results programmatically.
+The nature of current AI chat tools and the MCP protocol itself makes it impractical to analyze large amounts of data. Most MCP clients currently do not support chaining tool calls (using the output of one tool as input to the next one) and instead fall back to copying the results token by token, which frequently leads to hallucinations. If you are looking to process historical data from your Octopus instance for analysis purposes, we recommend using the API directly or writing your own MCP client that is capable of processing the tool call results programmatically.
 
 #### Performance
 
@@ -419,7 +419,7 @@ The MCP Server is technically just a thin layer on top of the existing Octopus S
 
 ## Contributing
 
-We are keen to hear how you plan to use Octopus MCP server and what features you would like to see us build. You can reach out to our team directly via `TBD`
+We are eager to hear how you plan to use Octopus MCP server and what features you would like to see us build. You can reach out to our team directly via `TBD`
 
 Alternatively, for issues and feedback please use [Octopus Deploy Issues](https://github.com/OctopusDeploy/Issues/issues) repository.
 
