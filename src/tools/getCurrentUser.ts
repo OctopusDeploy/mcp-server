@@ -39,7 +39,7 @@ This tool retrieves information about the currently authenticated user from the 
         isService: user.IsService,
         emailAddress: user.EmailAddress,
         canPasswordBeEdited: user.CanPasswordBeEdited,
-        isRequestor: user.IsRequestor, 
+        isRequestor: user.IsRequestor,
       };
 
       return {
