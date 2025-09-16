@@ -7,7 +7,6 @@ permissions:
   contents: write
   packages: write
   pull-requests: write
-  branches: write
 jobs:
   publish:
     runs-on: ubuntu-latest
