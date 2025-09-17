@@ -20,9 +20,43 @@ Exercise caution and mitigate the risks by using least-privileged accounts when 
 
 ## 🚀 Installation
 
+### Requirements
+- Node.js >= v20.0.0
+- Cursor, Claude Code, VSCode, Windsurf or another MCP Client
+- Octopus Deploy instance that can be accessed remotely
+- Octopus Deploy API Key
+
+### Command Line
 ```
 npx -y @octopusdeploy/mcp-server
 ```
+
+Connection details for your Octopus Deploy instance can be supplied either via the command line:
+```
+npx -y @octopusdeploy/mcp-server --server-url https://your-octopus.com --api-key YOUR_API_KEY
+```
+
+Or via environment variables:
+```
+OCTOPUS_API_KEY=API-KEY
+OCTOPUS_SERVER_URL=https://your-octopus.com
+```
+
+<details>
+<summary><b>Install via JSON config (Cursor, Claude Desktop, etc.)</b></summary>
+
+```
+{
+  "mcpServers": {
+    "octopusdeploy": {
+      "command": "npx",
+      "args": ["-y", "@octopusdeploy/mcp-server", "--api-key", "YOUR_API_KEY", "--server-url", "https://your-octopus.com"]
+    }
+  }
+}
+```
+
+</details>
 
 ### Configuration Options
 
