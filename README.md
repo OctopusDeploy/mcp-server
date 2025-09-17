@@ -94,7 +94,7 @@ npm install @octopusdeploy/mcp-server
 
 4. Run it via:
 ```
-npx -y @octopusdeploy/mcp-server
+npx "your/folders/full/path" -y @octopusdeploy/mcp-server
 ```
 
 ## 🔨 Tools
