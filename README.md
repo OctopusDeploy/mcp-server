@@ -423,7 +423,7 @@ This tool retrieves information about the currently authenticated user from the 
 
 ## Security Considerations
 
-While the Octopus MCP Server at this stage is a read-only tool, it **can read full deployment logs, which could include secrets stored in your Octopus Server, such as production keys.** Exercise caution when connecting Octopus MCP to tools and models you do not fully trust.
+While the Octopus MCP Server at this stage is a read-only tool, it **can read full deployment logs, which could include production secrets.** Exercise caution when connecting Octopus MCP to tools and models you do not fully trust.
 
 Running agents in a fully automated fashion could make you vulnerable to exposure via prompt-injection attacks that exfiltrate tokens.
 
