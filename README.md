@@ -75,14 +75,14 @@ npx -y @octopusdeploy/mcp-server --toolsets all
 ```
 
 Available toolsets:
-- **core** - Basic operations (always enabled) (`list_spaces`,`list_environments`)
-- **projects** - Project operations (`list_projects`)
-- **deployments** - Deployment operations (`list_deployments`, `get_latest_deployment`)
-- **releases** - Release management (`get_release_by_id`, `list_releases`, `list_releases_for_project`)
-- **tasks** - Task operations (`get_task_by_id`, `get_task_details`, `get_task_raw`)
-- **tenants** - Multi-tenancy operations (`list_tenants`, `get_tenant_by_id`, `get_tenant_variables`, `get_missing_tenant_variables`)
-- **kubernetes** - Kubernetes operations (`get_kubernetes_live_status`)
-- **machines** - Deployment target operations (`list_deployment_targets`, `get_deployment_target`)
+- **core** - Basic operations (always enabled)
+- **projects** - Project operations
+- **deployments** - Deployment operations
+- **releases** - Release management
+- **tasks** - Task operations
+- **tenants** - Multi-tenancy operations
+- **kubernetes** - Kubernetes operations
+- **machines** - Deployment target operations
 
 #### Read-Only Mode
 The server runs in read-only mode by default for security. All current tools are read-only operations.
