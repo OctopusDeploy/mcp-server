@@ -459,4 +459,4 @@ We are working on integrating an MCP server directly into Octopus Server. This w
 
 ## License
 
-This project is licensed under the terms of Apache 2.0 open source license.
+This project is licensed under the terms of Mozilla Public License 2.0 open source license.
