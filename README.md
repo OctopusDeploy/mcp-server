@@ -370,6 +370,7 @@ This tool retrieves information about the currently authenticated user from the 
 <details>
 <summary>Customer X have submitted a support ticket complaining that there is a bug in the latest release of App. Can you tell me what release they are on, when it was deployed, and if there were any issues with the deployment?</summary>
 
+```
 "I'll help you investigate Customer X's App deployment. Let me start by checking what spaces are available and then look into their current release and deployment status.Let me try a broader search to see all available spaces first:I can see there's an ""App"" space which is likely where Customer X would be deployed. Let me check the projects in that space:Now let me check the environments in this space to understand the deployment structure:Now let me check if there are any tenants, as Customer X would likely be a tenant in the Cloud Customers environment:Great! I found the Customer X tenant. Now let me get the latest deployment for this tenant:Now let me get details about the latest release to see what version they're running:Now let me check the deployment task details to see if there were any issues:Perfect! Now let me also check the previous deployment to see if there were any issues there that might give context to their bug report:Based on my investigation of Customer X's App deployment, here's what I found:
 
 ## Current Status Summary
@@ -404,6 +405,7 @@ Both the current deployment (2025.4.X) and the previous deployment (2025.3.X) co
 3. They upgraded from 2025.3.14236 to 2025.4.X on September 11th, so the bug is likely related to changes introduced in the 2025.4.x branch
 
 You may want to investigate what specific changes were made between versions 2025.3.X and 2025.4.X to help identify the root cause of their reported bug."
+```
 
 </details>
 
