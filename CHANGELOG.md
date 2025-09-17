@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/OctopusDeploy/mcp-server/compare/v0.1.0...v0.1.1) (2025-09-17)
+
+
+### Miscellaneous Chores
+
+* release 0.1.1 ([129094f](https://github.com/OctopusDeploy/mcp-server/commit/129094f005e67a9475b8892b05db089871d0ab47))
+
 ## 0.1.0 (2025-09-16)
 
 
