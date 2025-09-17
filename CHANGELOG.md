@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/OctopusDeploy/mcp-server/compare/v0.1.1...v0.1.2) (2025-09-17)
+
+
+### Miscellaneous Chores
+
+* update packaging to make the index files executable ([6ed95e5](https://github.com/OctopusDeploy/mcp-server/commit/6ed95e559b8dff2f76bebd361d131770346dcb89))
+
 ## [0.1.1](https://github.com/OctopusDeploy/mcp-server/compare/v0.1.0...v0.1.1) (2025-09-17)
 
 
