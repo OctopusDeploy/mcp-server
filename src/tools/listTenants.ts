@@ -69,5 +69,6 @@ export function registerListTenantsTool(server: McpServer) {
 registerToolDefinition({
   toolName: "list_tenants",
   config: { toolset: "tenants", readOnly: true },
-  registerFn: registerListTenantsTool
+  registerFn: registerListTenantsTool,
+  minimumOctopusVersion: "2021.1",
 });

@@ -6,7 +6,7 @@ import { registerTools } from "./tools/index.js";
 import { Command } from "commander";
 import dotenv from "dotenv";
 import { createToolsetConfig } from "./utils/parseConfig.js";
-import { DEFAULT_TOOLSETS } from "./types/toolConfig.js";
+import { DEFAULT_TOOLSETS, printToolVersionAnalysis } from "./types/toolConfig.js";
 import { getClientConfigurationFromEnvironment } from "./helpers/getClientConfigurationFromEnvironment.js";
 import { setClientInfo } from "./utils/clientInfo.js";
 import { logger } from "./utils/logger.js";
@@ -29,6 +29,7 @@ program
   .option("--log-level <level>", "Minimum log level (info, error)", "info")
   .option("--log-file <path>", "Log file path or filename (default: mcp-server-log.txt)")
   .option("-q, --quiet", "Disable file logging, only log errors to console", false)
+  .option("--list-tools-by-version", "List all registered tools by their supported Octopus version and exit")
   .parse();
 
 const options = program.opts();
@@ -53,6 +54,19 @@ getClientConfigurationFromEnvironment();
 
 // Create toolset configuration
 const toolsetConfig = createToolsetConfig(options.toolsets, options.readOnly);
+
+// Check if user wants to list tools by version
+if (options.listToolsByVersion) {
+  // Need to register tools first so they're in the registry
+  const tempServer = new McpServer({
+    name: "temp",
+    description: "temp",
+    version: SEMVER_VERSION,
+  });
+  registerTools(tempServer, toolsetConfig);
+  printToolVersionAnalysis();
+  process.exit(0);
+}
 
 const server = new McpServer({
   name: "Octopus Deploy",

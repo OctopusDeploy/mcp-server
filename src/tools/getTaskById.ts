@@ -59,5 +59,6 @@ export function registerGetTaskByIdTool(server: McpServer) {
 registerToolDefinition({
   toolName: "get_task_by_id",
   config: { toolset: "tasks", readOnly: true },
-  registerFn: registerGetTaskByIdTool
+  registerFn: registerGetTaskByIdTool,
+  minimumOctopusVersion: "2021.1",
 });

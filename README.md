@@ -8,9 +8,7 @@ This project is currently in Early Access, and subject to breaking changes.
 
 ### Octopus Server Compatibility
 
-TODO: Make stronger guarantees about the version of server this will work against.
-
-The MCP Server is developed and tested against versions `2025.3.x` of Octopus Server. Most of the APIs used are stable and exist in prior versions of Octopus and should therefore be generally compatible, but we will not be testing or deliberately maintaining compatibility with older versions of Octopus.
+Most tools exposed by the MCP Server use stable APIs that have been available from at least version `2021.1` of Octopus Server. Tools that are newer will specify the minimum supported version in the documentation. Alternatively, you can use the command line argument `--list-tools-by-version` to check how specific tools relate to versions of Octopus.
 
 ## 🚀 Installation
 
@@ -158,7 +156,7 @@ npx "your/folders/full/path" -y @octopusdeploy/mcp-server
 - `get_missing_tenant_variables`: Get tenant variables that are missing values
 
 ### Kubernetes
-- `get_kubernetes_live_status`: Get live status of Kubernetes resources for a project and environment (only supported in Octopus Server starting with version `2025.3`)
+- `get_kubernetes_live_status`: Get live status of Kubernetes resources for a project and environment (minimum supported version: `2025.3`)
 
 ### Machines (Deployment Targets)
 - `list_deployment_targets`: List all deployment targets in a space with optional filtering
@@ -166,7 +164,7 @@ npx "your/folders/full/path" -y @octopusdeploy/mcp-server
 
 ### Additional Tools
 - `get_deployment_process`: Get deployment process by ID for projects or releases
-- `get_branches`: Get Git branches for a version-controlled project
+- `get_branches`: Get Git branches for a version-controlled project (minimum supported version: `2021.2`)
 - `get_current_user`: Get information about the current authenticated user
 
 ## Security Considerations

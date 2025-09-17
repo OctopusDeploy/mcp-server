@@ -57,5 +57,6 @@ This tool retrieves information about the currently authenticated user from the 
 registerToolDefinition({
   toolName: "get_current_user",
   config: { toolset: "context", readOnly: true },
-  registerFn: registerGetCurrentUserTool
+  registerFn: registerGetCurrentUserTool,
+  minimumOctopusVersion: "2021.1",
 });

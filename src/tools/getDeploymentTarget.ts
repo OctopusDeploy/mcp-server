@@ -75,5 +75,6 @@ This tool retrieves detailed information about a specific deployment target usin
 registerToolDefinition({
   toolName: "get_deployment_target",
   config: { toolset: "machines", readOnly: true },
-  registerFn: registerGetDeploymentTargetTool
+  registerFn: registerGetDeploymentTargetTool,
+  minimumOctopusVersion: "2021.1",
 });

@@ -76,5 +76,6 @@ export function registerListDeploymentsTool(server: McpServer) {
 registerToolDefinition({
   toolName: "list_deployments",
   config: { toolset: "deployments", readOnly: true },
-  registerFn: registerListDeploymentsTool
+  registerFn: registerListDeploymentsTool,
+  minimumOctopusVersion: "2021.1",
 });

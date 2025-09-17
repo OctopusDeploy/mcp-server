@@ -65,5 +65,6 @@ export function registerListReleasesForProjectTool(server: McpServer) {
 registerToolDefinition({
   toolName: "list_releases_for_project",
   config: { toolset: "releases", readOnly: true },
-  registerFn: registerListReleasesForProjectTool
+  registerFn: registerListReleasesForProjectTool,
+  minimumOctopusVersion: "2021.1",
 });
