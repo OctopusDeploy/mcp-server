@@ -33,13 +33,13 @@ Use the `--toolsets` parameter to enable specific groups of tools:
 
 ```bash
 # Enable all toolsets (default)
-npm start
+npx -y @octopusdeploy/mcp-server
 
 # Enable only specific toolsets
-npm start -- --toolsets projects,deployments
+npx -y @octopusdeploy/mcp-server --toolsets projects,deployments
 
 # Enable all toolsets explicitly
-npm start -- --toolsets all
+npx -y @octopusdeploy/mcp-server --toolsets all
 ```
 
 Available toolsets:
@@ -57,20 +57,44 @@ The server runs in read-only mode by default for security. All current tools are
 
 ```bash
 # Run in read-only mode (default)
-npm start -- --read-only
+npx -y @octopusdeploy/mcp-server --read-only
 
 # Disable read-only mode (currently no effect as all tools are read-only)
-npm start -- --read-only=false
+npx -y @octopusdeploy/mcp-server --read-only=false
 ```
 
 #### Complete Examples
 
 ```bash
 # Development setup with only core and project tools
-npm start -- --toolsets core,projects --server-url https://your-octopus.com --api-key YOUR_API_KEY
+npx -y @octopusdeploy/mcp-server --toolsets core,projects --server-url https://your-octopus.com --api-key YOUR_API_KEY
 
 # Full production setup with all tools
-npm start -- --toolsets all --read-only --server-url https://your-octopus.com --api-key YOUR_API_KEY
+npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https://your-octopus.com --api-key YOUR_API_KEY
+```
+
+### Running from Github Registry
+
+This is a temporary workaround until we start publishing preview versions to the public npm registry. The following is assuming you are already signed in to the github registry.
+
+1. In a new folder install dependencies manually:
+```
+npm install @octopusdeploy/api-client @modelcontextprotocol/sdk commander dotenv zod
+```
+
+2. Create `.npmrc` file with the following contents:
+```
+@octopusdeploy:registry=https://npm.pkg.github.com
+```
+
+3. Install the mcp-server:
+```
+npm install @octopusdeploy/mcp-server
+```
+
+4. Run it via:
+```
+npx -y @octopusdeploy/mcp-server
 ```
 
 ## 🔨 Tools
