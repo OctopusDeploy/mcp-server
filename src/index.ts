@@ -8,8 +8,9 @@ import { DEFAULT_TOOLSETS } from "./types/toolConfig.js";
 import { getClientConfigurationFromEnvironment } from "./helpers/getClientConfigurationFromEnvironment.js";
 import { setClientInfo } from "./utils/clientInfo.js";
 import { logger } from "./utils/logger.js";
+import packageJson from "../package.json" with { type: "json" };
 
-export const SEMVER_VERSION = "0.0.1"; // TODO: replace this with GHA
+export const SEMVER_VERSION = packageJson.version;
 
 dotenv.config({ quiet: true });
 
