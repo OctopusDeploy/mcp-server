@@ -29,19 +29,31 @@ program
   .option("--log-level <level>", "Minimum log level (info, error)", "info")
   .option("--log-file <path>", "Log file path or filename (default: mcp-server-log.txt)")
   .option("-q, --quiet", "Disable file logging, only log errors to console", false)
-  .option("--list-tools-by-version", "List all registered tools by their supported Octopus version and exit")
+  .option("--list-tools-by-version", "List all registered tools by their supported Octopus Server version and exit")
   .parse();
 
 const options = program.opts();
 
-// Configure logger based on command line options
+const server = new McpServer({
+  name: "Octopus Deploy",
+  description: "Official Octopus Deploy MCP server.",
+  version: SEMVER_VERSION,
+});
+
+const toolsetConfig = createToolsetConfig(options.toolsets, options.readOnly);
+registerTools(server, toolsetConfig);
+
+if (options.listToolsByVersion) {
+  printToolVersionAnalysis();
+  process.exit(0);
+}
+
 if (options.logFile) {
   logger.setLogFilePath(options.logFile);
 }
 logger.setLogLevel(logger.parseLogLevel(options.logLevel));
 logger.setQuietMode(options.quiet);
 
-// Pass CLI options to tools registration
 if (options.serverUrl) {
   process.env.CLI_SERVER_URL = options.serverUrl;
 }
@@ -51,28 +63,6 @@ if (options.apiKey) {
 
 // Test configuration
 getClientConfigurationFromEnvironment();
-
-// Create toolset configuration
-const toolsetConfig = createToolsetConfig(options.toolsets, options.readOnly);
-
-// Check if user wants to list tools by version
-if (options.listToolsByVersion) {
-  // Need to register tools first so they're in the registry
-  const tempServer = new McpServer({
-    name: "temp",
-    description: "temp",
-    version: SEMVER_VERSION,
-  });
-  registerTools(tempServer, toolsetConfig);
-  printToolVersionAnalysis();
-  process.exit(0);
-}
-
-const server = new McpServer({
-  name: "Octopus Deploy",
-  description: "Official Octopus Deploy MCP server.",
-  version: SEMVER_VERSION,
-});
 
 // Set up initialization callback to capture client info
 server.server.oninitialized = () => {
@@ -84,8 +74,6 @@ server.server.oninitialized = () => {
     logger.info("Client initialized but no client info available");
   }
 };
-
-registerTools(server, toolsetConfig);
 
 logger.info(`Starting Octopus Deploy MCP server (version: ${SEMVER_VERSION})`);
 
