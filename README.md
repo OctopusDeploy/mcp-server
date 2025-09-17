@@ -445,9 +445,7 @@ The MCP Server is technically just a thin layer on top of the existing Octopus S
 
 ## Contributing
 
-We are eager to hear how you plan to use Octopus MCP server and what features you would like to see us build. You can reach out to our team directly via `TBD`
-
-Alternatively, for issues and feedback please use [Octopus Deploy Issues](https://github.com/OctopusDeploy/Issues/issues) repository.
+We are eager to hear how you plan to use Octopus MCP server and what features you would like to see us build. Use  [Issues](https://github.com/OctopusDeploy/mcp-server/issues) to provide feedback, log bugs or request features.
 
 ## FAQ
 
@@ -460,4 +458,4 @@ We are working on integrating an MCP server directly into Octopus Server. This w
 
 ## License
 
-This project is licensed under the terms of X open source license.
+This project is licensed under the terms of Apache 2.0 open source license.
