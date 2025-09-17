@@ -441,16 +441,21 @@ The MCP Server is technically just a thin layer on top of the existing Octopus S
 
 ## Contributing
 
-We are eager to hear how you plan to use Octopus MCP server and what features you would like to see us build. Use  [Issues](https://github.com/OctopusDeploy/mcp-server/issues) to provide feedback, log bugs or request features.
+We are eager to hear how you plan to use Octopus MCP Server and what features you would like to see included in future version. 
+
+Please use [Issues](https://github.com/OctopusDeploy/mcp-server/issues) to provide feedback, or request features.
+
+If you are a current Octopus customer, please report any issues you experience using our MCP server to our [support team](mailto:support@octoups.com). This will ensure you get a timely response within our standard support guarantees.
 
 ## FAQ
 
 ### Do you have plans to release a remote MCP server?
 
-We are working on integrating an MCP server directly into Octopus Server. This will open up the door for us to build more complex tools, as well as:
-* Give Octopus Administrators more granular control over MCP clients
-* Natively support remote OAuth rather than authorization via API keys
-* Integrate security scanning tools into the MCP output
+We are working on integrating an MCP server directly into Octopus Server. This will open up the door for us to build more complex MCP tools, as well as:
+
+* Giving Octopus Administrators more granular control over MCP clients
+* Natively support OAuth for client authentication
+* Integrating security scanning tools into the MCP output
 
 ## License
 
