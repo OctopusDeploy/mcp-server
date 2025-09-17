@@ -1,50 +1,48 @@
-# 🐙 Octopus Deploy Official MCP Server
+# 🐙 Octopus Deploy Official MCP Server (Early Access)
 
 [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) allows the AI assistants you use in your day to day work, like Claude Code, or ChatGPT, to connect to the systems and services you own in a standardized fashion, allowing them to pull information from those systems and services to answer questions and perform tasks.
 
 The Octopus MCP Server provides your AI assistant with powerful tools that allow it to inspect, query, and diagnose problems within your Octopus instance, transforming it into your ultimate DevOps wingmate. 
 
-This project should currently be considered unstable, and subject to breaking changes. In the future, we may offer stability; please file an issue if there is a use case where this would be valuable.
+This project is currently in Early Access, and subject to breaking changes.
 
 ### Octopus Server Compatibility
 
+TODO: Make stronger guarantees about the version of server this will work against.
+
 The MCP Server is developed and tested against versions `2025.3.x` of Octopus Server. Most of the APIs used are stable and exist in prior versions of Octopus and should therefore be generally compatible, but we will not be testing or deliberately maintaining compatibility with older versions of Octopus.
-
-## ⚠️ Security Disclaimer ⚠️
-
-While the Octopus MCP Server at this stage is a read-only tool, it **can read full deployment logs, which could include secrets stored in your Octopus Server, such as production keys.** Exercise caution when connecting Octopus MCP to tools and models you do not fully trust.
-
-Running agents in a fully automated fashion could make you vulnerable to exposure via prompt-injection attacks that exfiltrate tokens.
-
-Exercise caution and mitigate the risks by using least-privileged accounts when connecting to Octopus Server.
 
 ## 🚀 Installation
 
 ### Requirements
 - Node.js >= v20.0.0
-- Cursor, Claude Code, VSCode, Windsurf or another MCP Client
-- Octopus Deploy instance that can be accessed remotely
+- Octopus Deploy instance that can be accessed by the MCP server via HTTPS
 - Octopus Deploy API Key
 
-### Command Line
+### Configuration
+
+The Octopus MCP Server is typically configured within your AI Client of choice. 
+
+It is packaged as an npm package and executed via Node's `npx` command. Your configuration will include the command invocation `npx`, and a set of arguments that supply the Octoups MCP Server package and provide the Octopus Server URL and API key required, if they are not available as environment variables.
+
+The command line invocation you will be configuring will be one of the two following variants:
+
 ```bash
 npx -y @octopusdeploy/mcp-server
 ```
 
-Connection details for your Octopus Deploy instance can be supplied either via the command line:
-```bash
-npx -y @octopusdeploy/mcp-server --server-url https://your-octopus.com --api-key YOUR_API_KEY
-```
-
-Or via environment variables:
+With configuration provided via environment variables:
 ```bash
 OCTOPUS_API_KEY=API-KEY
 OCTOPUS_SERVER_URL=https://your-octopus.com
 ```
 
-<details>
-<summary><b>Install via JSON config (Cursor, Claude Desktop, etc.)</b></summary>
+Or with configuration supplied via the command line:
+```bash
+npx -y @octopusdeploy/mcp-server --server-url https://your-octopus.com --api-key YOUR_API_KEY
+```
 
+Full example configuration (for Claude Desktop, Claude Code, and Cursor):
 ```json
 {
   "mcpServers": {
@@ -56,11 +54,11 @@ OCTOPUS_SERVER_URL=https://your-octopus.com
 }
 ```
 
-</details>
-
 ### Configuration Options
 
-The Octopus MCP Server supports several command-line options to customize which tools are available:
+The Octopus MCP Server supports several command-line options to customize which tools are available. 
+
+If you are not sure which tools you require, we recommend running without any additional command-line options and using the provided defaults.
 
 #### Toolsets
 Use the `--toolsets` parameter to enable specific groups of tools:
@@ -107,7 +105,7 @@ npx -y @octopusdeploy/mcp-server --toolsets core,projects --server-url https://y
 npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https://your-octopus.com --api-key YOUR_API_KEY
 ```
 
-### Running from Github Registry
+### Running from Github Registry (TODO: Remove)
 
 This is a temporary workaround until we start publishing preview versions to the public npm registry. The following is assuming you are already signed in to the github registry.
 
@@ -423,57 +421,21 @@ This tool retrieves information about the currently authenticated user from the 
 
 </details>
 
-## Use Cases
+## Security Considerations
 
-<details>
-<summary>Customer X have submitted a support ticket complaining that there is a bug in the latest release of App. Can you tell me what release they are on, when it was deployed, and if there were any issues with the deployment?</summary>
+While the Octopus MCP Server at this stage is a read-only tool, it **can read full deployment logs, which could include secrets stored in your Octopus Server, such as production keys.** Exercise caution when connecting Octopus MCP to tools and models you do not fully trust.
 
-```
-"I'll help you investigate Customer X's App deployment. Let me start by checking what spaces are available and then look into their current release and deployment status.Let me try a broader search to see all available spaces first:I can see there's an ""App"" space which is likely where Customer X would be deployed. Let me check the projects in that space:Now let me check the environments in this space to understand the deployment structure:Now let me check if there are any tenants, as Customer X would likely be a tenant in the Cloud Customers environment:Great! I found the Customer X tenant. Now let me get the latest deployment for this tenant:Now let me get details about the latest release to see what version they're running:Now let me check the deployment task details to see if there were any issues:Perfect! Now let me also check the previous deployment to see if there were any issues there that might give context to their bug report:Based on my investigation of Customer X's App deployment, here's what I found:
+Running agents in a fully automated fashion could make you vulnerable to exposure via prompt-injection attacks that exfiltrate tokens.
 
-## Current Status Summary
+Exercise caution and mitigate the risks by using least-privileged accounts when connecting to Octopus Server.
 
-**Current Release**: Customer X is running **App version 2025.4.X**
+## Limitations
 
-**Deployment Date**: The latest deployment was completed on **September 11, 2025 at 11:26:07 PM +00:00** (yesterday)
-
-**Deployment Status**: The deployment was **completely successful** with no errors or warnings
-
-## Deployment Details
-
-- **Tenant**: Customer X (11111-11111-11111-11111)
-- **Environment**: Cloud Customers
-- **Task ID**: ServerTasks-12610852
-- **Duration**: 2 minutes 12 seconds
-- **Status**: Success with no issues
-
-## Previous Release
-
-The previous deployment was:
-- **Version**: 2025.3.X
-- **Deployed**: September 11, 2025 at 2:22:51 AM +00:00 
-- **Status**: Also successful with no deployment issues
-
-## Analysis
-
-Both the current deployment (2025.4.X) and the previous deployment (2025.3.X) completed successfully without any errors, warnings, or deployment-related issues. This suggests that:
-
-1. The bug they're reporting is likely a functional issue with version 2025.4.X rather than a deployment problem
-2. The deployment infrastructure and process are working correctly
-3. They upgraded from 2025.3.X to 2025.4.X on September 11th, so the bug is likely related to changes introduced in the 2025.4.x branch
-
-You may want to investigate what specific changes were made between versions 2025.3.X and 2025.4.X to help identify the root cause of their reported bug."
-```
-
-</details>
-
-### Limitations
-
-#### Data Analysis
+### Data Analysis
 
 The nature of current AI chat tools and the MCP protocol itself makes it impractical to analyze large amounts of data. Most MCP clients currently do not support chaining tool calls (using the output of one tool as input to the next one) and instead fall back to copying the results token by token, which frequently leads to hallucinations. If you are looking to process historical data from your Octopus instance for analysis purposes, we recommend using the API directly or writing your own MCP client that is capable of processing the tool call results programmatically.
 
-#### Performance
+### Performance
 
 The MCP Server is technically just a thin layer on top of the existing Octopus Server API. As such it is capable of retrieving large amounts of data (for example, requesting thousands of deployments). Such queries can have a significant effect on your instance's performance. Instruct your models to only retrieve the minimum set of data that it needs (most models are really good at this out of the box).
 
