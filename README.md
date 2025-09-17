@@ -21,7 +21,7 @@ Exercise caution and mitigate the risks by using least-privileged accounts when 
 ## 🚀 Installation
 
 ```
-TBD
+npx -y @octopusdeploy/mcp-server
 ```
 
 ### Configuration Options
@@ -375,7 +375,7 @@ This tool retrieves information about the currently authenticated user from the 
 
 ## Current Status Summary
 
-**Current Release**: Customer X is running **App version 2025.4.51**
+**Current Release**: Customer X is running **App version 2025.4.X**
 
 **Deployment Date**: The latest deployment was completed on **September 11, 2025 at 11:26:07 PM +00:00** (yesterday)
 
@@ -402,7 +402,7 @@ Both the current deployment (2025.4.X) and the previous deployment (2025.3.X) co
 
 1. The bug they're reporting is likely a functional issue with version 2025.4.X rather than a deployment problem
 2. The deployment infrastructure and process are working correctly
-3. They upgraded from 2025.3.14236 to 2025.4.X on September 11th, so the bug is likely related to changes introduced in the 2025.4.x branch
+3. They upgraded from 2025.3.X to 2025.4.X on September 11th, so the bug is likely related to changes introduced in the 2025.4.x branch
 
 You may want to investigate what specific changes were made between versions 2025.3.X and 2025.4.X to help identify the root cause of their reported bug."
 ```

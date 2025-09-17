@@ -9,6 +9,7 @@
   "description": "The Octopus MCP Server provides your AI assistant with powerful tools that allow it to inspect, query, and diagnose problems within your Octopus instance.",
   "main": "dist/index.js",
   "module": "dist/index.js",
+  "bin": "./dist/index.js",
   "files": [
     "dist/**/*"
   ],
