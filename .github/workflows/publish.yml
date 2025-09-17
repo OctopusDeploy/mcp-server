@@ -24,7 +24,7 @@ jobs:
         with:
           cache: 'npm'
           node-version: 20
-          registry-url: 'https://npm.pkg.github.com'
+          registry-url: 'https://registry.npmjs.org'
           scope: '@octopusdeploy'
         if: ${{ steps.release.outputs.release_created }}
       - run: npm ci
@@ -33,5 +33,5 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
       - run: npm publish --access=public
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         if: ${{ steps.release.outputs.release_created }}
