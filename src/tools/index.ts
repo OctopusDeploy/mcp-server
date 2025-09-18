@@ -29,6 +29,8 @@ import './getBranches.js';
 import './getCurrentUser.js';
 import './listCertificates.js';
 import './getCertificate.js';
+import './listAccounts.js';
+import './getAccount.js';
 
 function isToolEnabled(toolRegistration: ToolRegistration, config: ToolsetConfig): boolean {
   if (!toolRegistration) {
