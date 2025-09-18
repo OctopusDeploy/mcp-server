@@ -33,7 +33,7 @@ Full example configuration (for Claude Desktop, Claude Code, and Cursor):
 
 The Octopus MCP Server is typically configured within your AI Client of choice. 
 
-It is packaged as an npm package and executed via Node's `npx` command. Your configuration will include the command invocation `npx`, and a set of arguments that supply the Octoups MCP Server package and provide the Octopus Server URL and API key required, if they are not available as environment variables.
+It is packaged as an npm package and executed via Node's `npx` command. Your configuration will include the command invocation `npx`, and a set of arguments that supply the Octopus MCP Server package and provide the Octopus Server URL and API key required, if they are not available as environment variables.
 
 The command line invocation you will be configuring will be one of the two following variants:
 
@@ -174,7 +174,7 @@ We are eager to hear how you plan to use Octopus MCP Server and what features yo
 
 Please use [Issues](https://github.com/OctopusDeploy/mcp-server/issues) to provide feedback, or request features.
 
-If you are a current Octopus customer, please report any issues you experience using our MCP server to our [support team](mailto:support@octoups.com). This will ensure you get a timely response within our standard support guarantees.
+If you are a current Octopus customer, please report any issues you experience using our MCP server to our [support team](mailto:support@octopus.com). This will ensure you get a timely response within our standard support guarantees.
 
 ## FAQ
 
