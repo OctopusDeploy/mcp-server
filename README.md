@@ -103,30 +103,6 @@ npx -y @octopusdeploy/mcp-server --toolsets core,projects --server-url https://y
 npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https://your-octopus.com --api-key YOUR_API_KEY
 ```
 
-### Running from Github Registry (TODO: Remove)
-
-This is a temporary workaround until we start publishing preview versions to the public npm registry. The following is assuming you are already signed in to the github registry.
-
-1. In a new folder install dependencies manually:
-```bash
-npm install @octopusdeploy/api-client @modelcontextprotocol/sdk commander dotenv zod
-```
-
-2. Create `.npmrc` file with the following contents:
-```bash
-@octopusdeploy:registry=https://npm.pkg.github.com
-```
-
-3. Install the mcp-server:
-```bash
-npm install @octopusdeploy/mcp-server
-```
-
-4. Run it via:
-```bash
-npx "your/folders/full/path" -y @octopusdeploy/mcp-server
-```
-
 ## 🔨 Tools
 
 ### Core Tools
