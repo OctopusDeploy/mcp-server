@@ -81,6 +81,7 @@ Available toolsets:
 - **tenants** - Multi-tenancy operations
 - **kubernetes** - Kubernetes operations
 - **machines** - Deployment target operations
+- **certificates** - Certificate operations
 
 #### Read-Only Mode
 The server runs in read-only mode by default for security. All current tools are read-only operations.
@@ -137,6 +138,10 @@ npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https:/
 ### Machines (Deployment Targets)
 - `list_deployment_targets`: List all deployment targets in a space with optional filtering
 - `get_deployment_target`: Get detailed information about a specific deployment target
+
+### Certificates
+- `list_certificates`: List all certificates in a space with optional filtering
+- `get_certificate`: Get detailed information about a specific certificate by its ID
 
 ### Additional Tools
 - `get_deployment_process`: Get deployment process by ID for projects or releases
