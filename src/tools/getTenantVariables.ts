@@ -64,5 +64,5 @@ export function registerGetTenantVariablesTool(server: McpServer) {
 registerToolDefinition({
   toolName: "get_tenant_variables",
   config: { toolset: "tenants", readOnly: true },
-  registerFn: registerGetTenantVariablesTool
+  registerFn: registerGetTenantVariablesTool,
 });

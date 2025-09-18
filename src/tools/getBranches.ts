@@ -61,5 +61,6 @@ This tool retrieves Git branches for a specific project in a space. The space na
 registerToolDefinition({
   toolName: "get_branches",
   config: { toolset: "context", readOnly: true },
-  registerFn: registerGetBranchesTool
+  registerFn: registerGetBranchesTool,
+  minimumOctopusVersion: "2021.2",
 });

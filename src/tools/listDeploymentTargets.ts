@@ -124,5 +124,5 @@ This tool lists all deployment targets in a given space. The space name is requi
 registerToolDefinition({
   toolName: "list_deployment_targets",
   config: { toolset: "machines", readOnly: true },
-  registerFn: registerListDeploymentTargetsTool
+  registerFn: registerListDeploymentTargetsTool,
 });

@@ -50,5 +50,5 @@ export function registerGetTenantByIdTool(server: McpServer) {
 registerToolDefinition({
   toolName: "get_tenant_by_id",
   config: { toolset: "tenants", readOnly: true },
-  registerFn: registerGetTenantByIdTool
+  registerFn: registerGetTenantByIdTool,
 });

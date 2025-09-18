@@ -58,5 +58,5 @@ export function registerGetTaskRawTool(server: McpServer) {
 registerToolDefinition({
   toolName: "get_task_raw",
   config: { toolset: "tasks", readOnly: true },
-  registerFn: registerGetTaskRawTool
+  registerFn: registerGetTaskRawTool,
 });

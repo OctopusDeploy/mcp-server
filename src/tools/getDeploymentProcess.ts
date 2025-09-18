@@ -104,5 +104,5 @@ This tool retrieves a deployment process by its ID. Each project has a deploymen
 registerToolDefinition({
   toolName: "get_deployment_process",
   config: { toolset: "projects", readOnly: true },
-  registerFn: registerGetDeploymentProcessTool
+  registerFn: registerGetDeploymentProcessTool,
 });

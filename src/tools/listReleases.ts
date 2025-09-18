@@ -59,5 +59,5 @@ export function registerListReleasesTool(server: McpServer) {
 registerToolDefinition({
   toolName: "list_releases",
   config: { toolset: "releases", readOnly: true },
-  registerFn: registerListReleasesTool
+  registerFn: registerListReleasesTool,
 });

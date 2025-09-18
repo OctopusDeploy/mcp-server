@@ -50,5 +50,5 @@ export function registerGetReleaseByIdTool(server: McpServer) {
 registerToolDefinition({
   toolName: "get_release_by_id",
   config: { toolset: "releases", readOnly: true },
-  registerFn: registerGetReleaseByIdTool
+  registerFn: registerGetReleaseByIdTool,
 });

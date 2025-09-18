@@ -74,5 +74,6 @@ export function registerGetKubernetesLiveStatusTool(server: McpServer) {
 registerToolDefinition({
   toolName: "get_kubernetes_live_status",
   config: { toolset: "kubernetes", readOnly: true },
-  registerFn: registerGetKubernetesLiveStatusTool
+  registerFn: registerGetKubernetesLiveStatusTool,
+  minimumOctopusVersion: "2025.3",
 });

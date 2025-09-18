@@ -53,5 +53,5 @@ export function registerGetMissingTenantVariablesTool(server: McpServer) {
 registerToolDefinition({
   toolName: "get_missing_tenant_variables",
   config: { toolset: "tenants", readOnly: true },
-  registerFn: registerGetMissingTenantVariablesTool
+  registerFn: registerGetMissingTenantVariablesTool,
 });

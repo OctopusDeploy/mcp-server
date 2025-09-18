@@ -43,5 +43,5 @@ export function registerListSpacesTool(server: McpServer) {
 registerToolDefinition({
   toolName: "list_spaces",
   config: { toolset: "core", readOnly: true },
-  registerFn: registerListSpacesTool
+  registerFn: registerListSpacesTool,
 });
