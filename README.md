@@ -186,6 +186,8 @@ We are working on integrating an MCP server directly into Octopus Server. This w
 * Natively support OAuth for client authentication
 * Integrating security scanning tools into the MCP output
 
+If this is of interest to you, please register your interest on [our roadmap item](https://roadmap.octopus.com/c/228-remote-mcp-server-ai-).
+
 ## License
 
 This project is licensed under the terms of Mozilla Public License 2.0 open source license.
