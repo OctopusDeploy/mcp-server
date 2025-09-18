@@ -1,4 +1,4 @@
-import { Client, resolveSpaceId, TenantRepository } from "@octopusdeploy/api-client";
+import { Client, TenantRepository } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";

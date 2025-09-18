@@ -15,7 +15,7 @@ interface LoggerConfig {
 /**
  * Default logger configuration
  */
-let config: LoggerConfig = {
+const config: LoggerConfig = {
   logFilePath: "mcp-server-log.txt",
   minLevel: LogLevel.INFO,
   quietMode: false
