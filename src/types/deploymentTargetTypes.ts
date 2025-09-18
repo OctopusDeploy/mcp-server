@@ -1,4 +1,5 @@
 import { type NamedResource, type SpaceScopedResource, type ResourceWithSlug } from "./baseResource.js";
+import { type TenantedDeploymentMode } from "@octopusdeploy/api-client";
 
 export const MachineModelHealthStatusValues = {
     Healthy: "Healthy",
@@ -48,14 +49,6 @@ export interface TentacleDetailsResource {
     UpgradeRequired: boolean;
     UpgradeAvailable: boolean;
 }
-
-export const TenantedDeploymentModeValues = {
-    Untenanted: "Untenanted",
-    TenantedOrUntenanted: "TenantedOrUntenanted",
-    Tenanted: "Tenanted",
-} as const;
-
-export type TenantedDeploymentMode = (typeof TenantedDeploymentModeValues)[keyof typeof TenantedDeploymentModeValues];
 
 export interface EndpointResource {
     Id: string;
