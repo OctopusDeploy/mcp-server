@@ -52,6 +52,62 @@ The server accepts configuration via:
 3. Toolset filtering: `--toolsets` to enable specific tool groups
 4. Version checking: `--list-tools-by-version` to see tool compatibility
 
+## TypeScript Style Guide
+
+### Import Statements
+- Use `.js` extensions for local imports (required for ESM modules)
+- Import types explicitly using `type` keyword
+- Group imports: external packages first, then local imports
+
+```typescript
+import { Client, SpaceRepository } from "@octopusdeploy/api-client";
+import { z } from "zod";
+import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
+```
+
+### Type Definitions
+- Define interfaces for structured data
+- Use `type` for unions and aliases
+- Export types from dedicated type files in `src/types/`
+
+```typescript
+export type Toolset = "core" | "projects" | "deployments";
+export interface ToolConfig {
+  toolset: Toolset;
+  readOnly: boolean;
+}
+```
+
+### Function Signatures
+- Use explicit return types for public functions
+- Use descriptive parameter names
+- Document complex functions with JSDoc comments
+
+```typescript
+/**
+ * Set custom log file path
+ * @param filePath Path to the log file (can be full path or just filename)
+ */
+function setLogFilePath(filePath: string): void {
+  // implementation
+}
+```
+
+### Async/Await
+- Always use async/await over promise chains
+- Handle errors appropriately with try/catch
+
+### Naming Conventions
+- PascalCase for types, interfaces, and enums
+- camelCase for variables, functions, and properties
+- UPPER_SNAKE_CASE for constants
+- Descriptive names over abbreviations
+
+### Module Exports
+- Export individual functions/types rather than default exports
+- Group related exports in barrel files (`index.ts`)
+
 ## Contribution Process
 
 This project uses:
