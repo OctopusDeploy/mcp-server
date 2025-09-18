@@ -1,4 +1,6 @@
-# 🐙 Octopus Deploy Official MCP Server (Early Access)
+<img alt="Octopus Deploy Logo" src="https://github.com/user-attachments/assets/edaac2c0-e246-44e3-8b1b-50229dfa8ffd" />
+
+# Octopus Deploy Official MCP Server
 
 [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) allows the AI assistants you use in your day to day work, like Claude Code, or ChatGPT, to connect to the systems and services you own in a standardized fashion, allowing them to pull information from those systems and services to answer questions and perform tasks.
 
