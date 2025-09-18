@@ -187,7 +187,9 @@ The nature of current AI chat tools and the MCP protocol itself makes it impract
 
 The MCP Server is technically just a thin layer on top of the existing Octopus Server API. As such it is capable of retrieving large amounts of data (for example, requesting thousands of deployments). Such queries can have a significant effect on your instance's performance. Instruct your models to only retrieve the minimum set of data that it needs (most models are really good at this out of the box).
 
-## Contributing
+## 🤝 Contributions
+
+Contributions are welcome! :heart: Please read our [Contributing Guide](CONTRIBUTING.md) for information about how to get involved in this project.
 
 We are eager to hear how you plan to use Octopus MCP Server and what features you would like to see included in future version. 
 
