@@ -7,6 +7,7 @@ permissions:
   contents: write
   packages: write
   pull-requests: write
+  id-token: write
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -32,6 +33,4 @@ jobs:
       - run: npm run build
         if: ${{ steps.release.outputs.release_created }}
       - run: npm publish --access=public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         if: ${{ steps.release.outputs.release_created }}
