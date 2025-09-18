@@ -77,5 +77,4 @@ registerToolDefinition({
   toolName: "list_deployments",
   config: { toolset: "deployments", readOnly: true },
   registerFn: registerListDeploymentsTool,
-  minimumOctopusVersion: "2021.1",
 });

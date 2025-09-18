@@ -66,5 +66,4 @@ registerToolDefinition({
   toolName: "list_releases_for_project",
   config: { toolset: "releases", readOnly: true },
   registerFn: registerListReleasesForProjectTool,
-  minimumOctopusVersion: "2021.1",
 });

@@ -49,5 +49,4 @@ registerToolDefinition({
   toolName: "list_environments",
   config: { toolset: "core", readOnly: true },
   registerFn: registerListEnvironmentsTool,
-  minimumOctopusVersion: "2021.1",
 });

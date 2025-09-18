@@ -76,5 +76,4 @@ registerToolDefinition({
   toolName: "get_deployment_target",
   config: { toolset: "machines", readOnly: true },
   registerFn: registerGetDeploymentTargetTool,
-  minimumOctopusVersion: "2021.1",
 });

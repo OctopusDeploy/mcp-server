@@ -65,5 +65,4 @@ registerToolDefinition({
   toolName: "get_tenant_variables",
   config: { toolset: "tenants", readOnly: true },
   registerFn: registerGetTenantVariablesTool,
-  minimumOctopusVersion: "2021.1",
 });

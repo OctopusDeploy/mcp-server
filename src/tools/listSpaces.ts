@@ -44,5 +44,4 @@ registerToolDefinition({
   toolName: "list_spaces",
   config: { toolset: "core", readOnly: true },
   registerFn: registerListSpacesTool,
-  minimumOctopusVersion: "2021.1",
 });

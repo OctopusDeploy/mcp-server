@@ -70,5 +70,4 @@ registerToolDefinition({
   toolName: "list_tenants",
   config: { toolset: "tenants", readOnly: true },
   registerFn: registerListTenantsTool,
-  minimumOctopusVersion: "2021.1",
 });

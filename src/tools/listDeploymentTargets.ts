@@ -125,5 +125,4 @@ registerToolDefinition({
   toolName: "list_deployment_targets",
   config: { toolset: "machines", readOnly: true },
   registerFn: registerListDeploymentTargetsTool,
-  minimumOctopusVersion: "2021.1",
 });

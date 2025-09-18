@@ -60,5 +60,4 @@ registerToolDefinition({
   toolName: "get_task_details",
   config: { toolset: "tasks", readOnly: true },
   registerFn: registerGetTaskDetailsTool,
-  minimumOctopusVersion: "2021.1",
 });

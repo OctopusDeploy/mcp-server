@@ -105,5 +105,4 @@ registerToolDefinition({
   toolName: "get_deployment_process",
   config: { toolset: "projects", readOnly: true },
   registerFn: registerGetDeploymentProcessTool,
-  minimumOctopusVersion: "2021.1",
 });

@@ -51,5 +51,4 @@ registerToolDefinition({
   toolName: "list_projects",
   config: { toolset: "projects", readOnly: true },
   registerFn: registerListProjectsTool,
-  minimumOctopusVersion: "2021.1",
 });
