@@ -17,7 +17,8 @@
     "start": "node dist/index.js",
     "build": "tsc && shx chmod +x dist/*.js",
     "dev": "nodemon --quiet --exec \"tsc && node dist/index.js\" --ext ts --watch src",
-    "lint": "eslint src --ext .ts"
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix"
   },
   "keywords": [
     "octopus deploy",

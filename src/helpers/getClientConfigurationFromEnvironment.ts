@@ -14,7 +14,7 @@ function isEmpty(value: string | undefined): value is undefined | "" {
   return !value || value.trim().length === 0;
 }
 
-function constructUserAgent(options: ConfigurationOptions): string {
+function constructUserAgent(): string {
   const clientInfo = getClientInfo();
   const userAgent = `${USER_AGENT_NAME}/${SEMVER_VERSION} (${clientInfo.name}/${clientInfo.version})`;
 
@@ -28,7 +28,7 @@ function getClientConfiguration(options: ConfigurationOptions = {}): ClientConfi
     );
   }
 
-  const userAgent = constructUserAgent(options);
+  const userAgent = constructUserAgent();
 
   return {
     userAgentApp: userAgent,
