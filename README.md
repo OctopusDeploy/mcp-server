@@ -154,7 +154,7 @@ npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https:/
 - `get_branches`: Get Git branches for a version-controlled project (minimum supported version: `2021.2`)
 - `get_current_user`: Get information about the current authenticated user
 
-## Security Considerations
+## 🔒 Security Considerations
 
 While the Octopus MCP Server at this stage is a read-only tool, it **can read full deployment logs, which could include production secrets.** Exercise caution when connecting Octopus MCP to tools and models you do not fully trust.
 
@@ -162,7 +162,7 @@ Running agents in a fully automated fashion could make you vulnerable to exposur
 
 Exercise caution and mitigate the risks by using least-privileged accounts when connecting to Octopus Server.
 
-## Limitations
+## ⚠️ Limitations
 
 ### Data Analysis
 
@@ -182,7 +182,7 @@ Please use [Issues](https://github.com/OctopusDeploy/mcp-server/issues) to provi
 
 If you are a current Octopus customer, please report any issues you experience using our MCP server to our [support team](mailto:support@octopus.com). This will ensure you get a timely response within our standard support guarantees.
 
-## FAQ
+## 🙋 FAQ
 
 ### Do you have plans to release a remote MCP server?
 
