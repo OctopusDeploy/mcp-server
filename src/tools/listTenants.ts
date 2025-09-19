@@ -5,13 +5,64 @@ import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfi
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { getPublicUrl } from "../helpers/getPublicUrl.js";
 
+export interface ListTenantsParams {
+  spaceName: string;
+  skip?: number;
+  take?: number;
+  projectId?: string;
+  tags?: string;
+  ids?: string[];
+  partialName?: string;
+}
+
+export async function listTenantsHandler(params: ListTenantsParams) {
+  const { spaceName, skip, take, projectId, tags, ids, partialName } = params;
+  const configuration = getClientConfigurationFromEnvironment();
+  const client = await Client.create(configuration);
+  const tenantRepository = new TenantRepository(client, spaceName);
+
+  const tenantsResponse = await tenantRepository.list({
+    skip,
+    take,
+    projectId,
+    tags,
+    ids,
+    partialName
+  });
+
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: JSON.stringify({
+          totalResults: tenantsResponse.TotalResults,
+          itemsPerPage: tenantsResponse.ItemsPerPage,
+          numberOfPages: tenantsResponse.NumberOfPages,
+          lastPageNumber: tenantsResponse.LastPageNumber,
+          items: tenantsResponse.Items.map(tenant => ({
+            id: tenant.Id,
+            name: tenant.Name,
+            description: tenant.Description,
+            projectEnvironments: tenant.ProjectEnvironments,
+            tenantTags: tenant.TenantTags,
+            clonedFromTenantId: tenant.ClonedFromTenantId,
+            spaceId: tenant.SpaceId,
+            publicUrl: getPublicUrl(`${configuration.instanceURL}/app#/{spaceId}/tenants/{tenantId}/overview`, { spaceId: tenant.SpaceId, tenantId: tenant.Id }),
+            publicUrlInstruction: `You can view more details about this tenant in the Octopus Deploy web portal at the provided publicUrl.`
+          }))
+        }),
+      },
+    ],
+  };
+}
+
 export function registerListTenantsTool(server: McpServer) {
   server.tool(
     "list_tenants",
     `List tenants in a space
-  
+
   This tool lists all tenants in a given space. The space name is required. Optionally provide skip and take parameters for pagination.`,
-    { 
+    {
       spaceName: z.string().describe("The space name"),
       skip: z.number().optional().describe("Number of items to skip for pagination"),
       take: z.number().optional().describe("Number of items to take for pagination"),
@@ -24,45 +75,7 @@ export function registerListTenantsTool(server: McpServer) {
       title: "List all tenants in an Octopus Deploy space",
       readOnlyHint: true,
     },
-    async ({ spaceName, skip, take, projectId, tags, ids, partialName }) => {
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
-      const tenantRepository = new TenantRepository(client, spaceName);
-
-      const tenantsResponse = await tenantRepository.list({ 
-        skip, 
-        take, 
-        projectId, 
-        tags, 
-        ids, 
-        partialName 
-      });
-
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              totalResults: tenantsResponse.TotalResults,
-              itemsPerPage: tenantsResponse.ItemsPerPage,
-              numberOfPages: tenantsResponse.NumberOfPages,
-              lastPageNumber: tenantsResponse.LastPageNumber,
-              items: tenantsResponse.Items.map(tenant => ({
-                id: tenant.Id,
-                name: tenant.Name,
-                description: tenant.Description,
-                projectEnvironments: tenant.ProjectEnvironments,
-                tenantTags: tenant.TenantTags,
-                clonedFromTenantId: tenant.ClonedFromTenantId,
-                spaceId: tenant.SpaceId,
-                publicUrl: getPublicUrl(`${configuration.instanceURL}/app#/{spaceId}/tenants/{tenantId}/overview`, { spaceId: tenant.SpaceId, tenantId: tenant.Id }),
-                publicUrlInstruction: `You can view more details about this tenant in the Octopus Deploy web portal at the provided publicUrl.`
-              }))
-            }),
-          },
-        ],
-      };
-    }
+    listTenantsHandler
   );
 }
 
