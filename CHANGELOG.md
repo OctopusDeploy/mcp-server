@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/OctopusDeploy/mcp-server/compare/v0.2.1...v0.2.2) (2025-09-19)
+
+
+### Bug Fixes
+
+* Fix image source URLs in README.md ([#28](https://github.com/OctopusDeploy/mcp-server/issues/28)) ([da6cc4e](https://github.com/OctopusDeploy/mcp-server/commit/da6cc4e757d2a32c015a0f5978703395aac7ceb8))
+
 ## [0.2.1](https://github.com/OctopusDeploy/mcp-server/compare/v0.2.0...v0.2.1) (2025-09-19)
 
 
@@ -16,4 +23,3 @@
 * Add get/list certificates tools ([#9](https://github.com/OctopusDeploy/mcp-server/issues/9)) ([5119956](https://github.com/OctopusDeploy/mcp-server/commit/511995667378df220d0537a3c1ca5aa1a6bc18fe))
 
 ## [0.1.2](https://github.com/OctopusDeploy/mcp-server/compare/v0.1.1...v0.1.2) (2025-09-17)
-
