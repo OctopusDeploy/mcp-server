@@ -3,6 +3,7 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES } from "../helpers/errorHandling.js";
 
 export function registerGetReleaseByIdTool(server: McpServer) {
   server.tool(
@@ -17,32 +18,43 @@ export function registerGetReleaseByIdTool(server: McpServer) {
       readOnlyHint: true,
     },
     async ({ spaceName, releaseId }) => {
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
-      const releaseRepository = new ReleaseRepository(client, spaceName);
+      validateEntityId(releaseId, 'release', ENTITY_PREFIXES.release);
 
-      const release = await releaseRepository.get(releaseId);
+      try {
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const releaseRepository = new ReleaseRepository(client, spaceName);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              id: release.Id,
-              version: release.Version,
-              channelId: release.ChannelId,
-              projectId: release.ProjectId,
-              releaseNotes: release.ReleaseNotes,
-              assembled: release.Assembled,
-              ignoreChannelRules: release.IgnoreChannelRules,
-              selectedPackages: release.SelectedPackages,
-              selectedGitResources: release.SelectedGitResources,
-              buildInformation: release.BuildInformation,
-              customFields: release.CustomFields
-            }),
-          },
-        ],
-      };
+        const release = await releaseRepository.get(releaseId);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                id: release.Id,
+                version: release.Version,
+                channelId: release.ChannelId,
+                projectId: release.ProjectId,
+                releaseNotes: release.ReleaseNotes,
+                assembled: release.Assembled,
+                ignoreChannelRules: release.IgnoreChannelRules,
+                selectedPackages: release.SelectedPackages,
+                selectedGitResources: release.SelectedGitResources,
+                buildInformation: release.BuildInformation,
+                customFields: release.CustomFields
+              }),
+            },
+          ],
+        };
+      } catch (error) {
+        handleOctopusApiError(error, {
+          entityType: 'release',
+          entityId: releaseId,
+          spaceName,
+          helpText: "Use list_releases or list_releases_for_project to find valid release IDs."
+        });
+      }
     }
   );
 }

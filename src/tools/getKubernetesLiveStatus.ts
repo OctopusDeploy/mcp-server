@@ -3,6 +3,7 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES, isErrorWithMessage } from "../helpers/errorHandling.js";
 
 export function registerGetKubernetesLiveStatusTool(server: McpServer) {
   server.tool(
@@ -22,51 +23,74 @@ export function registerGetKubernetesLiveStatusTool(server: McpServer) {
       readOnlyHint: true,
     },
     async ({ spaceName, projectId, environmentId, tenantId, summaryOnly = false }) => {
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
-      const observabilityRepository = new ObservabilityRepository(client, spaceName);
+      validateEntityId(projectId, 'project', ENTITY_PREFIXES.project);
+      validateEntityId(environmentId, 'environment', ENTITY_PREFIXES.environment);
+      if (tenantId) {
+        validateEntityId(tenantId, 'tenant', ENTITY_PREFIXES.tenant);
+      }
 
-      const liveStatus = await observabilityRepository.getLiveStatus(
-        projectId,
-        environmentId,
-        tenantId,
-        summaryOnly
-      );
+      try {
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const observabilityRepository = new ObservabilityRepository(client, spaceName);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              projectId,
-              environmentId,
-              tenantId,
-              summaryOnly: summaryOnly,
-              liveStatus: {
-                machineStatuses: liveStatus.MachineStatuses?.map((machine: KubernetesMachineLiveStatusResource) => ({
-                  machineId: machine.MachineId,
-                  status: machine.Status,
-                  resources: machine.Resources?.map((resource: KubernetesLiveStatusResource) => ({
-                    name: resource.Name,
-                    namespace: resource.Namespace,
-                    kind: resource.Kind,
-                    healthStatus: resource.HealthStatus,
-                    syncStatus: resource.SyncStatus,
-                    machineId: resource.MachineId,
-                    children: resource.Children,
-                    desiredResourceId: resource.DesiredResourceId,
-                    resourceId: resource.ResourceId
-                  }))
-                })),
-                summary: liveStatus.Summary ? {
-                  status: liveStatus.Summary.Status,
-                  lastUpdated: liveStatus.Summary.LastUpdated
-                } : undefined
-              }
-            }),
-          },
-        ],
-      };
+        const liveStatus = await observabilityRepository.getLiveStatus(
+          projectId,
+          environmentId,
+          tenantId,
+          summaryOnly
+        );
+
+        if (!liveStatus || (!liveStatus.MachineStatuses && !liveStatus.Summary)) {
+          throw new Error(
+            `No Kubernetes live status found for project '${projectId}' in environment '${environmentId}'${tenantId ? ` for tenant '${tenantId}'` : ''}. ` +
+            "This may indicate that the project is not deployed to Kubernetes in this environment, or the resources are not being monitored."
+          );
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                projectId,
+                environmentId,
+                tenantId,
+                summaryOnly: summaryOnly,
+                liveStatus: {
+                  machineStatuses: liveStatus.MachineStatuses?.map((machine: KubernetesMachineLiveStatusResource) => ({
+                    machineId: machine.MachineId,
+                    status: machine.Status,
+                    resources: machine.Resources?.map((resource: KubernetesLiveStatusResource) => ({
+                      name: resource.Name,
+                      namespace: resource.Namespace,
+                      kind: resource.Kind,
+                      healthStatus: resource.HealthStatus,
+                      syncStatus: resource.SyncStatus,
+                      machineId: resource.MachineId,
+                      children: resource.Children,
+                      desiredResourceId: resource.DesiredResourceId,
+                      resourceId: resource.ResourceId
+                    }))
+                  })),
+                  summary: liveStatus.Summary ? {
+                    status: liveStatus.Summary.Status,
+                    lastUpdated: liveStatus.Summary.LastUpdated
+                  } : undefined
+                }
+              }),
+            },
+          ],
+        };
+      } catch (error) {
+        if (isErrorWithMessage(error, 'minimum version')) {
+          throw new Error(
+            `Kubernetes live status requires Octopus Deploy version 2025.3 or later. ` +
+            "This feature is not available in your Octopus Deploy instance version."
+          );
+        }
+        handleOctopusApiError(error, { spaceName });
+      }
     }
   );
 }

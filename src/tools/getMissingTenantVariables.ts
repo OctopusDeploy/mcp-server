@@ -3,6 +3,7 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES } from "../helpers/errorHandling.js";
 
 export function registerGetMissingTenantVariablesTool(server: McpServer) {
   server.tool(
@@ -22,9 +23,15 @@ export function registerGetMissingTenantVariablesTool(server: McpServer) {
       readOnlyHint: true,
     },
     async ({ spaceName, tenantId, projectId, environmentId, includeDetails = false }) => {
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
-      const tenantRepository = new TenantRepository(client, spaceName);
+      if (tenantId) {
+        validateEntityId(tenantId, 'tenant', ENTITY_PREFIXES.tenant);
+      }
+      if (projectId) {
+        validateEntityId(projectId, 'project', ENTITY_PREFIXES.project);
+      }
+      if (environmentId) {
+        validateEntityId(environmentId, 'environment', ENTITY_PREFIXES.environment);
+      }
 
       const filterOptions = {
         tenantId,
@@ -32,20 +39,44 @@ export function registerGetMissingTenantVariablesTool(server: McpServer) {
         environmentId
       };
 
-      const missingVariables = await tenantRepository.missingVariables(filterOptions, includeDetails);
+      try {
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const tenantRepository = new TenantRepository(client, spaceName);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              filters: filterOptions,
-              includeDetails,
-              missingVariables
-            }),
-          },
-        ],
-      };
+        const missingVariables = await tenantRepository.missingVariables(filterOptions, includeDetails);
+
+        if (!missingVariables || (Array.isArray(missingVariables) && missingVariables.length === 0)) {
+          const filterDescription = Object.entries(filterOptions)
+            .filter(([, value]) => value)
+            .map(([key, value]) => `${key}: ${value}`)
+            .join(', ') || 'no filters';
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: `No missing tenant variables found with filters: ${filterDescription}. All required variables appear to be configured.`,
+              },
+            ],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                filters: filterOptions,
+                includeDetails,
+                missingVariables
+              }),
+            },
+          ],
+        };
+      } catch (error) {
+        handleOctopusApiError(error, { spaceName });
+      }
     }
   );
 }
