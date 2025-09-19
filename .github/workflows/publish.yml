@@ -2,7 +2,7 @@ name: Publish Release
 on:
   push:
     branches:
-      - main
+      - geoffr/update-steps
 permissions:
   contents: write
   packages: write
@@ -17,16 +17,13 @@ jobs:
         with:
           release-type: node
           token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         if: ${{ steps.release.outputs.release_created }}
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           cache: 'npm'
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
-          scope: '@octopusdeploy'
         if: ${{ steps.release.outputs.release_created }}
       - run: npm ci
         if: ${{ steps.release.outputs.release_created }}

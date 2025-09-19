@@ -30,6 +30,10 @@
     "url": "https://github.com/OctopusDeploy/mcp-server.git"
   },
   "license": "Apache-2.0",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.5",
     "@octopusdeploy/api-client": "^3.8.0",
