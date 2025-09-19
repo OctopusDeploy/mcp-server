@@ -18,6 +18,9 @@ Most tools exposed by the MCP Server use stable APIs that have been available fr
 
 ## 🚀 Installation
 
+[![Install in VS Code](https://img.shields.io/badge/VS_Code-Install_Server-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=octopusdeploy&inputs=%5B%7B%22type%22%3A%22promptString%22%2C%22id%22%3A%22octopus-api-key%22%2C%22description%22%3A%22Octopus%20API%20Key%22%2C%22password%22%3Atrue%7D%2C%7B%22type%22%3A%22promptString%22%2C%22id%22%3A%22octopus-server-url%22%2C%22description%22%3A%22Octopus%20Server%20URL%22%2C%22default%22%3A%22https%3A%2F%2Fyour.octopus.app%22%7D%5D&config=%7B%22type%22%3A%20%22stdio%22%2C%22command%22%3A%20%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40octopusdeploy%2Fmcp-server%22%2C%22--server-url%22%2C%22%24%7Binput%3Aoctopus-server-url%7D%22%2C%22--api-key%22%2C%22%24%7Binput%3Aoctopus-api-key%7D%22%5D%7D)
+[![Install in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Install_Server-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=octopusdeploy&inputs=%5B%7B%22type%22%3A%22promptString%22%2C%22id%22%3A%22octopus-api-key%22%2C%22description%22%3A%22Octopus%20API%20Key%22%2C%22password%22%3Atrue%7D%2C%7B%22type%22%3A%22promptString%22%2C%22id%22%3A%22octopus-server-url%22%2C%22description%22%3A%22Octopus%20Server%20URL%22%2C%22default%22%3A%22https%3A%2F%2Fyour.octopus.app%22%7D%5D&config=%7B%22type%22%3A%20%22stdio%22%2C%22command%22%3A%20%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40octopusdeploy%2Fmcp-server%22%2C%22--server-url%22%2C%22%24%7Binput%3Aoctopus-server-url%7D%22%2C%22--api-key%22%2C%22%24%7Binput%3Aoctopus-api-key%7D%22%5D%7D&quality=insiders)
+
 ### Requirements
 - Node.js >= v20.0.0
 - Octopus Deploy instance that can be accessed by the MCP server via HTTPS
