@@ -1,7 +1,7 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d8f112b2-87b6-4a45-bffe-85faa456c7a8">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/edaac2c0-e246-44e3-8b1b-50229dfa8ffd">
-  <img alt="Octopus Deploy Logo" src="https://github.com/user-attachments/assets/edaac2c0-e246-44e3-8b1b-50229dfa8ffd" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/octopusdeploy/mcp-server/main/images/OctopusDeploy_Logo_DarkMode.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/octopusdeploy/mcp-server/main/images/OctopusDeploy_Logo_LightMode.png">
+  <img alt="Octopus Deploy Logo" src="https://raw.githubusercontent.com/octopusdeploy/mcp-server/main/images/OctopusDeploy_Logo_LightMode.png" />
 </picture>
 
 # Octopus Deploy Official MCP Server
