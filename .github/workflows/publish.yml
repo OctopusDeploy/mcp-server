@@ -2,7 +2,7 @@ name: Publish Release
 on:
   push:
     branches:
-      - geoffr/update-steps
+      - main
 permissions:
   contents: write
   packages: write
@@ -18,13 +18,18 @@ jobs:
           release-type: node
           token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/checkout@v4
+        if: ${{ steps.release.outputs.release_created }}
       - uses: actions/setup-node@v4
         with:
           cache: 'npm'
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
+        if: ${{ steps.release.outputs.release_created }}
       - run: npm ci
+        if: ${{ steps.release.outputs.release_created }}
       - run: npm run build
-      - run: npm publish --access=public
+        if: ${{ steps.release.outputs.release_created }}
+      - run: npm publish --access=public 
+        if: ${{ steps.release.outputs.release_created }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
