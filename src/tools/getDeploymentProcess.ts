@@ -31,11 +31,32 @@ This tool retrieves a deployment process by its ID. Each project has a deploymen
       const project = projectRepository && projectId ? await projectRepository.get(projectId) : null;
 
       if (!processId && !projectId) {
-        throw new Error("Either processId or projectId must be provided.");
+        throw new Error(
+          "Either processId or projectId must be provided. " +
+          "Use list_projects to find project IDs (starting with 'Projects-') or " +
+          "use list_deployments to find process IDs (starting with 'DeploymentProcesses-')."
+        );
+      }
+
+      if (projectId && !projectId.startsWith('Projects-')) {
+        throw new Error(
+          `Invalid project ID format '${projectId}'. Project IDs should start with 'Projects-' followed by numbers. ` +
+          "Use list_projects to find valid project IDs."
+        );
+      }
+
+      if (processId && !processId.startsWith('DeploymentProcesses-')) {
+        throw new Error(
+          `Invalid process ID format '${processId}'. Process IDs should start with 'DeploymentProcesses-' followed by numbers. ` +
+          "Use list_deployments to find valid process IDs."
+        );
       }
 
       if (project?.IsVersionControlled && !branchName) {
-        throw new Error("Branch name must be provided for version controlled projects.");
+        throw new Error(
+          `Branch name required for version controlled project '${projectId}'. ` +
+          "Try 'main' or 'master', or use get_branches tool to list available branches."
+        );
       }
 
       // If using branchName get the canonical ref first

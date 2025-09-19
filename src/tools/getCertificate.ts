@@ -4,6 +4,7 @@ import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { type CertificateResource, mapCertificateResource } from "../types/certificateTypes.js";
+import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES } from "../helpers/errorHandling.js";
 
 export function registerGetCertificateTool(server: McpServer) {
   server.tool(
@@ -20,28 +21,38 @@ This tool retrieves detailed information about a specific certificate using its 
       readOnlyHint: true,
     },
     async ({ spaceName, certificateId }) => {
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
-      const spaceId = await resolveSpaceId(client, spaceName);
+      validateEntityId(certificateId, 'certificate', ENTITY_PREFIXES.certificate);
 
-      const response = await client.get<CertificateResource>(
-        "~/api/{spaceId}/certificates/{id}",
-        {
-          spaceId,
-          id: certificateId,
-        }
-      );
+      try {
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const spaceId = await resolveSpaceId(client, spaceName);
 
-      const certificate = mapCertificateResource(response);
-
-      return {
-        content: [
+        const response = await client.get<CertificateResource>(
+          "~/api/{spaceId}/certificates/{id}",
           {
-            type: "text",
-            text: JSON.stringify(certificate),
-          },
-        ],
-      };
+            spaceId,
+            id: certificateId,
+          }
+        );
+
+        const certificate = mapCertificateResource(response);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(certificate),
+            },
+          ],
+        };
+      } catch (error) {
+        handleOctopusApiError(error, {
+          entityType: 'certificate',
+          entityId: certificateId,
+          spaceName
+        });
+      }
     }
   );
 }

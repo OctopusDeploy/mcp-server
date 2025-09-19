@@ -5,6 +5,7 @@ import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfi
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { tenantsDescription } from "../types/tenantsTypes.js";
 import { getPublicUrl } from "../helpers/getPublicUrl.js";
+import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES } from "../helpers/errorHandling.js";
 
 export function registerGetTenantByIdTool(server: McpServer) {
   server.tool(
@@ -19,30 +20,40 @@ export function registerGetTenantByIdTool(server: McpServer) {
       readOnlyHint: true,
     },
     async ({ spaceName, tenantId }) => {
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
-      const tenantRepository = new TenantRepository(client, spaceName);
+      validateEntityId(tenantId, 'tenant', ENTITY_PREFIXES.tenant);
 
-      const tenant = await tenantRepository.get(tenantId);
+      try {
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const tenantRepository = new TenantRepository(client, spaceName);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              id: tenant.Id,
-              name: tenant.Name,
-              description: tenant.Description,
-              projectEnvironments: tenant.ProjectEnvironments,
-              tenantTags: tenant.TenantTags,
-              clonedFromTenantId: tenant.ClonedFromTenantId,
-              spaceId: tenant.SpaceId,
-              publicUrl: getPublicUrl(`${configuration.instanceURL}/app#/{spaceId}/tenants/{tenantId}/overview`, { spaceId: tenant.SpaceId, tenantId: tenant.Id }),
-              publicUrlInstruction: `You can view more details about this tenant in the Octopus Deploy web portal at the provided publicUrl.`
-            }),
-          },
-        ],
-      };
+        const tenant = await tenantRepository.get(tenantId);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                id: tenant.Id,
+                name: tenant.Name,
+                description: tenant.Description,
+                projectEnvironments: tenant.ProjectEnvironments,
+                tenantTags: tenant.TenantTags,
+                clonedFromTenantId: tenant.ClonedFromTenantId,
+                spaceId: tenant.SpaceId,
+                publicUrl: getPublicUrl(`${configuration.instanceURL}/app#/{spaceId}/tenants/{tenantId}/overview`, { spaceId: tenant.SpaceId, tenantId: tenant.Id }),
+                publicUrlInstruction: `You can view more details about this tenant in the Octopus Deploy web portal at the provided publicUrl.`
+              }),
+            },
+          ],
+        };
+      } catch (error) {
+        handleOctopusApiError(error, {
+          entityType: 'tenant',
+          entityId: tenantId,
+          spaceName
+        });
+      }
     }
   );
 }

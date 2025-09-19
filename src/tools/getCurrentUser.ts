@@ -2,6 +2,7 @@ import { Client } from "@octopusdeploy/api-client";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
+import { handleOctopusApiError } from "../helpers/errorHandling.js";
 
 interface CurrentUser {
   Id: string;
@@ -26,30 +27,34 @@ This tool retrieves information about the currently authenticated user from the 
       readOnlyHint: true,
     },
     async () => {
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
+      try {
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
 
-      const user = await client.get<CurrentUser>("~/api/users/me");
+        const user = await client.get<CurrentUser>("~/api/users/me");
 
-      const currentUser = {
-        id: user.Id,
-        username: user.Username,
-        displayName: user.DisplayName,
-        isActive: user.IsActive,
-        isService: user.IsService,
-        emailAddress: user.EmailAddress,
-        canPasswordBeEdited: user.CanPasswordBeEdited,
-        isRequestor: user.IsRequestor,
-      };
+        const currentUser = {
+          id: user.Id,
+          username: user.Username,
+          displayName: user.DisplayName,
+          isActive: user.IsActive,
+          isService: user.IsService,
+          emailAddress: user.EmailAddress,
+          canPasswordBeEdited: user.CanPasswordBeEdited,
+          isRequestor: user.IsRequestor,
+        };
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify(currentUser),
-          },
-        ],
-      };
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(currentUser),
+            },
+          ],
+        };
+      } catch (error) {
+        handleOctopusApiError(error, {});
+      }
     }
   );
 }
