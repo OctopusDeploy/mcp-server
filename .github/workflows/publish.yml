@@ -18,16 +18,11 @@ jobs:
           release-type: node
           token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/checkout@v4
-        if: ${{ steps.release.outputs.release_created }}
       - uses: actions/setup-node@v4
         with:
           cache: 'npm'
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
-        if: ${{ steps.release.outputs.release_created }}
       - run: npm ci
-        if: ${{ steps.release.outputs.release_created }}
       - run: npm run build
-        if: ${{ steps.release.outputs.release_created }}
       - run: npm publish --access=public --dry-run
-        if: ${{ steps.release.outputs.release_created }}
