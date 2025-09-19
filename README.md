@@ -1,7 +1,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/octopusdeploy/mcp-server/blob/main/images/OctopusDeploy_Logo_DarkMode.png?raw=true">
   <source media="(prefers-color-scheme: light)" srcset="https://github.com/octopusdeploy/mcp-server/blob/main/images/OctopusDeploy_Logo_LightMode.png?raw=true">
-  <img alt="Octopus Deploy Logo" src="https://raw.githubusercontent.com/octopusdeploy/mcp-server/main/images/OctopusDeploy_Logo_LightMode.png" />
+  <img alt="Octopus Deploy Logo" src="https://github.com/octopusdeploy/mcp-server/blob/main/images/OctopusDeploy_Logo_LightMode.png?raw=true" />
 </picture>
 
 # Octopus Deploy Official MCP Server
@@ -149,7 +149,7 @@ npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https:/
 ### Certificates
 - `list_certificates`: List all certificates in a space with optional filtering
 - `get_certificate`: Get detailed information about a specific certificate by its ID
-- 
+
 ### Accounts
 - `list_accounts`: List all accounts in a space with optional filtering
 - `get_accounts`: Get detailed information about a specific account by its ID
