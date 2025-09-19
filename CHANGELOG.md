@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/OctopusDeploy/mcp-server/compare/v0.2.0...v0.2.1) (2025-09-19)
+
+
+### Bug Fixes
+
+* Add accounts operations to README ([#26](https://github.com/OctopusDeploy/mcp-server/issues/26)) ([5bdbd9b](https://github.com/OctopusDeploy/mcp-server/commit/5bdbd9b7bbfe42467d5b1de039fb53fe68abe7ce))
+
 ## [0.2.0](https://github.com/OctopusDeploy/mcp-server/compare/v0.1.2...v0.2.0) (2025-09-19)
 
 
