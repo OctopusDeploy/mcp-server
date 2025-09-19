@@ -10,9 +10,7 @@ import { DEFAULT_TOOLSETS, printToolVersionAnalysis } from "./types/toolConfig.j
 import { getClientConfigurationFromEnvironment } from "./helpers/getClientConfigurationFromEnvironment.js";
 import { setClientInfo } from "./utils/clientInfo.js";
 import { logger } from "./utils/logger.js";
-import packageJson from "../package.json" with { type: "json" };
-
-export const SEMVER_VERSION = packageJson.version;
+import { SEMVER_VERSION } from "./utils/version.js";
 
 dotenv.config({ quiet: true });
 
@@ -61,9 +59,6 @@ if (options.apiKey) {
   process.env.CLI_API_KEY = options.apiKey;
 }
 
-// Test configuration
-getClientConfigurationFromEnvironment();
-
 // Set up initialization callback to capture client info
 server.server.oninitialized = () => {
   const clientInfo = server.server.getClientVersion();
@@ -79,6 +74,9 @@ logger.info(`Starting Octopus Deploy MCP server (version: ${SEMVER_VERSION})`);
 
 // Start server
 async function runServer() {
+  // Test configuration
+  getClientConfigurationFromEnvironment();
+  
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }

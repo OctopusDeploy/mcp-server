@@ -16,6 +16,6 @@
     "resolveJsonModule": true,
     "verbatimModuleSyntax": true
   },
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules", "**/*.test.ts", "**/__tests__/**"],
   "include": ["src/**/*.ts"]
 }
