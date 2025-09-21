@@ -17,23 +17,22 @@ jobs:
         with:
           release-type: node
           token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         if: ${{ steps.release.outputs.release_created }}
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
           cache: 'npm'
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
-          scope: '@octopusdeploy'
         if: ${{ steps.release.outputs.release_created }}
       - run: npm ci
         if: ${{ steps.release.outputs.release_created }}
       - run: npm run build
         if: ${{ steps.release.outputs.release_created }}
-      - run: npm publish --access=public
+      - run: npm publish --access=public 
         if: ${{ steps.release.outputs.release_created }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Generate SBOM with Trivy
         if: ${{ steps.release.outputs.release_created }}
         uses: aquasecurity/trivy-action@0.32.0

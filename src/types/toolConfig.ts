@@ -10,7 +10,8 @@ export type Toolset =
   | "kubernetes"
   | "machines"
   | "context"
-  | "certificates";
+  | "certificates"
+  | "accounts";
 
 export interface ToolConfig {
   toolset: Toolset;
@@ -46,6 +47,7 @@ export const DEFAULT_TOOLSETS: Toolset[] = [
   "machines",
   "context",
   "certificates",
+  "accounts"
 ];
 
 export interface ToolVersionInfo {

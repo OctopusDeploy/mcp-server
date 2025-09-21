@@ -1,8 +1,14 @@
-# 🐙 Octopus Deploy Official MCP Server (Early Access)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/octopusdeploy/mcp-server/blob/main/images/OctopusDeploy_Logo_DarkMode.png?raw=true">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/octopusdeploy/mcp-server/blob/main/images/OctopusDeploy_Logo_LightMode.png?raw=true">
+  <img alt="Octopus Deploy Logo" src="https://github.com/octopusdeploy/mcp-server/blob/main/images/OctopusDeploy_Logo_LightMode.png?raw=true" />
+</picture>
+
+# Octopus Deploy Official MCP Server
 
 [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) allows the AI assistants you use in your day to day work, like Claude Code, or ChatGPT, to connect to the systems and services you own in a standardized fashion, allowing them to pull information from those systems and services to answer questions and perform tasks.
 
-The Octopus MCP Server provides your AI assistant with powerful tools that allow it to inspect, query, and diagnose problems within your Octopus instance, transforming it into your ultimate DevOps wingmate. 
+The Octopus MCP Server provides your AI assistant with powerful tools that allow it to inspect, query, and diagnose problems within your Octopus instance, transforming it into your ultimate DevOps wingmate. For a list of supported use-cases and sample prompts, see our [documentation](https://octopus.com/docs/octopus-ai/mcp/use-cases).
 
 This project is currently in Early Access, and subject to breaking changes.
 
@@ -33,7 +39,7 @@ Full example configuration (for Claude Desktop, Claude Code, and Cursor):
 
 The Octopus MCP Server is typically configured within your AI Client of choice. 
 
-It is packaged as an npm package and executed via Node's `npx` command. Your configuration will include the command invocation `npx`, and a set of arguments that supply the Octoups MCP Server package and provide the Octopus Server URL and API key required, if they are not available as environment variables.
+It is packaged as an npm package and executed via Node's `npx` command. Your configuration will include the command invocation `npx`, and a set of arguments that supply the Octopus MCP Server package and provide the Octopus Server URL and API key required, if they are not available as environment variables.
 
 The command line invocation you will be configuring will be one of the two following variants:
 
@@ -82,6 +88,7 @@ Available toolsets:
 - **kubernetes** - Kubernetes operations
 - **machines** - Deployment target operations
 - **certificates** - Certificate operations
+- **accounts** - Account operations
 
 #### Read-Only Mode
 The server runs in read-only mode by default for security. All current tools are read-only operations.
@@ -143,12 +150,16 @@ npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https:/
 - `list_certificates`: List all certificates in a space with optional filtering
 - `get_certificate`: Get detailed information about a specific certificate by its ID
 
+### Accounts
+- `list_accounts`: List all accounts in a space with optional filtering
+- `get_accounts`: Get detailed information about a specific account by its ID
+
 ### Additional Tools
 - `get_deployment_process`: Get deployment process by ID for projects or releases
 - `get_branches`: Get Git branches for a version-controlled project (minimum supported version: `2021.2`)
 - `get_current_user`: Get information about the current authenticated user
 
-## Security Considerations
+## 🔒 Security Considerations
 
 While the Octopus MCP Server at this stage is a read-only tool, it **can read full deployment logs, which could include production secrets.** Exercise caution when connecting Octopus MCP to tools and models you do not fully trust.
 
@@ -156,7 +167,7 @@ Running agents in a fully automated fashion could make you vulnerable to exposur
 
 Exercise caution and mitigate the risks by using least-privileged accounts when connecting to Octopus Server.
 
-## Limitations
+## ⚠️ Limitations
 
 ### Data Analysis
 
@@ -174,9 +185,9 @@ We are eager to hear how you plan to use Octopus MCP Server and what features yo
 
 Please use [Issues](https://github.com/OctopusDeploy/mcp-server/issues) to provide feedback, or request features.
 
-If you are a current Octopus customer, please report any issues you experience using our MCP server to our [support team](mailto:support@octoups.com). This will ensure you get a timely response within our standard support guarantees.
+If you are a current Octopus customer, please report any issues you experience using our MCP server to our [support team](mailto:support@octopus.com). This will ensure you get a timely response within our standard support guarantees.
 
-## FAQ
+## 🙋 FAQ
 
 ### Do you have plans to release a remote MCP server?
 
@@ -185,6 +196,8 @@ We are working on integrating an MCP server directly into Octopus Server. This w
 * Giving Octopus Administrators more granular control over MCP clients
 * Natively support OAuth for client authentication
 * Integrating security scanning tools into the MCP output
+
+If this is of interest to you, please register your interest on [our roadmap item](https://roadmap.octopus.com/c/228-remote-mcp-server-ai-).
 
 ## License
 
