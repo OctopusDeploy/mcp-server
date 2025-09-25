@@ -54,6 +54,14 @@ Full example configuration (for Claude Desktop, Claude Code, and Cursor):
 }
 ```
 
+For Apple Mac users, you might need to add the following arguments in the configuration to force Docker to use the Linux platform:
+```json
+"--platform",
+"linux/amd64",
+```
+
+We are planning to release a native ARM build shortly so that those arguments will not be required anymore.
+
 ### Install via Node
 
 #### Requirements
