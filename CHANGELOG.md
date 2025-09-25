@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/OctopusDeploy/mcp-server/compare/v0.2.4...v0.2.5) (2025-09-25)
+
+
+### Bug Fixes
+
+* Empty commit to bump version ([#38](https://github.com/OctopusDeploy/mcp-server/issues/38)) ([c2ed767](https://github.com/OctopusDeploy/mcp-server/commit/c2ed7676ca20279aa9c4b393f6cea61f2221020e))
+
 ## [0.2.4](https://github.com/OctopusDeploy/mcp-server/compare/v0.2.3...v0.2.4) (2025-09-25)
 
 
