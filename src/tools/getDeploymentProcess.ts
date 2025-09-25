@@ -24,14 +24,20 @@ This tool retrieves a deployment process by its ID. Each project has a deploymen
       readOnlyHint: true,
     },
     async ({ spaceName, processId, projectId, branchName, includeDetails = false }) => {
+
+      if (!processId && !projectId) {
+        throw new Error("Either processId or projectId must be provided.");
+      }
+
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const spaceId = await resolveSpaceId(client, spaceName);
       const projectRepository = projectId ? new ProjectRepository(client, spaceName) : null;
       const project = projectRepository && projectId ? await projectRepository.get(projectId) : null;
 
-      if (!processId && !projectId) {
-        throw new Error("Either processId or projectId must be provided.");
+      // If we were not supplied a processId, we assume we are retrieving the process for the specified project.
+      if (!processId) {
+        processId = project?.DeploymentProcessId;
       }
 
       if (project?.IsVersionControlled && !branchName) {
