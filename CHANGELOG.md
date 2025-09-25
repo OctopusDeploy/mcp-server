@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/OctopusDeploy/mcp-server/compare/v0.2.3...v0.2.4) (2025-09-25)
+
+
+### Bug Fixes
+
+* Temporarily remove sbom steps ([#36](https://github.com/OctopusDeploy/mcp-server/issues/36)) ([656ae08](https://github.com/OctopusDeploy/mcp-server/commit/656ae08a33793e84ff2a8f1c3f2ffd41494adb60))
+
 ## [0.2.3](https://github.com/OctopusDeploy/mcp-server/compare/v0.2.2...v0.2.3) (2025-09-25)
 
 

@@ -4,7 +4,7 @@
   "bugs": {
     "url": "https://github.com/OctopusDeploy/mcp-server/issues"
   },
-  "version": "0.2.3",
+  "version": "0.2.4",
   "type": "module",
   "description": "The Octopus MCP Server provides your AI assistant with powerful tools that allow it to inspect, query, and diagnose problems within your Octopus instance.",
   "main": "dist/index.js",
