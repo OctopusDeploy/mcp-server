@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/OctopusDeploy/mcp-server/compare/v0.2.2...v0.2.3) (2025-09-25)
+
+
+### Bug Fixes
+
+* Add Docker container support ([#32](https://github.com/OctopusDeploy/mcp-server/issues/32)) ([c395f2d](https://github.com/OctopusDeploy/mcp-server/commit/c395f2d5469bd69d747a6bbab170b7c26e8ef6ee))
+
 ## [0.2.2](https://github.com/OctopusDeploy/mcp-server/compare/v0.2.1...v0.2.2) (2025-09-19)
 
 
