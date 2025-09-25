@@ -20,12 +20,48 @@ Most tools exposed by the MCP Server use stable APIs that have been available fr
 
 ## 🚀 Installation
 
-### Requirements
+### Install via Docker
+
+Run with environment variables
+```bash
+docker run -i --rm -e OCTOPUS_API_KEY=your-key -e OCTOPUS_SERVER_URL=https://your-octopus.com octopusdeploy/mcp-server
+```
+
+Run with CLI arguments
+```bash
+docker run -i --rm octopusdeploy/mcp-server --server-url https://your-octopus.com --api-key YOUR_API_KEY
+```
+
+Full example configuration (for Claude Desktop, Claude Code, and Cursor):
+```json
+{
+  "mcpServers": {
+    "octopus-deploy": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "octopusdeploy/mcp-server",
+        "--server-url",
+        "https://your-octopus.com",
+        "--api-key",
+        "YOUR_API_KEY"
+      ]
+    },
+  }
+}
+```
+
+### Install via Node
+
+#### Requirements
 - Node.js >= v20.0.0
 - Octopus Deploy instance that can be accessed by the MCP server via HTTPS
 - Octopus Deploy API Key
 
-### Configuration
+#### Configuration
 
 Full example configuration (for Claude Desktop, Claude Code, and Cursor):
 ```json
