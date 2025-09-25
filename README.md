@@ -22,19 +22,14 @@ Most tools exposed by the MCP Server use stable APIs that have been available fr
 
 ### Install via Docker
 
-Build the image locally
-```bash
-docker build -t octopus-mcp-server .
-```
-
 Run with environment variables
 ```bash
-docker run -i --rm -e OCTOPUS_API_KEY=your-key -e OCTOPUS_SERVER_URL=https://your-octopus.com octopus-mcp-server
+docker run -i --rm -e OCTOPUS_API_KEY=your-key -e OCTOPUS_SERVER_URL=https://your-octopus.com octopusdeploy/mcp-server
 ```
 
 Run with CLI arguments
 ```bash
-docker run -i --rm octopus-mcp-server --server-url https://your-octopus.com --api-key YOUR_API_KEY
+docker run -i --rm octopusdeploy/mcp-server --server-url https://your-octopus.com --api-key YOUR_API_KEY
 ```
 
 Full example configuration (for Claude Desktop, Claude Code, and Cursor):
@@ -48,7 +43,7 @@ Full example configuration (for Claude Desktop, Claude Code, and Cursor):
         "run",
         "-i",
         "--rm",
-        "octopus-mcp-server",
+        "octopusdeploy/mcp-server",
         "--server-url",
         "https://your-octopus.com",
         "--api-key",
