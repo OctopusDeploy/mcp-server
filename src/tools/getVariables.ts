@@ -1,22 +1,20 @@
 import {
     Client,
-    type DeploymentEnvironment, type Project,
+    type Project,
     ProjectRepository,
     resolveSpaceId, type ResourcesById,
-    type TenantVariable, type VersionControlledPersistenceSettings
+    type TenantVariable
 } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
-import type {Tenant} from "@octopusdeploy/api-client/dist/features/tenants/tenant.js";
 
-export function registerGetTenantVariablesTool(server: McpServer) {
+export function registerGetVariablesTool(server: McpServer) {
     server.tool(
         "get_variables",
         `Get all variables for a project. This tool retrieves all variables available to a project, 
-  including project variables, library variable set variables, and tenant variables.
-  Results include variable names, values, and scopes.
+  including project variables, library variable set variables, and tenant variables. Results include variable names, values, and scopes.
   `,
         {
             spaceName: z.string().describe("The space name"),
@@ -56,14 +54,14 @@ export function registerGetTenantVariablesTool(server: McpServer) {
 }
 
 registerToolDefinition({
-    toolName: "get_tenant_variables",
-    config: { toolset: "tenants", readOnly: true },
-    registerFn: registerGetTenantVariablesTool,
+    toolName: "get_variables",
+    config: { toolset: "projects", readOnly: true },
+    registerFn: registerGetVariablesTool,
 });
 
-export type VariableResource = VariableResourceBase<ScopeSpecification, VariablePromptOptions>;
+export type VariableResource = VariableResourceBase<ScopeSpecification, Readonly<unknown>>;
 
-export interface VariableResourceBase<TScopeSpecification extends Readonly<ReadonlyArrays<ScopeSpecificationTypes>>, TVariablePromptOptions extends Readonly<VariablePromptOptions>> {
+export interface VariableResourceBase<TScopeSpecification extends Readonly<ReadonlyArrays<ScopeSpecificationTypes>>, TVariablePromptOptions extends Readonly<unknown>> {
     Id: string;
     Name: string;
     Value: string | null;
@@ -95,43 +93,6 @@ export interface ScopeSpecificationTypes {
     ProcessOwner?: string;
 }
 
-export interface VariablePromptOptions {
-    Label: string;
-    Description: string;
-    Required: boolean;
-    DisplaySettings: VariablePromptDisplaySettings;
-}
-
-export enum ControlType {
-    SingleLineText = "SingleLineText",
-    MultiLineText = "MultiLineText",
-    Select = "Select",
-    Checkbox = "Checkbox",
-    Sensitive = "Sensitive",
-    StepName = "StepName",
-    AzureAccount = "AzureAccount",
-    Certificate = "Certificate",
-    WorkerPool = "WorkerPool",
-    AmazonWebServicesAccount = "AmazonWebServicesAccount",
-    UsernamePasswordAccount = "UsernamePasswordAccount",
-    GoogleCloudAccount = "GoogleCloudAccount",
-    GenericOidcAccount = "GenericOidcAccount",
-    Package = "Package",
-    Custom = "Custom",
-    TargetTags = "TargetTags",
-    Feed = "Feed",
-    Environments = "Environments",
-    TenantTags = "TenantTags",
-    Teams = "Teams",
-    Channels = "Channels",
-    Project = "Project",
-}
-
-export interface VariablePromptDisplaySettings {
-    "Octopus.ControlType"?: ControlType;
-    "Octopus.SelectOptions"?: string;
-}
-
 export enum VariableType {
     String = "String",
     Sensitive = "Sensitive",
@@ -143,10 +104,6 @@ export enum VariableType {
     UsernamePasswordAccount = "UsernamePasswordAccount",
     GenericOidcAccount = "GenericOidcAccount",
 }
-
-export type ReferenceType = VariableType.Certificate | VariableType.AmazonWebServicesAccount | VariableType.AzureAccount | VariableType.WorkerPool | VariableType.GoogleCloudAccount | VariableType.GenericOidcAccount;
-export type VariableAccountType = VariableType.AmazonWebServicesAccount | VariableType.AzureAccount | VariableType.GoogleCloudAccount | VariableType.UsernamePasswordAccount | VariableType.GenericOidcAccount;
-
 
 interface VariableSetResource {
     Id: string;
