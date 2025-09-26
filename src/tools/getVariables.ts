@@ -223,9 +223,7 @@ interface LibraryVariableSetWithVariables {
 interface AllVariablesForProject {
     projectVariableSet: VariableSetResource | undefined;
     libraryVariableSets: LibraryVariableSetWithVariables[];
-    tenants: Tenant[];
     tenantVariables: TenantVariable[];
-    environments: DeploymentEnvironment[];
 }
 
 interface GetAllVariablesParams {
@@ -253,22 +251,13 @@ export async function getAllVariables(
     // 3. Load library variable sets
     const libraryVariableSets = await loadLibraryVariableSetVariables(project.IncludedLibraryVariableSetIds, apiClient, spaceId);
 
-    // 4. Load tenants (if user has permission)
-    // TODO: Add permission check logic here - isAllowed({ permission: Permission.TenantView, tenant: "*" })
-    const tenants = await loadTenants(project.Id, apiClient, spaceId);
-
-    // 5. Load tenant variables
+    // 4. Load tenant variables
     const tenantVariables = await loadTenantVariables(project.Id, apiClient, spaceId);
-
-    // 6. Load environments
-    const environments = await loadEnvironments(params.ephemeralEnvironmentsAreEnabled ?? false, apiClient, params.spaceId);
 
     return {
         projectVariableSet,
         libraryVariableSets,
-        tenants,
         tenantVariables,
-        environments
     };
 }
 
@@ -279,11 +268,24 @@ async function loadProjectVariableSet(
     spaceId: string
 ): Promise<VariableSetResource | undefined> {
 
-    function hasVariablesInGit(persistenceSettings: unknown): boolean {
-        // TODO: Implement persistence settings check
-        // This should check if the project is configured to store variables in git
-        return persistenceSettings?.VersioningStrategy?.Type === 'Git' &&
-            persistenceSettings?.Variables?.Type === 'Git';
+    // This is a bit hacky,  but gets around the limitations of our ts client types without having to define
+    // a heap of new types.
+    // We are expecting the type to match { ConversionState: { VariablesAreInGit: true } }
+    // If the variables are stored in git.
+    function hasVariablesInGit(value: unknown): boolean {
+        if (typeof value !== 'object' || value === null || !('ConversionState' in value)) {
+            return false;
+        }
+
+        const obj = value as Record<string, unknown>;
+        const conversionState = obj.ConversionState;
+
+        return (
+            typeof conversionState === 'object' &&
+            conversionState !== null &&
+            'VariablesAreInGit' in conversionState &&
+            (conversionState as Record<string, unknown>).VariablesAreInGit === true
+        );
     }
 
     // Check if project has git persistence
@@ -349,20 +351,6 @@ async function loadLibraryVariableSetVariables(
     }));
 }
 
-async function loadTenants(
-    projectId: string,
-    apiClient: Client,
-    spaceId: string
-): Promise<Tenant[]> {
-    // TODO: Add permission check
-    try {
-        return await apiClient.get<Tenant[]>(`/api/${spaceId}/tenants?projectId=${projectId}`);
-    } catch {
-        // If no permission, return empty array
-        return [];
-    }
-}
-
 async function loadTenantVariables(
     projectId: string,
     apiClient: Client,
@@ -372,43 +360,4 @@ async function loadTenantVariables(
         `/bff/spaces/${spaceId}/projects/${projectId}/tenantvariables`
     );
     return response.TenantVariableResources;
-}
-
-async function loadEnvironments(
-    ephemeralEnvironmentsAreEnabled: boolean,
-    apiClient: Client,
-    spaceId: string,
-    ids?: string[]
-): Promise<DeploymentEnvironment[]> {
-
-    if (ephemeralEnvironmentsAreEnabled) {
-        // Load static and parent environments only
-        const queryParams = new URLSearchParams({
-            spaceId,
-            skip: '0',
-            take: '2147483647', // Repository.takeAll equivalent
-            type: 'Static,Parent'
-        });
-
-        const response = await apiClient.get<{Environments: {Items: DeploymentEnvironment[]}}>(
-            `/* STUB: Environments V2 endpoint - /api/${spaceId}/environments/v2?${queryParams} */`
-        );
-
-        let environments = response.Environments.Items;
-        if (ids) {
-            environments = environments.filter(env => ids.includes(env.Id));
-        }
-        return environments;
-    } else {
-        // Load all environments and map to V2 format
-        const queryParams = ids ? `?ids=${ids.join(',')}` : '';
-        const environments = await apiClient.get<any[]>(`/api/${spaceId}/environments${queryParams}`);
-
-        // TODO: Implement mapFromEnvironmentResourceToEnvironmentV2Resource conversion
-        return environments.map(env => ({
-            /* STUB: Convert EnvironmentResource to EnvironmentV2Resource */
-            ...env,
-            // Add V2-specific properties as needed
-        } as DeploymentEnvironment));
-    }
 }
