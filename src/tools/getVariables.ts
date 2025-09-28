@@ -9,6 +9,7 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import type {ResourceCollection} from "@octopusdeploy/api-client/dist/resourceCollection.js";
 
 export function registerGetVariablesTool(server: McpServer) {
     server.tool(
@@ -259,12 +260,12 @@ async function loadProjectVariableSet(
 
         // Retrieve the variable set stored in git for the associated gitRef
         const textVariableSet = await apiClient.get<VariableSetResource>(
-            `/api/${spaceId}/projects/${project.Id}/${gitRef}/variables`
+            `/api/spaces/${spaceId}/projects/${project.Id}/${gitRef}/variables`
         );
 
         // Sensitive variables are still stored in the database so that they can be encrypted
         const sensitiveVariableSet = await apiClient.get<VariableSetResource>(
-            `/api/${spaceId}/projects/${project.Id}/variables`
+            `/api/spaces/${spaceId}/projects/${project.Id}/variables`
         );
 
         // Combine variables from both sets
@@ -274,10 +275,12 @@ async function loadProjectVariableSet(
         };
     } else {
         // For database projects, get variables directly
-        return await apiClient.get<VariableSetResource>(`/api/${spaceId}/variables/${project.VariableSetId}`);
+        return await apiClient.get<VariableSetResource>(`/api/spaces/${spaceId}/variables/${project.VariableSetId}`);
     }
 }
 
+// TODO: No pagination in here, nor do we return pagination details to the LLM to further explore
+// Think about how to solve.
 async function loadLibraryVariableSetVariables(
     includedLibraryVariableSetIds: string[],
     apiClient: Client,
@@ -285,14 +288,14 @@ async function loadLibraryVariableSetVariables(
 ): Promise<LibraryVariableSetWithVariables[]> {
 
     // Get library variable sets
-    const libraryVariableSets = await apiClient.get<LibraryVariableSetResource[]>(
-        `/api/${spaceId}/libraryvariablesets?ids=${includedLibraryVariableSetIds.join(',')}`
+    const libraryVariableSets = await apiClient.get<ResourceCollection<LibraryVariableSetResource>>(
+        `/api/spaces/${spaceId}/libraryvariablesets?ids=${includedLibraryVariableSetIds.join(',')}`
     );
 
     // Get all variable sets for the library variable sets
-    const variableSetIds = libraryVariableSets.map(lvs => lvs.VariableSetId);
+    const variableSetIds = libraryVariableSets.Items.map(lvs => lvs.VariableSetId);
     const allVariableSets = await apiClient.get<VariableSetResource[]>(
-        `/api/${spaceId}/variables?ids=${variableSetIds.join(',')}`
+        `/api/spaces/${spaceId}/variables/all?ids=${variableSetIds.join(',')}`
     );
 
     // Create lookup map
@@ -302,7 +305,7 @@ async function loadLibraryVariableSetVariables(
     }, {});
 
     // Combine library variable sets with their variable sets
-    return libraryVariableSets.map(lvs => ({
+    return libraryVariableSets.Items.map(lvs => ({
         variableSet: allVariableSetsMap[lvs.VariableSetId],
         libraryVariableSet: lvs
     }));
