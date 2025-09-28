@@ -2,7 +2,7 @@ name: Publish Release
 on:
   push:
     branches:
-      - main
+      - octocolby-patch-1
 permissions:
   contents: write
   packages: write
