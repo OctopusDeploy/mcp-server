@@ -52,8 +52,8 @@ jobs:
         #if: ${{ steps.release.outputs.release_created }}
         uses: OctopusDeploy/upload-sbom-go@v1.1.0
         with:
-          dependency-track-url: ${{ secrets.DTRACK_KEY }}
-          dependency-track-key: ${{ secrets.DTRACK_URL }}
+          dependency-track-url: ${{ secrets.DTRACK_URL }}
+          dependency-track-key: ${{ secrets.DTRACK_KEY }}
           project-name: octopus-mcp-server
           #project-version: ${{ steps.release.outputs.version }}
           project-version: v0.2.5
