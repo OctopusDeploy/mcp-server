@@ -33,6 +33,33 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Generate SBOM with Trivy
+        if: ${{ steps.release.outputs.release_created }}
+        uses: aquasecurity/trivy-action@0.32.0
+        with:
+          format: 'cyclonedx'
+          scan-type: 'fs'
+          scan-ref: '.'
+          output: 'bom.json'
+      - name: Upload SBOM as Artifact
+        if: ${{ steps.release.outputs.release_created }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: bom.json
+          path: bom.json
+          overwrite: true
+      - name: Upload SBOM to Dependency Track
+        if: ${{ steps.release.outputs.release_created }}
+        uses: OctopusDeploy/upload-sbom-go@v1.1.0
+        with:
+          dependency-track-url: ${{ secrets.DTRACK_URL }}
+          dependency-track-key: ${{ secrets.DTRACK_KEY }}
+          project-name: octopus-mcp-server
+          project-version: ${{ steps.release.outputs.version }}
+          parent-name: octopus-mcp-server
+          is-latest: true
+          project-tags: octopus-mcp-server
+          sbom-file: "bom.json"
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         if: ${{ steps.release.outputs.release_created }}
