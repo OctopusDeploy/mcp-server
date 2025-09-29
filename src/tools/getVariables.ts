@@ -32,7 +32,7 @@ export function registerGetVariablesTool(server: McpServer) {
             const client = await Client.create(configuration);
             const spaceId = await resolveSpaceId(client, spaceName);
 
-            const variables = getAllVariables({
+            const variables = await getAllVariables({
                 projectId: projectId,
                 spaceName: spaceName,
                 spaceId: spaceId,
