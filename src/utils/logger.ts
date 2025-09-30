@@ -94,7 +94,7 @@ function shouldLog(level: LogLevel): boolean {
  */
 function writeToFile(level: LogLevel, message: string): void {
   if (config.quietMode || config.logFilePath === undefined) {
-    return; // Don't write to file in quiet mode
+    return; // Don't write to file if the log file path is not defined
   }
 
   const timestamp = new Date().toISOString();
