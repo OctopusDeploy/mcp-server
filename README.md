@@ -161,7 +161,7 @@ npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https:/
 #### Other command line arguments
 
 * `--log-level <level>` - Minimum log level (info, error)
-* `--log-file <path>` - Log file path or filename. Logs will only be written to console if not specified
+* `--log-file <path>` - Log file path or filename. If not specified, logs are written to console only
 * `-q, --quiet` - Disable file logging, only log errors to console
 * `--list-tools-by-version` - List all registered tools by their supported Octopus Server version and exit
 

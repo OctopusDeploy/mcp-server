@@ -33,7 +33,7 @@ program
   .option("--toolsets <toolsets>", `Comma-separated list of toolsets to enable, or "all" (default: all). Available toolsets: ${DEFAULT_TOOLSETS.join(", ")}`)
   .option("--read-only", "Enable read-only mode (default: enabled)", true)
   .option("--log-level <level>", "Minimum log level (info, error)", "info")
-  .option("--log-file <path>", `Log file path or filename. Logs will only be written to console if not specified.`)
+  .option("--log-file <path>", 'Log file path or filename. If not specified, logs are written to console only.')
   .option("-q, --quiet", "Disable file logging, only log errors to console", false)
   .option("--list-tools-by-version", "List all registered tools by their supported Octopus Server version and exit")
   .parse();
