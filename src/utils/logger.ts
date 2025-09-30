@@ -1,6 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
 
+export const DefaultLogFileName = "octopus-mcp-log.txt";
+
 export enum LogLevel {
   INFO = 1,
   ERROR = 2
@@ -10,25 +12,38 @@ interface LoggerConfig {
   logFilePath: string;
   minLevel: LogLevel;
   quietMode: boolean;
+  entryDirectory?: string;
 }
 
 /**
  * Default logger configuration
  */
 const config: LoggerConfig = {
-  logFilePath: "mcp-server-log.txt",
+  logFilePath: DefaultLogFileName,
   minLevel: LogLevel.INFO,
   quietMode: false
 };
+
+/**
+ * Set the entry directory for resolving relative log file paths
+ * @param directory The directory of the entry point
+ */
+function setEntryDirectory(directory: string): void {
+  config.entryDirectory = directory;
+  // Update log file path if it's still the default
+  if (config.logFilePath === DefaultLogFileName) {
+    config.logFilePath = path.join(directory, DefaultLogFileName);
+  }
+}
 
 /**
  * Set custom log file path
  * @param filePath Path to the log file (can be full path or just filename)
  */
 function setLogFilePath(filePath: string): void {
-  // If it's just a filename (no path separators), use current directory
-  if (!filePath.includes('/') && !filePath.includes('\\')) {
-    config.logFilePath = path.join(process.cwd(), filePath);
+  // If it's just a filename (no path separators), use entry directory if available
+  if (!filePath.includes('/') && !filePath.includes('\\') && config.entryDirectory) {
+    config.logFilePath = path.join(config.entryDirectory, filePath);
   } else {
     config.logFilePath = filePath;
   }
@@ -135,6 +150,7 @@ function error(message: string): void {
 }
 
 export const logger = {
+  setEntryDirectory,
   setLogFilePath,
   setLogLevel,
   setQuietMode,
