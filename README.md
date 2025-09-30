@@ -76,6 +76,7 @@ Full example configuration (for Claude Desktop, Claude Code, and Cursor):
 {
   "mcpServers": {
     "octopusdeploy": {
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "@octopusdeploy/mcp-server", "--api-key", "YOUR_API_KEY", "--server-url", "https://your-octopus.com"]
     }
@@ -156,6 +157,13 @@ npx -y @octopusdeploy/mcp-server --toolsets core,projects --server-url https://y
 # Full production setup with all tools
 npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https://your-octopus.com --api-key YOUR_API_KEY
 ```
+
+#### Other command line arguments
+
+* `--log-level <level>` - Minimum log level (info, error)
+* `--log-file <path>` - Log file path or filename. If not specified, logs are written to console only
+* `-q, --quiet` - Disable file logging, only log errors to console
+* `--list-tools-by-version` - List all registered tools by their supported Octopus Server version and exit
 
 ## 🔨 Tools
 

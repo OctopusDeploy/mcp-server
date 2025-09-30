@@ -11,8 +11,14 @@ import { getClientConfigurationFromEnvironment } from "./helpers/getClientConfig
 import { setClientInfo } from "./utils/clientInfo.js";
 import { logger } from "./utils/logger.js";
 import packageJson from "../package.json" with { type: "json" };
+import { fileURLToPath } from "url";
+import { dirname, join, isAbsolute } from "path";
 
 export const SEMVER_VERSION = packageJson.version;
+
+// Set entry directory for logger (ESM equivalent of __dirname)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 dotenv.config({ quiet: true });
 
@@ -27,7 +33,7 @@ program
   .option("--toolsets <toolsets>", `Comma-separated list of toolsets to enable, or "all" (default: all). Available toolsets: ${DEFAULT_TOOLSETS.join(", ")}`)
   .option("--read-only", "Enable read-only mode (default: enabled)", true)
   .option("--log-level <level>", "Minimum log level (info, error)", "info")
-  .option("--log-file <path>", "Log file path or filename (default: mcp-server-log.txt)")
+  .option("--log-file <path>", 'Log file path or filename. If not specified, logs are written to console only.')
   .option("-q, --quiet", "Disable file logging, only log errors to console", false)
   .option("--list-tools-by-version", "List all registered tools by their supported Octopus Server version and exit")
   .parse();
@@ -49,8 +55,13 @@ if (options.listToolsByVersion) {
 }
 
 if (options.logFile) {
-  logger.setLogFilePath(options.logFile);
+  if (dirname(options.logFile) === '.') {
+    logger.setLogFilePath(join(__dirname, options.logFile));
+  } else {
+    logger.setLogFilePath(options.logFile);
+  }
 }
+
 logger.setLogLevel(logger.parseLogLevel(options.logLevel));
 logger.setQuietMode(options.quiet);
 
