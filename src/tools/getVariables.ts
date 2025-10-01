@@ -13,9 +13,9 @@ import type {ResourceCollection} from "@octopusdeploy/api-client/dist/resourceCo
 export function registerGetVariablesTool(server: McpServer) {
     server.tool(
         "get_variables",
-        `Get all variables for a project. This tool retrieves all variables available to a project, 
-  including project variables, library variable set variables, and tenant variables. Results include variable names, values, and scopes.
-  `,
+        `This tool gets all project and library variable set variables for a given project. 
+        If you want to retrieve tenant variables for a given tenant, use the get_tenant_variables tool.
+        `,
         {
             spaceName: z.string().describe("The space name"),
             projectId: z.string().describe("The ID of the project to retrieve the variables for"),
