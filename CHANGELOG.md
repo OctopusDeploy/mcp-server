@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/OctopusDeploy/mcp-server/compare/v0.2.5...v0.3.0) (2025-10-01)
+
+
+### Features
+
+* Project variables tool ([#41](https://github.com/OctopusDeploy/mcp-server/issues/41)) ([4c7d1f2](https://github.com/OctopusDeploy/mcp-server/commit/4c7d1f2d46396a20bad6a9742643fd91a3e0e525))
+
+
+### Bug Fixes
+
+* Change log file path to match entry point instead of node folder ([#44](https://github.com/OctopusDeploy/mcp-server/issues/44)) ([206b6ca](https://github.com/OctopusDeploy/mcp-server/commit/206b6ca8606ab0b58161bbb987b8194bf14dce66))
+* Fix SBOM build ([#42](https://github.com/OctopusDeploy/mcp-server/issues/42)) ([9500aa4](https://github.com/OctopusDeploy/mcp-server/commit/9500aa45f66e8e2581a6315c58706e36cba69415))
+
 ## [0.2.5](https://github.com/OctopusDeploy/mcp-server/compare/v0.2.4...v0.2.5) (2025-09-25)
 
 
