@@ -10,6 +10,7 @@ import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import type {ResourceCollection} from "@octopusdeploy/api-client/dist/resourceCollection.js";
+import { logger } from "../utils/logger.js";
 
 export function registerGetVariablesTool(server: McpServer) {
     server.tool(
@@ -179,9 +180,9 @@ interface LibraryVariableSetWithVariables {
 }
 
 interface AllVariablesForProject {
-    projectVariableSet: VariableSetResource | undefined;
+    projectVariableSet: Omit<VariableSetResource, "ScopeValues"> | undefined;
     libraryVariableSets: LibraryVariableSetWithVariables[];
-    tenantVariables: TenantVariable[];
+    tenantVariables: string[];
 }
 
 interface GetAllVariablesParams {
@@ -224,7 +225,7 @@ async function loadProjectVariableSet(
     gitRef: string | undefined,
     apiClient: Client,
     spaceId: string
-): Promise<VariableSetResource | undefined> {
+): Promise<Omit<VariableSetResource, "ScopeValues"> | undefined> {
 
     // This is a bit hacky,  but gets around the limitations of our ts client types without having to define
     // a heap of new types.
@@ -255,6 +256,8 @@ async function loadProjectVariableSet(
         return undefined;
     }
 
+    let result: VariableSetResource;
+
     if (hasGitVariables) {
         // For git projects, we need to get both text and sensitive variables separately
 
@@ -269,14 +272,21 @@ async function loadProjectVariableSet(
         );
 
         // Combine variables from both sets
-        return {
+        result = {
             ...textVariableSet,
             Variables: [...textVariableSet.Variables, ...sensitiveVariableSet.Variables]
         };
     } else {
         // For database projects, get variables directly
-        return await apiClient.get<VariableSetResource>(`/api/spaces/${spaceId}/variables/${project.VariableSetId}`);
+        result = await apiClient.get<VariableSetResource>(`/api/spaces/${spaceId}/variables/${project.VariableSetId}`);
     }
+
+    // Strip out scope values, as they are not useful and pollute context
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
+    delete result.ScopeValues;
+
+    return result;
 }
 
 // TODO: No pagination in here, nor do we return pagination details to the LLM to further explore
@@ -286,6 +296,8 @@ async function loadLibraryVariableSetVariables(
     apiClient: Client,
     spaceId: string
 ): Promise<LibraryVariableSetWithVariables[]> {
+
+    if (includedLibraryVariableSetIds.length == 0) return [];
 
     // Get library variable sets
     const libraryVariableSets = await apiClient.get<ResourceCollection<LibraryVariableSetResource>>(
@@ -315,9 +327,29 @@ async function loadTenantVariables(
     projectId: string,
     apiClient: Client,
     spaceId: string
-): Promise<TenantVariable[]> {
+): Promise<string[]> {
     const response = await apiClient.get<{TenantVariableResources: TenantVariable[]}>(
         `/bff/spaces/${spaceId}/projects/${projectId}/tenantvariables`
     );
-    return response.TenantVariableResources;
+
+    const variableNames = new Set<string>();
+
+    // Extract variable names from project variables templates
+    // Note that this will be guaranteed to only have a single collection of ProjectVariables for the tenant
+    response.TenantVariableResources.forEach(tenant => {
+        Object.values(tenant.ProjectVariables || {}).forEach(projectVar => {
+            projectVar.Templates?.forEach(template => {
+                variableNames.add(template.Name);
+            });
+        });
+
+        // Extract variable names from library variable sets templates
+        Object.values(tenant.LibraryVariables || {}).forEach(libraryVar => {
+            libraryVar.Templates?.forEach(template => {
+                variableNames.add(template.Name);
+            });
+        });
+    });
+
+    return Array.from(variableNames).sort();
 }
