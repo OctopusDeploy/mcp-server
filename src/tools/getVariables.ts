@@ -2,15 +2,13 @@ import {
     Client,
     type Project,
     ProjectRepository,
-    resolveSpaceId, type ResourcesById,
-    type TenantVariable
+    resolveSpaceId, type ResourcesById
 } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import type {ResourceCollection} from "@octopusdeploy/api-client/dist/resourceCollection.js";
-import { logger } from "../utils/logger.js";
 
 export function registerGetVariablesTool(server: McpServer) {
     server.tool(
@@ -37,8 +35,7 @@ export function registerGetVariablesTool(server: McpServer) {
                 projectId: projectId,
                 spaceName: spaceName,
                 spaceId: spaceId,
-                gitRef: gitRef,
-                ephemeralEnvironmentsAreEnabled: false
+                gitRef: gitRef
             }, client)
 
             return {
@@ -61,17 +58,15 @@ registerToolDefinition({
     registerFn: registerGetVariablesTool,
 });
 
-export type VariableResource = VariableResourceBase<ScopeSpecification, Readonly<unknown>>;
-
-export interface VariableResourceBase<TScopeSpecification extends Readonly<ReadonlyArrays<ScopeSpecificationTypes>>, TVariablePromptOptions extends Readonly<unknown>> {
+type VariableResource = {
     Id: string;
     Name: string;
     Value: string | null;
     Description: string | undefined;
-    Scope: TScopeSpecification;
+    Scope: ScopeSpecification;
     IsEditable: boolean;
-    Prompt: TVariablePromptOptions | null;
-    Type: VariableType;
+    Prompt: Readonly<unknown>;
+    Type: unknown;
     IsSensitive: boolean; //false; // For backwards compatibility
 }
 
@@ -79,13 +74,9 @@ type Arrays<T> = {
     [P in keyof T]: Array<T[P]>;
 };
 
-type ReadonlyArrays<T> = {
-    [P in keyof T]: ReadonlyArray<T[P]>;
-};
+type ScopeSpecification = Arrays<ScopeSpecificationTypes>;
 
-export type ScopeSpecification = Arrays<ScopeSpecificationTypes>;
-
-export interface ScopeSpecificationTypes {
+interface ScopeSpecificationTypes {
     Environment?: string;
     Machine?: string;
     Role?: string;
@@ -95,55 +86,13 @@ export interface ScopeSpecificationTypes {
     ProcessOwner?: string;
 }
 
-export enum VariableType {
-    String = "String",
-    Sensitive = "Sensitive",
-    Certificate = "Certificate",
-    AmazonWebServicesAccount = "AmazonWebServicesAccount",
-    AzureAccount = "AzureAccount",
-    GoogleCloudAccount = "GoogleCloudAccount",
-    WorkerPool = "WorkerPool",
-    UsernamePasswordAccount = "UsernamePasswordAccount",
-    GenericOidcAccount = "GenericOidcAccount",
-}
-
 interface VariableSetResource {
     Id: string;
     SpaceId: string;
     OwnerId: string;
-    ScopeValues: ScopeValues;
+    ScopeValues: unknown;
     Variables: VariableResource[];
     Version: number;
-}
-
-interface ReferenceDataItem {
-    Id: string;
-    Name: string;
-}
-
-interface ProcessReferenceDataItem extends ReferenceDataItem {
-    ProcessType: ProcessType;
-}
-
-enum ProcessType {
-    Deployment = "Deployment",
-    Runbook = "Runbook",
-    ProcessTemplate = "ProcessTemplate",
-}
-
-interface ScopeValues {
-    Actions: ReferenceDataItem[];
-    Channels: ReferenceDataItem[];
-    Environments: ReferenceDataItem[];
-    Machines: ReferenceDataItem[];
-    Roles: ReferenceDataItem[];
-    TenantTags: ReferenceDataItem[];
-    Processes: ProcessReferenceDataItem[];
-}
-
-enum VariableSetContentType {
-    Variables = "Variables",
-    ScriptModule = "ScriptModule",
 }
 
 type PropertyValueResource = string | SensitiveValue | null;
@@ -170,19 +119,18 @@ interface LibraryVariableSetResource  {
     SpaceId: string;
     Description: string;
     VariableSetId: string;
-    ContentType: VariableSetContentType;
+    ContentType: unknown;
     Templates: ActionTemplateParameterResource[];
 }
 
 interface LibraryVariableSetWithVariables {
-    variableSet: VariableSetResource;
+    variableSet: VariableSetResponse;
     libraryVariableSet: LibraryVariableSetResource;
 }
 
 interface AllVariablesForProject {
     projectVariableSet: Omit<VariableSetResource, "ScopeValues"> | undefined;
     libraryVariableSets: LibraryVariableSetWithVariables[];
-    tenantVariables: string[];
 }
 
 interface GetAllVariablesParams {
@@ -190,8 +138,9 @@ interface GetAllVariablesParams {
     gitRef?: string;
     spaceName: string;
     spaceId: string;
-    ephemeralEnvironmentsAreEnabled?: boolean;
 }
+
+type VariableSetResponse = Omit<VariableSetResource, "ScopeValues">;
 
 export async function getAllVariables(
     params: GetAllVariablesParams,
@@ -200,23 +149,14 @@ export async function getAllVariables(
 
     const { spaceId, spaceName, gitRef, projectId } = params;
 
-    // 1. Get the project to understand its configuration
     const projectRepository = new ProjectRepository(apiClient, spaceName);
     const project = await projectRepository.get(projectId);
-
-    // 2. Load project variables (handling git persistence)
     const projectVariableSet = await loadProjectVariableSet(project, gitRef, apiClient, spaceId);
-
-    // 3. Load library variable sets
     const libraryVariableSets = await loadLibraryVariableSetVariables(project.IncludedLibraryVariableSetIds, apiClient, spaceId);
-
-    // 4. Load tenant variables
-    const tenantVariables = await loadTenantVariables(project.Id, apiClient, spaceId);
 
     return {
         projectVariableSet,
-        libraryVariableSets,
-        tenantVariables,
+        libraryVariableSets
     };
 }
 
@@ -225,7 +165,7 @@ async function loadProjectVariableSet(
     gitRef: string | undefined,
     apiClient: Client,
     spaceId: string
-): Promise<Omit<VariableSetResource, "ScopeValues"> | undefined> {
+): Promise<VariableSetResponse | undefined> {
 
     // This is a bit hacky,  but gets around the limitations of our ts client types without having to define
     // a heap of new types.
@@ -251,9 +191,7 @@ async function loadProjectVariableSet(
     const hasGitVariables = hasVariablesInGit(project.PersistenceSettings);
 
     if (hasGitVariables && !gitRef) {
-        // TODO: Should we throw an error here for MCP?
-        // If we've just changed from an invalid branch, GitRef might be null. Wait until it's set.
-        return undefined;
+        throw new Error(`Missing gitRef for config-as-code project ${project.Name}`);
     }
 
     let result: VariableSetResource;
@@ -281,16 +219,11 @@ async function loadProjectVariableSet(
         result = await apiClient.get<VariableSetResource>(`/api/spaces/${spaceId}/variables/${project.VariableSetId}`);
     }
 
-    // Strip out scope values, as they are not useful and pollute context
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
     delete result.ScopeValues;
 
     return result;
 }
 
-// TODO: No pagination in here, nor do we return pagination details to the LLM to further explore
-// Think about how to solve.
 async function loadLibraryVariableSetVariables(
     includedLibraryVariableSetIds: string[],
     apiClient: Client,
@@ -310,8 +243,12 @@ async function loadLibraryVariableSetVariables(
         `/api/spaces/${spaceId}/variables/all?ids=${variableSetIds.join(',')}`
     );
 
+    const responseVariableSets: VariableSetResponse[] = allVariableSets.map(set => {
+        delete set.ScopeValues;
+        return set;
+    })
     // Create lookup map
-    const allVariableSetsMap = allVariableSets.reduce((acc: ResourcesById<VariableSetResource>, resource) => {
+    const allVariableSetsMap = responseVariableSets.reduce((acc: ResourcesById<VariableSetResponse>, resource) => {
         acc[resource.Id] = resource;
         return acc;
     }, {});
@@ -321,35 +258,4 @@ async function loadLibraryVariableSetVariables(
         variableSet: allVariableSetsMap[lvs.VariableSetId],
         libraryVariableSet: lvs
     }));
-}
-
-async function loadTenantVariables(
-    projectId: string,
-    apiClient: Client,
-    spaceId: string
-): Promise<string[]> {
-    const response = await apiClient.get<{TenantVariableResources: TenantVariable[]}>(
-        `/bff/spaces/${spaceId}/projects/${projectId}/tenantvariables`
-    );
-
-    const variableNames = new Set<string>();
-
-    // Extract variable names from project variables templates
-    // Note that this will be guaranteed to only have a single collection of ProjectVariables for the tenant
-    response.TenantVariableResources.forEach(tenant => {
-        Object.values(tenant.ProjectVariables || {}).forEach(projectVar => {
-            projectVar.Templates?.forEach(template => {
-                variableNames.add(template.Name);
-            });
-        });
-
-        // Extract variable names from library variable sets templates
-        Object.values(tenant.LibraryVariables || {}).forEach(libraryVar => {
-            libraryVar.Templates?.forEach(template => {
-                variableNames.add(template.Name);
-            });
-        });
-    });
-
-    return Array.from(variableNames).sort();
 }
