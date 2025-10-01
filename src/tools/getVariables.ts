@@ -194,7 +194,7 @@ async function loadProjectVariableSet(
         throw new Error(`Missing gitRef for config-as-code project ${project.Name}`);
     }
 
-    let result: VariableSetResource;
+    let resource: VariableSetResource;
 
     if (hasGitVariables) {
         // For git projects, we need to get both text and sensitive variables separately
@@ -210,16 +210,17 @@ async function loadProjectVariableSet(
         );
 
         // Combine variables from both sets
-        result = {
+        resource = {
             ...textVariableSet,
             Variables: [...textVariableSet.Variables, ...sensitiveVariableSet.Variables]
         };
     } else {
         // For database projects, get variables directly
-        result = await apiClient.get<VariableSetResource>(`/api/spaces/${spaceId}/variables/${project.VariableSetId}`);
+        resource = await apiClient.get<VariableSetResource>(`/api/spaces/${spaceId}/variables/${project.VariableSetId}`);
     }
 
-    delete result.ScopeValues;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { ScopeValues, ...result } = resource;
 
     return result;
 }
@@ -230,7 +231,7 @@ async function loadLibraryVariableSetVariables(
     spaceId: string
 ): Promise<LibraryVariableSetWithVariables[]> {
 
-    if (includedLibraryVariableSetIds.length == 0) return [];
+    if (includedLibraryVariableSetIds.length === 0) return [];
 
     // Get library variable sets
     const libraryVariableSets = await apiClient.get<ResourceCollection<LibraryVariableSetResource>>(
@@ -243,9 +244,10 @@ async function loadLibraryVariableSetVariables(
         `/api/spaces/${spaceId}/variables/all?ids=${variableSetIds.join(',')}`
     );
 
-    const responseVariableSets: VariableSetResponse[] = allVariableSets.map(set => {
-        delete set.ScopeValues;
-        return set;
+    const responseVariableSets: VariableSetResponse[] = allVariableSets.map(resource => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { ScopeValues, ...result } = resource;
+        return result;
     })
     // Create lookup map
     const allVariableSetsMap = responseVariableSets.reduce((acc: ResourcesById<VariableSetResponse>, resource) => {
