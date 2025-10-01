@@ -14,7 +14,9 @@ export function registerGetVariablesTool(server: McpServer) {
     server.tool(
         "get_variables",
         `This tool gets all project and library variable set variables for a given project. 
-        If you want to retrieve tenant variables for a given tenant, use the get_tenant_variables tool.
+        Projects can contain variables (specific to a project), library variable sets (shared collections of variables associated with many projects), 
+        and tenant variables (variables related to a tenants connected to the project)
+        If you want to retrieve tenant variables for a tenant connected to the project, use the get_tenant_variables tool.
         `,
         {
             spaceName: z.string().describe("The space name"),
@@ -201,12 +203,12 @@ async function loadProjectVariableSet(
 
         // Retrieve the variable set stored in git for the associated gitRef
         const textVariableSet = await apiClient.get<VariableSetResource>(
-            `/api/spaces/${spaceId}/projects/${project.Id}/${gitRef}/variables`
+            `~/api/spaces/${spaceId}/projects/${project.Id}/${gitRef}/variables`
         );
 
         // Sensitive variables are still stored in the database so that they can be encrypted
         const sensitiveVariableSet = await apiClient.get<VariableSetResource>(
-            `/api/spaces/${spaceId}/projects/${project.Id}/variables`
+            `~/api/spaces/${spaceId}/projects/${project.Id}/variables`
         );
 
         // Combine variables from both sets
@@ -216,7 +218,7 @@ async function loadProjectVariableSet(
         };
     } else {
         // For database projects, get variables directly
-        resource = await apiClient.get<VariableSetResource>(`/api/spaces/${spaceId}/variables/${project.VariableSetId}`);
+        resource = await apiClient.get<VariableSetResource>(`~/api/spaces/${spaceId}/variables/${project.VariableSetId}`);
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -235,13 +237,13 @@ async function loadLibraryVariableSetVariables(
 
     // Get library variable sets
     const libraryVariableSets = await apiClient.get<ResourceCollection<LibraryVariableSetResource>>(
-        `/api/spaces/${spaceId}/libraryvariablesets?ids=${includedLibraryVariableSetIds.join(',')}`
+        `~/api/spaces/${spaceId}/libraryvariablesets?ids=${includedLibraryVariableSetIds.join(',')}`
     );
 
     // Get all variable sets for the library variable sets
     const variableSetIds = libraryVariableSets.Items.map(lvs => lvs.VariableSetId);
     const allVariableSets = await apiClient.get<VariableSetResource[]>(
-        `/api/spaces/${spaceId}/variables/all?ids=${variableSetIds.join(',')}`
+        `~/api/spaces/${spaceId}/variables/all?ids=${variableSetIds.join(',')}`
     );
 
     const responseVariableSets: VariableSetResponse[] = allVariableSets.map(resource => {
