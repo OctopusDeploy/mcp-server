@@ -13,8 +13,8 @@ export function registerListTenantsTool(server: McpServer) {
   This tool lists all tenants in a given space. The space name is required. Optionally provide skip and take parameters for pagination.`,
     { 
       spaceName: z.string().describe("The space name"),
-      skip: z.number().optional().describe("Number of items to skip for pagination"),
-      take: z.number().optional().describe("Number of items to take for pagination"),
+      skip: z.number().optional(),
+      take: z.number().optional(),
       projectId: z.string().optional().describe("Filter by specific project ID"),
       tags: z.string().optional().describe("Filter by tenant tags (comma-separated list)"),
       ids: z.array(z.string()).optional().describe("Filter by specific tenant IDs"),

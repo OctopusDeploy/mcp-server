@@ -17,13 +17,14 @@ export function registerListDeploymentsTool(server: McpServer) {
       tenants: z.array(z.string()).optional(),
       channels: z.array(z.string()).optional(),
       taskState: z.enum(["Canceled", "Cancelling", "Executing", "Failed", "Queued", "Success", "TimedOut"]).optional(),
+      skip: z.number().optional(),
       take: z.number().optional()
     },
     {
       title: "List deployments in an Octopus Deploy space",
       readOnlyHint: true,
     },
-    async ({ spaceName, projects, environments, tenants, channels, taskState, take }) => {
+    async ({ spaceName, projects, environments, tenants, channels, taskState, skip, take }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const deploymentRepository = new DeploymentRepository(client, spaceName);
@@ -34,6 +35,7 @@ export function registerListDeploymentsTool(server: McpServer) {
         tenants,
         channels,
         taskState: taskState ? TaskState[taskState as keyof typeof TaskState] : undefined,
+        skip,
         take
       });
       
