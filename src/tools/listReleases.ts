@@ -12,8 +12,8 @@ export function registerListReleasesTool(server: McpServer) {
   This tool lists all releases in a given space. The space name is required. Optionally provide skip and take parameters for pagination.`,
     { 
       spaceName: z.string().describe("The space name"),
-      skip: z.number().optional().describe("Number of items to skip for pagination"),
-      take: z.number().optional().describe("Number of items to take for pagination")
+      skip: z.number().optional(),
+      take: z.number().optional()
     },
     {
       title: "List all releases in an Octopus Deploy space",
