@@ -10,8 +10,8 @@ export function registerListDeploymentsTool(server: McpServer) {
     `List deployments in a space
   
   This tool lists deployments in a given space. The space name is required. When requesting latest deployment consider which deployment state the user is interested in (successful or all). Optional filters include: projects (array of project IDs), environments (array of environment IDs), tenants (array of tenant IDs), channels (array of channel IDs), taskState (one of: Canceled, Cancelling, Executing, Failed, Queued, Success, TimedOut), and take (number of results to return).`,
-    { 
-      spaceName: z.string(), 
+    {
+      spaceName: z.string(),
       projects: z.array(z.string()).optional(),
       environments: z.array(z.string()).optional(),
       tenants: z.array(z.string()).optional(),
@@ -29,7 +29,7 @@ export function registerListDeploymentsTool(server: McpServer) {
       const client = await Client.create(configuration);
       const deploymentRepository = new DeploymentRepository(client, spaceName);
 
-      const deploymentsResponse = await deploymentRepository.list({ 
+      const deploymentsResponse = await deploymentRepository.list({
         projects,
         environments,
         tenants,
@@ -38,36 +38,40 @@ export function registerListDeploymentsTool(server: McpServer) {
         skip,
         take
       });
-      
-      const deployments = deploymentsResponse.Items.map((deployment: Deployment) => ({
-        spaceId: deployment.SpaceId,
-        id: deployment.Id,
-        name: deployment.Name,
-        releaseId: deployment.ReleaseId,
-        environmentId: deployment.EnvironmentId,
-        tenantId: deployment.TenantId,
-        projectId: deployment.ProjectId,
-        channelId: deployment.ChannelId,
-        created: deployment.Created,
-        taskId: deployment.TaskId,
-        deploymentProcessId: deployment.DeploymentProcessId,
-        comments: deployment.Comments,
-        formValues: deployment.FormValues,
-        queueTime: deployment.QueueTime,
-        queueTimeExpiry: deployment.QueueTimeExpiry,
-        useGuidedFailure: deployment.UseGuidedFailure,
-        specificMachineIds: deployment.SpecificMachineIds,
-        excludedMachineIds: deployment.ExcludedMachineIds,
-        skipActions: deployment.SkipActions,
-        forcePackageDownload: deployment.ForcePackageDownload,
-        forcePackageRedeployment: deployment.ForcePackageRedeployment,
-      }));
 
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(deployments),
+            text: JSON.stringify({
+              totalResults: deploymentsResponse.TotalResults,
+              itemsPerPage: deploymentsResponse.ItemsPerPage,
+              numberOfPages: deploymentsResponse.NumberOfPages,
+              lastPageNumber: deploymentsResponse.LastPageNumber,
+              items: deploymentsResponse.Items.map((deployment: Deployment) => ({
+                spaceId: deployment.SpaceId,
+                id: deployment.Id,
+                name: deployment.Name,
+                releaseId: deployment.ReleaseId,
+                environmentId: deployment.EnvironmentId,
+                tenantId: deployment.TenantId,
+                projectId: deployment.ProjectId,
+                channelId: deployment.ChannelId,
+                created: deployment.Created,
+                taskId: deployment.TaskId,
+                deploymentProcessId: deployment.DeploymentProcessId,
+                comments: deployment.Comments,
+                formValues: deployment.FormValues,
+                queueTime: deployment.QueueTime,
+                queueTimeExpiry: deployment.QueueTimeExpiry,
+                useGuidedFailure: deployment.UseGuidedFailure,
+                specificMachineIds: deployment.SpecificMachineIds,
+                excludedMachineIds: deployment.ExcludedMachineIds,
+                skipActions: deployment.SkipActions,
+                forcePackageDownload: deployment.ForcePackageDownload,
+                forcePackageRedeployment: deployment.ForcePackageRedeployment,
+              }))
+            }),
           },
         ],
       };
