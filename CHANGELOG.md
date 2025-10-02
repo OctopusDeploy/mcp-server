@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/OctopusDeploy/mcp-server/compare/v0.3.0...v0.3.1) (2025-10-02)
+
+
+### Bug Fixes
+
+* Add missing pagination parameters to various tools ([#45](https://github.com/OctopusDeploy/mcp-server/issues/45)) ([3d2d444](https://github.com/OctopusDeploy/mcp-server/commit/3d2d444d9e48126937d411a2bb6f1539118c3cd6))
+
 ## [0.3.0](https://github.com/OctopusDeploy/mcp-server/compare/v0.2.5...v0.3.0) (2025-10-01)
 
 
