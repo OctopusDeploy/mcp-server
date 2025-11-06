@@ -12,6 +12,10 @@
 
 The Octopus MCP Server provides your AI assistant with powerful tools that allow it to inspect, query, and diagnose problems within your Octopus instance, transforming it into your ultimate DevOps wingmate. For a list of supported use-cases and sample prompts, see our [documentation](https://octopus.com/docs/octopus-ai/mcp/use-cases).
 
+<a href="https://glama.ai/mcp/servers/@OctopusDeploy/mcp-server">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@OctopusDeploy/mcp-server/badge" alt="Octopus Deploy Server MCP server" />
+</a>
+
 This project is currently in Early Access, and subject to breaking changes.
 
 ### Octopus Server Compatibility
