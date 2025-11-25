@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.0](https://github.com/OctopusDeploy/mcp-server/compare/v0.3.1...v1.0.0) (2025-11-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* removes early access labeling
+
+### Bug Fixes
+
+* removes early access labeling ([f63ccf4](https://github.com/OctopusDeploy/mcp-server/commit/f63ccf45a64eccf918deebf41b730e7eccff2190))
+
 ## [0.3.1](https://github.com/OctopusDeploy/mcp-server/compare/v0.3.0...v0.3.1) (2025-10-02)
 
 
