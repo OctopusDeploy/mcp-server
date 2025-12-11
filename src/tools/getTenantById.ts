@@ -9,7 +9,7 @@ import { getPublicUrl } from "../helpers/getPublicUrl.js";
 export function registerGetTenantByIdTool(server: McpServer) {
   server.tool(
     "get_tenant_by_id",
-    `Get details for a specific tenant by its ID. ${tenantsDescription}`,
+    `Get details for a specific tenant by its ID, including the projects and environments the tenant is associated with. ${tenantsDescription}`,
     { 
       spaceName: z.string().describe("The space name"),
       tenantId: z.string().describe("The ID of the tenant to retrieve")
