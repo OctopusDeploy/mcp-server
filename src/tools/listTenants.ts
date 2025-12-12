@@ -1,9 +1,10 @@
-import { Client, TenantRepository } from "@octopusdeploy/api-client";
-import { z } from "zod";
-import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
-import { registerToolDefinition } from "../types/toolConfig.js";
-import { getPublicUrl } from "../helpers/getPublicUrl.js";
+import {Client, resolveSpaceId, type ResourceCollection} from "@octopusdeploy/api-client";
+import {z} from "zod";
+import {type McpServer} from "@modelcontextprotocol/sdk/server/mcp.js";
+import {getClientConfigurationFromEnvironment} from "../helpers/getClientConfigurationFromEnvironment.js";
+import {registerToolDefinition} from "../types/toolConfig.js";
+import {getPublicUrl} from "../helpers/getPublicUrl.js";
+import type {TenantResource} from "../types/tenantsTypes.js";
 
 export function registerListTenantsTool(server: McpServer) {
   server.tool(
@@ -11,7 +12,7 @@ export function registerListTenantsTool(server: McpServer) {
     `List tenants in a space
   
   This tool lists all tenants in a given space. The space name is required. Optionally provide skip and take parameters for pagination.`,
-    { 
+    {
       spaceName: z.string().describe("The space name"),
       skip: z.number().optional(),
       take: z.number().optional(),
@@ -24,19 +25,22 @@ export function registerListTenantsTool(server: McpServer) {
       title: "List all tenants in an Octopus Deploy space",
       readOnlyHint: true,
     },
-    async ({ spaceName, skip, take, projectId, tags, ids, partialName }) => {
+    async ({spaceName, skip, take, projectId, tags, ids, partialName}) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
-      const tenantRepository = new TenantRepository(client, spaceName);
+      const spaceId = await resolveSpaceId(client, spaceName);
 
-      const tenantsResponse = await tenantRepository.list({ 
-        skip, 
-        take, 
-        projectId, 
-        tags, 
-        ids, 
-        partialName 
-      });
+      const tenantsResponse = await client.get<ResourceCollection<TenantResource>>(
+        "~/api/{spaceId}/tenants{?skip,take,projectId,tags,ids,partialName}",
+        {
+          spaceId,
+          skip,
+          take,
+          projectId,
+          tags,
+          ids,
+          partialName
+        });
 
       return {
         content: [
@@ -50,12 +54,16 @@ export function registerListTenantsTool(server: McpServer) {
               items: tenantsResponse.Items.map(tenant => ({
                 id: tenant.Id,
                 name: tenant.Name,
+                slug: tenant.Slug,
                 description: tenant.Description,
-                projectEnvironments: tenant.ProjectEnvironments,
+                isDisabled: tenant.IsDisabled ?? false, // Disabling tenants was introduced in 2024.4. Prior to that, all tenants could be considered IsDisabled=false.
                 tenantTags: tenant.TenantTags,
                 clonedFromTenantId: tenant.ClonedFromTenantId,
                 spaceId: tenant.SpaceId,
-                publicUrl: getPublicUrl(`${configuration.instanceURL}/app#/{spaceId}/tenants/{tenantId}/overview`, { spaceId: tenant.SpaceId, tenantId: tenant.Id }),
+                publicUrl: getPublicUrl(`${configuration.instanceURL}/app#/{spaceId}/tenants/{tenantId}/overview`, {
+                  spaceId: tenant.SpaceId,
+                  tenantId: tenant.Id
+                }),
                 publicUrlInstruction: `You can view more details about this tenant in the Octopus Deploy web portal at the provided publicUrl.`
               }))
             }),
@@ -68,6 +76,6 @@ export function registerListTenantsTool(server: McpServer) {
 
 registerToolDefinition({
   toolName: "list_tenants",
-  config: { toolset: "tenants", readOnly: true },
+  config: {toolset: "tenants", readOnly: true},
   registerFn: registerListTenantsTool,
 });
