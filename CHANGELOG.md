@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.0.1](https://github.com/OctopusDeploy/mcp-server/compare/v1.0.0...v1.0.1) (2025-12-12)
+
+
+### Bug Fixes
+
+* Simplifies list tenants tool ([#53](https://github.com/OctopusDeploy/mcp-server/issues/53)) ([c86d602](https://github.com/OctopusDeploy/mcp-server/commit/c86d602c3b04c56be713974ccec98addeb2aa7c7))
+
+## [1.0.0](https://github.com/OctopusDeploy/mcp-server/compare/v0.3.1...v1.0.0) (2025-11-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* removes early access labeling
+
+### Bug Fixes
+
+* removes early access labeling ([f63ccf4](https://github.com/OctopusDeploy/mcp-server/commit/f63ccf45a64eccf918deebf41b730e7eccff2190))
+
 ## [0.3.1](https://github.com/OctopusDeploy/mcp-server/compare/v0.3.0...v0.3.1) (2025-10-02)
 
 
