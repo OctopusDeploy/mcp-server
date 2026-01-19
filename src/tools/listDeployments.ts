@@ -1,8 +1,9 @@
-import { Client, DeploymentRepository, TaskState, type Deployment } from "@octopusdeploy/api-client";
+import { Client, DeploymentRepository, ReleaseRepository, TaskState, type Deployment } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { getPublicUrl } from "../helpers/getPublicUrl.js";
 
 export function registerListDeploymentsTool(server: McpServer) {
   server.tool(
@@ -39,6 +40,28 @@ export function registerListDeploymentsTool(server: McpServer) {
         take
       });
 
+      const deployments = deploymentsResponse.Items as Deployment[];
+      const releaseIds = Array.from(
+        new Set(
+          deployments
+            .map((deployment) => deployment.ReleaseId)
+            .filter((releaseId): releaseId is string => Boolean(releaseId))
+        )
+      );
+
+      const releaseVersions = new Map<string, string>();
+
+      if (releaseIds.length > 0) {
+        const releaseRepository = new ReleaseRepository(client, spaceName);
+        const releaseResults = await Promise.allSettled(releaseIds.map((id) => releaseRepository.get(id)));
+
+        releaseResults.forEach((result, index) => {
+          if (result.status === "fulfilled") {
+            releaseVersions.set(releaseIds[index]!, result.value.Version);
+          }
+        });
+      }
+
       return {
         content: [
           {
@@ -48,29 +71,49 @@ export function registerListDeploymentsTool(server: McpServer) {
               itemsPerPage: deploymentsResponse.ItemsPerPage,
               numberOfPages: deploymentsResponse.NumberOfPages,
               lastPageNumber: deploymentsResponse.LastPageNumber,
-              items: deploymentsResponse.Items.map((deployment: Deployment) => ({
-                spaceId: deployment.SpaceId,
-                id: deployment.Id,
-                name: deployment.Name,
-                releaseId: deployment.ReleaseId,
-                environmentId: deployment.EnvironmentId,
-                tenantId: deployment.TenantId,
-                projectId: deployment.ProjectId,
-                channelId: deployment.ChannelId,
-                created: deployment.Created,
-                taskId: deployment.TaskId,
-                deploymentProcessId: deployment.DeploymentProcessId,
-                comments: deployment.Comments,
-                formValues: deployment.FormValues,
-                queueTime: deployment.QueueTime,
-                queueTimeExpiry: deployment.QueueTimeExpiry,
-                useGuidedFailure: deployment.UseGuidedFailure,
-                specificMachineIds: deployment.SpecificMachineIds,
-                excludedMachineIds: deployment.ExcludedMachineIds,
-                skipActions: deployment.SkipActions,
-                forcePackageDownload: deployment.ForcePackageDownload,
-                forcePackageRedeployment: deployment.ForcePackageRedeployment,
-              }))
+              items: deployments.map((deployment) => {
+                const releaseVersion = deployment.ReleaseId ? releaseVersions.get(deployment.ReleaseId) : undefined;
+                const publicUrl = releaseVersion
+                  ? getPublicUrl(
+                      `${configuration.instanceURL}/app#/{spaceId}/projects/{projectId}/deployments/releases/{releaseVersion}/deployments/{deploymentId}`,
+                      {
+                        spaceId: deployment.SpaceId,
+                        projectId: deployment.ProjectId,
+                        releaseVersion,
+                        deploymentId: deployment.Id,
+                      }
+                    )
+                  : undefined;
+
+                return {
+                  spaceId: deployment.SpaceId,
+                  id: deployment.Id,
+                  name: deployment.Name,
+                  releaseId: deployment.ReleaseId,
+                  releaseVersion,
+                  environmentId: deployment.EnvironmentId,
+                  tenantId: deployment.TenantId,
+                  projectId: deployment.ProjectId,
+                  channelId: deployment.ChannelId,
+                  created: deployment.Created,
+                  taskId: deployment.TaskId,
+                  deploymentProcessId: deployment.DeploymentProcessId,
+                  comments: deployment.Comments,
+                  formValues: deployment.FormValues,
+                  queueTime: deployment.QueueTime,
+                  queueTimeExpiry: deployment.QueueTimeExpiry,
+                  useGuidedFailure: deployment.UseGuidedFailure,
+                  specificMachineIds: deployment.SpecificMachineIds,
+                  excludedMachineIds: deployment.ExcludedMachineIds,
+                  skipActions: deployment.SkipActions,
+                  forcePackageDownload: deployment.ForcePackageDownload,
+                  forcePackageRedeployment: deployment.ForcePackageRedeployment,
+                  publicUrl,
+                  publicUrlInstruction: publicUrl
+                    ? "You can view more details about this deployment in the Octopus Deploy web portal at the provided publicUrl."
+                    : undefined,
+                };
+              })
             }),
           },
         ],
