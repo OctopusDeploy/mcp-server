@@ -4,7 +4,7 @@ import { getClientConfigurationFromEnvironment } from '../helpers/getClientConfi
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerToolDefinition } from '../types/toolConfig.js';
 import { tasksDescription } from '../types/taskTypes.js';
-import { parseOctopusUrl, extractTaskId, extractDeploymentId, extractSpaceId } from '../helpers/urlParser.js';
+import { parseOctopusUrl, extractTaskId, extractDeploymentId } from '../helpers/urlParser.js';
 import { resolveSpaceNameFromId } from '../helpers/spaceResolver.js';
 
 export interface GetTaskFromUrlParams {

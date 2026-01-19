@@ -53,7 +53,7 @@ export async function getDeploymentFromUrl(client: Client, params: GetDeployment
     try {
       const release = await releaseRepository.get(deployment.ReleaseId);
       releaseVersion = release.Version;
-    } catch (error) {
+    } catch {
       releaseVersion = undefined;
     }
   }
