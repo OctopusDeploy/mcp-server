@@ -12,7 +12,7 @@ import { setClientInfo } from "./utils/clientInfo.js";
 import { logger } from "./utils/logger.js";
 import packageJson from "../package.json" with { type: "json" };
 import { fileURLToPath } from "url";
-import { dirname, join, isAbsolute } from "path";
+import { dirname, join } from "path";
 
 export const SEMVER_VERSION = packageJson.version;
 
