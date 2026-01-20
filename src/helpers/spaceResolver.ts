@@ -15,13 +15,7 @@ export async function resolveSpaceNameFromId(
   }
 
   const spaceRepository = new SpaceRepository(client);
-  const spacesResponse = await spaceRepository.list({});
-
-  const space = spacesResponse.Items.find((s) => s.Id === spaceId);
-
-  if (!space) {
-    throw new Error(`Space with ID "${spaceId}" not found`);
-  }
+  const space = await spaceRepository.get(spaceId);
 
   spaceCache.set(spaceId, { name: space.Name, timestamp: now });
 
