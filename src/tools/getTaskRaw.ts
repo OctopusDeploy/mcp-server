@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getClientConfigurationFromEnvironment } from '../helpers/getClientConfigurationFromEnvironment.js';
 import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerToolDefinition } from '../types/toolConfig.js';
+import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES } from '../helpers/errorHandling.js';
 
 export interface GetTaskRawParams {
   spaceName: string;
@@ -11,10 +12,8 @@ export interface GetTaskRawParams {
 
 export async function getTaskRaw(client: Client, params: GetTaskRawParams) {
   const { spaceName, taskId } = params;
-  
-  if (!taskId) {
-    throw new Error("Task ID is required");
-  }
+
+  validateEntityId(taskId, 'task', ENTITY_PREFIXES.task);
 
   const serverTaskRepository = new SpaceServerTaskRepository(client, spaceName);
   const response = await serverTaskRepository.getRaw(taskId);
@@ -32,25 +31,32 @@ export function registerGetTaskRawTool(server: McpServer) {
     },
     async (args) => {
       const { spaceName, taskId } = args as GetTaskRawParams;
-      
-      if (!taskId) {
-        throw new Error("Task ID is required");
-      }
 
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
-      const serverTaskRepository = new SpaceServerTaskRepository(client, spaceName);
-      
-      const response = await serverTaskRepository.getRaw(taskId);
-      
-      return {
-        content: [
-          {
-            type: "text",
-            text: response,
-          },
-        ],
-      };
+      validateEntityId(taskId, 'task', ENTITY_PREFIXES.task);
+
+      try {
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const serverTaskRepository = new SpaceServerTaskRepository(client, spaceName);
+
+        const response = await serverTaskRepository.getRaw(taskId);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: response,
+            },
+          ],
+        };
+      } catch (error) {
+        handleOctopusApiError(error, {
+          entityType: 'task',
+          entityId: taskId,
+          spaceName,
+          helpText: "Use list_deployments or list_releases to find valid task IDs."
+        });
+      }
     }
   );
 }

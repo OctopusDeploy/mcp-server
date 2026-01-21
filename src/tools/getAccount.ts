@@ -7,6 +7,7 @@ import {
   type AccountResource,
   mapAccountResource
 } from "../types/accountTypes.js";
+import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES } from "../helpers/errorHandling.js";
 
 export function registerGetAccountTool(server: McpServer) {
   server.tool(
@@ -23,28 +24,38 @@ This tool retrieves detailed information about a specific account using its ID. 
       readOnlyHint: true,
     },
     async ({ spaceName, accountId }) => {
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
-      const spaceId = await resolveSpaceId(client, spaceName);
+      validateEntityId(accountId, 'account', ENTITY_PREFIXES.account);
 
-      const response = await client.get<AccountResource>(
-        "~/api/{spaceId}/accounts/{id}",
-        {
-          spaceId,
-          id: accountId,
-        }
-      );
+      try {
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const spaceId = await resolveSpaceId(client, spaceName);
 
-      const account = mapAccountResource(response);
-
-      return {
-        content: [
+        const response = await client.get<AccountResource>(
+          "~/api/{spaceId}/accounts/{id}",
           {
-            type: "text",
-            text: JSON.stringify(account),
-          },
-        ],
-      };
+            spaceId,
+            id: accountId,
+          }
+        );
+
+        const account = mapAccountResource(response);
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(account),
+            },
+          ],
+        };
+      } catch (error) {
+        handleOctopusApiError(error, {
+          entityType: 'account',
+          entityId: accountId,
+          spaceName
+        });
+      }
     }
   );
 }

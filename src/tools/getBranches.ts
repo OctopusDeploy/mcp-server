@@ -4,6 +4,7 @@ import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { getProjectBranches } from "../helpers/vcsProjectHelpers.js";
+import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES } from "../helpers/errorHandling.js";
 
 export function registerGetBranchesTool(server: McpServer) {
   server.tool(
@@ -23,9 +24,7 @@ This tool retrieves Git branches for a specific project in a space. The space na
       readOnlyHint: true,
     },
     async ({ spaceName, projectId, searchByName, skip, take }) => {
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
-      const spaceId = await resolveSpaceId(client, spaceName);
+      validateEntityId(projectId, 'project', ENTITY_PREFIXES.project);
 
       const options = {
         searchByName,
@@ -33,27 +32,46 @@ This tool retrieves Git branches for a specific project in a space. The space na
         take,
       };
 
-      const branches = await getProjectBranches(client, spaceId, projectId, options);
+      try {
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const spaceId = await resolveSpaceId(client, spaceName);
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              Items: branches.Items.map(branch => ({
-                Name: branch.Name,
-                IsProtected: branch.IsProtected,
-                CanonicalName: branch.CanonicalName,
-              })),
-              TotalResults: branches.TotalResults,
-              ItemsPerPage: branches.ItemsPerPage,
-              NumberOfPages: branches.NumberOfPages,
-              LastPageNumber: branches.LastPageNumber,
-              ItemType: branches.ItemType,
-            }),
-          },
-        ],
-      };
+        const branches = await getProjectBranches(client, spaceId, projectId, options);
+
+        if (branches.Items.length === 0 && !searchByName) {
+          throw new Error(
+            `No branches found for project '${projectId}'. This may indicate that the project is not version controlled or ` +
+            "uses database storage instead of Git. Only version controlled projects have branches."
+          );
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                Items: branches.Items.map(branch => ({
+                  Name: branch.Name,
+                  IsProtected: branch.IsProtected,
+                  CanonicalName: branch.CanonicalName,
+                })),
+                TotalResults: branches.TotalResults,
+                ItemsPerPage: branches.ItemsPerPage,
+                NumberOfPages: branches.NumberOfPages,
+                LastPageNumber: branches.LastPageNumber,
+                ItemType: branches.ItemType,
+              }),
+            },
+          ],
+        };
+      } catch (error) {
+        handleOctopusApiError(error, {
+          entityType: 'project',
+          entityId: projectId,
+          spaceName
+        });
+      }
     }
   );
 }

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES } from "../helpers/errorHandling.js";
 
 export function registerGetTenantVariablesTool(server: McpServer) {
   server.tool(
@@ -24,39 +25,60 @@ export function registerGetTenantVariablesTool(server: McpServer) {
       readOnlyHint: true,
     },
     async ({ spaceName, tenantId, variableType, includeMissingVariables = false }) => {
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
-      const tenantRepository = new TenantRepository(client, spaceName);
+      validateEntityId(tenantId, 'tenant', ENTITY_PREFIXES.tenant);
 
-      let variables;
-      
-      switch (variableType) {
-        case "all": {
-          const tenant = await tenantRepository.get(tenantId);
-          variables = await tenantRepository.getVariables(tenant);
-          break;
-        }
-        case "common":
-          variables = await tenantRepository.getCommonVariablesById(tenantId, includeMissingVariables);
-          break;
-        case "project":
-          variables = await tenantRepository.getProjectVariablesById(tenantId, includeMissingVariables);
-          break;
+      if (!variableType) {
+        throw new Error(
+          "Variable type is required. Valid values are: 'all', 'common', or 'project'. " +
+          "'all' returns all variables, 'common' returns shared variables, 'project' returns project-specific variables."
+        );
       }
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              tenantId,
-              variableType,
-              includeMissingVariables,
-              variables
-            }),
-          },
-        ],
-      };
+      try {
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const tenantRepository = new TenantRepository(client, spaceName);
+
+        let variables;
+
+        switch (variableType) {
+          case "all": {
+            const tenant = await tenantRepository.get(tenantId);
+            variables = await tenantRepository.getVariables(tenant);
+            break;
+          }
+          case "common":
+            variables = await tenantRepository.getCommonVariablesById(tenantId, includeMissingVariables);
+            break;
+          case "project":
+            variables = await tenantRepository.getProjectVariablesById(tenantId, includeMissingVariables);
+            break;
+          default:
+            throw new Error(
+              `Invalid variable type '${variableType}'. Valid values are: 'all', 'common', or 'project'.`
+            );
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                tenantId,
+                variableType,
+                includeMissingVariables,
+                variables
+              }),
+            },
+          ],
+        };
+      } catch (error) {
+        handleOctopusApiError(error, {
+          entityType: 'tenant',
+          entityId: tenantId,
+          spaceName
+        });
+      }
     }
   );
 }

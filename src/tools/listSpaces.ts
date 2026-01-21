@@ -4,6 +4,7 @@ import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfi
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { spacesDescription } from "../types/spaceTypes.js";
+import { handleOctopusApiError } from "../helpers/errorHandling.js";
 
 export function registerListSpacesTool(server: McpServer) {
   server.tool(
@@ -12,40 +13,63 @@ export function registerListSpacesTool(server: McpServer) {
     {
       partialName: z.string().optional(),
       skip: z.number().optional(),
-      take: z.number().optional()
+      take: z.number().optional(),
     },
     {
       title: "List all spaces in an Octopus Deploy instance",
       readOnlyHint: true,
     },
     async ({ partialName, skip, take }) => {
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
-      const spaceRepository = new SpaceRepository(client);
+      try {
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const spaceRepository = new SpaceRepository(client);
 
-      const spacesResponse = await spaceRepository.list({ partialName, skip, take });
+        const spacesResponse = await spaceRepository.list({
+          partialName,
+          skip,
+          take,
+        });
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: JSON.stringify({
-              totalResults: spacesResponse.TotalResults,
-              itemsPerPage: spacesResponse.ItemsPerPage,
-              numberOfPages: spacesResponse.NumberOfPages,
-              lastPageNumber: spacesResponse.LastPageNumber,
-              items: spacesResponse.Items.map((space) => ({
-                id: space.Id,
-                name: space.Name,
-                description: space.Description,
-                isDefault: space.IsDefault,
-                taskQueueStopped: space.TaskQueueStopped,
-              }))
-            }),
-          },
-        ],
-      };
-    }
+        if (spacesResponse.Items.length === 0) {
+          const message = partialName
+            ? `No spaces found matching '${partialName}'. Space names are case-sensitive.`
+            : "No spaces found. This may indicate a configuration or permission issue.";
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: message,
+              },
+            ],
+          };
+        }
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify({
+                totalResults: spacesResponse.TotalResults,
+                itemsPerPage: spacesResponse.ItemsPerPage,
+                numberOfPages: spacesResponse.NumberOfPages,
+                lastPageNumber: spacesResponse.LastPageNumber,
+                items: spacesResponse.Items.map((space) => ({
+                  id: space.Id,
+                  name: space.Name,
+                  description: space.Description,
+                  isDefault: space.IsDefault,
+                  taskQueueStopped: space.TaskQueueStopped,
+                })),
+              }),
+            },
+          ],
+        };
+      } catch (error) {
+        handleOctopusApiError(error, {});
+      }
+    },
   );
 }
 
