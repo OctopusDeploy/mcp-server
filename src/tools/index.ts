@@ -31,6 +31,9 @@ import './listCertificates.js';
 import './getCertificate.js';
 import './listAccounts.js';
 import './getAccount.js';
+import './getVariables.js';
+import './getTaskFromUrl.js';
+import './getDeploymentFromUrl.js';
 
 function isToolEnabled(toolRegistration: ToolRegistration, config: ToolsetConfig): boolean {
   if (!toolRegistration) {

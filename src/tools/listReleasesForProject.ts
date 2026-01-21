@@ -13,8 +13,8 @@ export function registerListReleasesForProjectTool(server: McpServer) {
     { 
       spaceName: z.string(),
       projectId: z.string(),
-      skip: z.number().optional().describe("Number of items to skip for pagination"),
-      take: z.number().optional().describe("Number of items to take for pagination"),
+      skip: z.number().optional(),
+      take: z.number().optional(),
       searchByVersion: z.string().optional().describe("Search releases by version string")
     },
     {

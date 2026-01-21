@@ -1,5 +1,4 @@
 import * as fs from "fs";
-import * as path from "path";
 
 export enum LogLevel {
   INFO = 1,
@@ -7,7 +6,7 @@ export enum LogLevel {
 }
 
 interface LoggerConfig {
-  logFilePath: string;
+  logFilePath?: string | undefined;
   minLevel: LogLevel;
   quietMode: boolean;
 }
@@ -16,22 +15,18 @@ interface LoggerConfig {
  * Default logger configuration
  */
 const config: LoggerConfig = {
-  logFilePath: "mcp-server-log.txt",
+  logFilePath: undefined,
   minLevel: LogLevel.INFO,
   quietMode: false
 };
+
 
 /**
  * Set custom log file path
  * @param filePath Path to the log file (can be full path or just filename)
  */
 function setLogFilePath(filePath: string): void {
-  // If it's just a filename (no path separators), use current directory
-  if (!filePath.includes('/') && !filePath.includes('\\')) {
-    config.logFilePath = path.join(process.cwd(), filePath);
-  } else {
-    config.logFilePath = filePath;
-  }
+  config.logFilePath = filePath;
 }
 
 /**
@@ -98,8 +93,8 @@ function shouldLog(level: LogLevel): boolean {
  * @param message Message to log
  */
 function writeToFile(level: LogLevel, message: string): void {
-  if (config.quietMode) {
-    return; // Don't write to file in quiet mode
+  if (config.quietMode || config.logFilePath === undefined) {
+    return; // Don't write to file if the log file path is not defined
   }
 
   const timestamp = new Date().toISOString();

@@ -1,6 +1,6 @@
 import { type ClientConfiguration } from "@octopusdeploy/api-client";
 import { env } from "process";
-import { SEMVER_VERSION } from "../index.js";
+import { SEMVER_VERSION } from "../utils/version.js";
 import { getClientInfo } from "../utils/clientInfo.js";
 
 const USER_AGENT_NAME = "octopus-mcp-server";

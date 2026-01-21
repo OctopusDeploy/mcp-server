@@ -1,16 +1,16 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/user-attachments/assets/d8f112b2-87b6-4a45-bffe-85faa456c7a8">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/user-attachments/assets/edaac2c0-e246-44e3-8b1b-50229dfa8ffd">
-  <img alt="Octopus Deploy Logo" src="https://github.com/user-attachments/assets/edaac2c0-e246-44e3-8b1b-50229dfa8ffd" />
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/octopusdeploy/mcp-server/blob/main/images/OctopusDeploy_Logo_DarkMode.png?raw=true">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/octopusdeploy/mcp-server/blob/main/images/OctopusDeploy_Logo_LightMode.png?raw=true">
+  <img alt="Octopus Deploy Logo" src="https://github.com/octopusdeploy/mcp-server/blob/main/images/OctopusDeploy_Logo_LightMode.png?raw=true" />
 </picture>
 
 # Octopus Deploy Official MCP Server
 
+[Octopus](https://octopus.com) makes it easy to deliver software to Kubernetes, multi-cloud, on-prem infrastructure, and anywhere else. Automate the release, deployment, and operations of your software and AI workloads with a tool that can handle CD at scale in ways no other tool can.
+
 [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) allows the AI assistants you use in your day to day work, like Claude Code, or ChatGPT, to connect to the systems and services you own in a standardized fashion, allowing them to pull information from those systems and services to answer questions and perform tasks.
 
-The Octopus MCP Server provides your AI assistant with powerful tools that allow it to inspect, query, and diagnose problems within your Octopus instance, transforming it into your ultimate DevOps wingmate. 
-
-This project is currently in Early Access, and subject to breaking changes.
+The Octopus MCP Server provides your AI assistant with powerful tools that allow it to inspect, query, and diagnose problems within your Octopus instance, transforming it into your ultimate DevOps wingmate. For a list of supported use-cases and sample prompts, see our [documentation](https://octopus.com/docs/octopus-ai/mcp/use-cases).
 
 ### Octopus Server Compatibility
 
@@ -18,18 +18,63 @@ Most tools exposed by the MCP Server use stable APIs that have been available fr
 
 ## 🚀 Installation
 
-### Requirements
+### Install via Docker
+
+Run with environment variables
+```bash
+docker run -i --rm -e OCTOPUS_API_KEY=your-key -e OCTOPUS_SERVER_URL=https://your-octopus.com octopusdeploy/mcp-server
+```
+
+Run with CLI arguments
+```bash
+docker run -i --rm octopusdeploy/mcp-server --server-url https://your-octopus.com --api-key YOUR_API_KEY
+```
+
+Full example configuration (for Claude Desktop, Claude Code, and Cursor):
+```json
+{
+  "mcpServers": {
+    "octopus-deploy": {
+      "type": "stdio",
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "octopusdeploy/mcp-server",
+        "--server-url",
+        "https://your-octopus.com",
+        "--api-key",
+        "YOUR_API_KEY"
+      ]
+    },
+  }
+}
+```
+
+For Apple Mac users, you might need to add the following arguments in the configuration to force Docker to use the Linux platform:
+```json
+"--platform",
+"linux/amd64",
+```
+
+We are planning to release a native ARM build shortly so that those arguments will not be required anymore.
+
+### Install via Node
+
+#### Requirements
 - Node.js >= v20.0.0
 - Octopus Deploy instance that can be accessed by the MCP server via HTTPS
 - Octopus Deploy API Key
 
-### Configuration
+#### Configuration
 
 Full example configuration (for Claude Desktop, Claude Code, and Cursor):
 ```json
 {
   "mcpServers": {
     "octopusdeploy": {
+      "type": "stdio",
       "command": "npx",
       "args": ["-y", "@octopusdeploy/mcp-server", "--api-key", "YOUR_API_KEY", "--server-url", "https://your-octopus.com"]
     }
@@ -88,6 +133,7 @@ Available toolsets:
 - **kubernetes** - Kubernetes operations
 - **machines** - Deployment target operations
 - **certificates** - Certificate operations
+- **accounts** - Account operations
 
 #### Read-Only Mode
 The server runs in read-only mode by default for security. All current tools are read-only operations.
@@ -109,6 +155,13 @@ npx -y @octopusdeploy/mcp-server --toolsets core,projects --server-url https://y
 # Full production setup with all tools
 npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https://your-octopus.com --api-key YOUR_API_KEY
 ```
+
+#### Other command line arguments
+
+* `--log-level <level>` - Minimum log level (info, error)
+* `--log-file <path>` - Log file path or filename. If not specified, logs are written to console only
+* `-q, --quiet` - Disable file logging, only log errors to console
+* `--list-tools-by-version` - List all registered tools by their supported Octopus Server version and exit
 
 ## 🔨 Tools
 
@@ -148,6 +201,10 @@ npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https:/
 ### Certificates
 - `list_certificates`: List all certificates in a space with optional filtering
 - `get_certificate`: Get detailed information about a specific certificate by its ID
+
+### Accounts
+- `list_accounts`: List all accounts in a space with optional filtering
+- `get_accounts`: Get detailed information about a specific account by its ID
 
 ### Additional Tools
 - `get_deployment_process`: Get deployment process by ID for projects or releases

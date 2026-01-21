@@ -1,4 +1,8 @@
-import { Client, resolveSpaceId, ProjectRepository } from "@octopusdeploy/api-client";
+import {
+  Client,
+  resolveSpaceId,
+  ProjectRepository,
+} from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
@@ -14,68 +18,111 @@ export function registerGetDeploymentProcessTool(server: McpServer) {
 This tool retrieves a deployment process by its ID. Each project has a deployment process attached, and releases/deployments can also have frozen processes attached.`,
     {
       spaceName: z.string(),
-      projectId: z.string().optional().describe("The ID of the project to retrieve the deployment process for. If processId is not provided, this parameter is required."),
-      processId: z.string().optional().describe("The ID of the deployment process to retrieve. If not provided, the deployment process for the project will be retrieved."),
-      branchName: z.string().optional().describe("Optional branch name to get the deployment process for a specific branch (if using version controlled projects). Try `main` or `master` if unsure."),
-      includeDetails: z.boolean().optional().default(false).describe("Include detailed properties for steps and actions. Defaults to false."),
+      projectId: z
+        .string()
+        .optional()
+        .describe(
+          "The ID of the project to retrieve the deployment process for. If processId is not provided, this parameter is required.",
+        ),
+      processId: z
+        .string()
+        .optional()
+        .describe(
+          "The ID of the deployment process to retrieve. If not provided, the deployment process for the project will be retrieved.",
+        ),
+      branchName: z
+        .string()
+        .optional()
+        .describe(
+          "Optional branch name to get the deployment process for a specific branch (if using version controlled projects). Try `main` or `master` if unsure.",
+        ),
+      includeDetails: z
+        .boolean()
+        .optional()
+        .default(false)
+        .describe(
+          "Include detailed properties for steps and actions. Defaults to false.",
+        ),
     },
     {
       title: "Get deployment process details from Octopus Deploy",
       readOnlyHint: true,
     },
-    async ({ spaceName, processId, projectId, branchName, includeDetails = false }) => {
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
-      const spaceId = await resolveSpaceId(client, spaceName);
-      const projectRepository = projectId ? new ProjectRepository(client, spaceName) : null;
-      const project = projectRepository && projectId ? await projectRepository.get(projectId) : null;
-
+    async ({
+      spaceName,
+      processId,
+      projectId,
+      branchName,
+      includeDetails = false,
+    }) => {
       if (!processId && !projectId) {
         throw new Error(
           "Either processId or projectId must be provided. " +
-          "Use list_projects to find project IDs (starting with 'Projects-') or " +
-          "use list_deployments to find process IDs (starting with 'DeploymentProcesses-')."
+            "Use list_projects to find project IDs (starting with 'Projects-') or " +
+            "use list_deployments to find process IDs (starting with 'DeploymentProcesses-').",
         );
       }
 
-      if (projectId && !projectId.startsWith('Projects-')) {
+      if (projectId && !projectId.startsWith("Projects-")) {
         throw new Error(
           `Invalid project ID format '${projectId}'. Project IDs should start with 'Projects-' followed by numbers. ` +
-          "Use list_projects to find valid project IDs."
+            "Use list_projects to find valid project IDs.",
         );
       }
 
-      if (processId && !processId.startsWith('DeploymentProcesses-')) {
+      if (processId && !processId.startsWith("DeploymentProcesses-")) {
         throw new Error(
           `Invalid process ID format '${processId}'. Process IDs should start with 'DeploymentProcesses-' followed by numbers. ` +
-          "Use list_deployments to find valid process IDs."
+            "Use list_deployments to find valid process IDs.",
         );
+      }
+
+      const configuration = getClientConfigurationFromEnvironment();
+      const client = await Client.create(configuration);
+      const spaceId = await resolveSpaceId(client, spaceName);
+      const projectRepository = projectId
+        ? new ProjectRepository(client, spaceName)
+        : null;
+      const project =
+        projectRepository && projectId
+          ? await projectRepository.get(projectId)
+          : null;
+
+      // If we were not supplied a processId, we assume we are retrieving the process for the specified project.
+      if (!processId) {
+        processId = project?.DeploymentProcessId;
       }
 
       if (project?.IsVersionControlled && !branchName) {
         throw new Error(
           `Branch name required for version controlled project '${projectId}'. ` +
-          "Try 'main' or 'master', or use get_branches tool to list available branches."
+            "Try 'main' or 'master', or use get_branches tool to list available branches.",
         );
       }
 
       // If using branchName get the canonical ref first
-      const branches = branchName && projectId && await getProjectBranches(client, spaceId, projectId, { take: 1, searchByName: branchName });
-      const gitRef = branches && branches.Items.length > 0 ? branches.Items[0].CanonicalName : undefined;
+      const branches =
+        branchName &&
+        projectId &&
+        (await getProjectBranches(client, spaceId, projectId, {
+          take: 1,
+          searchByName: branchName,
+        }));
+      const gitRef =
+        branches && branches.Items.length > 0
+          ? branches.Items[0].CanonicalName
+          : undefined;
 
       const url = gitRef
         ? `~/api/{spaceId}/projects/{projectId}/{gitRef}/deploymentprocesses`
         : `~/api/{spaceId}/deploymentprocesses/{processId}`;
 
-      const response = await client.get<DeploymentProcessResource>(
-        url,
-        {
-          spaceId,
-          projectId,
-          processId,
-          gitRef
-        }
-      );
+      const response = await client.get<DeploymentProcessResource>(url, {
+        spaceId,
+        projectId,
+        processId,
+        gitRef,
+      });
 
       const deploymentProcess = {
         spaceId: response.SpaceId,
@@ -101,7 +148,7 @@ This tool retrieves a deployment process by its ID. Each project has a deploymen
               }
             }),
           };
-          
+
           return mappedStep;
         }),
       };
@@ -118,7 +165,7 @@ This tool retrieves a deployment process by its ID. Each project has a deploymen
           },
         ],
       };
-    }
+    },
   );
 }
 
