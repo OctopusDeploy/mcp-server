@@ -4,12 +4,14 @@
   "bugs": {
     "url": "https://github.com/OctopusDeploy/mcp-server/issues"
   },
-  "version": "0.1.2",
+  "version": "1.0.1",
   "type": "module",
   "description": "The Octopus MCP Server provides your AI assistant with powerful tools that allow it to inspect, query, and diagnose problems within your Octopus instance.",
   "main": "dist/index.js",
   "module": "dist/index.js",
-  "bin": "./dist/index.js",
+  "bin": {
+    "mcp-server": "dist/index.js"
+  },
   "files": [
     "dist/**/*"
   ],
@@ -30,9 +32,13 @@
   "homepage": "https://github.com/OctopusDeploy/mcp-server#readme",
   "repository": {
     "type": "git",
-    "url": "https://github.com/OctopusDeploy/mcp-server.git"
+    "url": "git+https://github.com/OctopusDeploy/mcp-server.git"
   },
   "license": "Apache-2.0",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.5",
     "@octopusdeploy/api-client": "^3.8.0",

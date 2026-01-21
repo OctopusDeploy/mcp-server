@@ -12,14 +12,31 @@ export interface GetTaskDetailsParams {
 
 export async function getTaskDetails(client: Client, params: GetTaskDetailsParams) {
   const { spaceName, taskId } = params;
-  
+
   if (!taskId) {
     throw new Error("Task ID is required");
   }
 
   const serverTaskRepository = new SpaceServerTaskRepository(client, spaceName);
-  const response = await serverTaskRepository.getDetails(taskId);
-  return response;
+
+  try {
+    const response = await serverTaskRepository.getDetails(taskId);
+    return response;
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('not found')) {
+      throw new Error(
+        `Task ${taskId} not found in space "${spaceName}". ` +
+        `\n\nCommon causes:\n` +
+        `1. If you extracted this task ID from a deployment URL, note that deployment URLs do not contain task IDs.\n` +
+        `   - Instead, use get_deployment_from_url or get_task_from_url to automatically resolve the correct task ID\n` +
+        `2. The task may exist in a different space\n` +
+        `3. The task may have been deleted or archived\n` +
+        `4. You may not have permission to view this task\n\n` +
+        `Tip: Use get_task_from_url if you have an Octopus Deploy URL instead of manually extracting IDs.`
+      );
+    }
+    throw error;
+  }
 }
 
 export function registerGetTaskDetailsTool(server: McpServer) {
@@ -33,17 +50,16 @@ export function registerGetTaskDetailsTool(server: McpServer) {
     },
     async (args) => {
       const { spaceName, taskId } = args as GetTaskDetailsParams;
-      
+
       if (!taskId) {
         throw new Error("Task ID is required");
       }
 
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
-      const serverTaskRepository = new SpaceServerTaskRepository(client, spaceName);
-      
-      const response = await serverTaskRepository.getDetails(taskId);
-      
+
+      const response = await getTaskDetails(client, { spaceName, taskId });
+
       return {
         content: [
           {

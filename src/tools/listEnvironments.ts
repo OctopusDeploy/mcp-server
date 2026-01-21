@@ -10,33 +10,43 @@ export function registerListEnvironmentsTool(server: McpServer) {
     `List environments in a space
   
   This tool lists all environments in a given space. The space name is required. Use this tool as early as possible to understand which environments are configured. Optionally filter by partial name match using partialName parameter.`,
-    { spaceName: z.string(), partialName: z.string().optional() },
+    {
+      spaceName: z.string(),
+      partialName: z.string().optional(),
+      skip: z.number().optional(),
+      take: z.number().optional()
+    },
     {
       title: "List all environments in an Octopus Deploy space",
       readOnlyHint: true,
     },
-    async ({ spaceName, partialName }) => {
+    async ({ spaceName, partialName, skip, take }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const environmentRepository = new EnvironmentRepository(client, spaceName);
 
-      const environmentsResponse = await environmentRepository.list({ partialName });
-      const environments = environmentsResponse.Items.map((environment: DeploymentEnvironment) => ({
-        spaceId: environment.SpaceId,
-        id: environment.Id,
-        name: environment.Name,
-        description: environment.Description,
-        sortOrder: environment.SortOrder,
-        useGuidedFailure: environment.UseGuidedFailure,
-        allowDynamicInfrastructure: environment.AllowDynamicInfrastructure,
-        extensionSettings: environment.ExtensionSettings,
-      }));
+      const environmentsResponse = await environmentRepository.list({ partialName, skip, take });
 
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(environments),
+            text: JSON.stringify({
+              totalResults: environmentsResponse.TotalResults,
+              itemsPerPage: environmentsResponse.ItemsPerPage,
+              numberOfPages: environmentsResponse.NumberOfPages,
+              lastPageNumber: environmentsResponse.LastPageNumber,
+              items: environmentsResponse.Items.map((environment: DeploymentEnvironment) => ({
+                spaceId: environment.SpaceId,
+                id: environment.Id,
+                name: environment.Name,
+                description: environment.Description,
+                sortOrder: environment.SortOrder,
+                useGuidedFailure: environment.UseGuidedFailure,
+                allowDynamicInfrastructure: environment.AllowDynamicInfrastructure,
+                extensionSettings: environment.ExtensionSettings,
+              }))
+            }),
           },
         ],
       };

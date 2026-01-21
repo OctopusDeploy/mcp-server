@@ -9,30 +9,39 @@ export function registerListSpacesTool(server: McpServer) {
   server.tool(
     "list_spaces",
     `List all spaces in the Octopus Deploy instance. ${spacesDescription} Always use this tool first to check that the requested space exists.`,
-    { partialName: z.string().optional() },
+    {
+      partialName: z.string().optional(),
+      skip: z.number().optional(),
+      take: z.number().optional()
+    },
     {
       title: "List all spaces in an Octopus Deploy instance",
       readOnlyHint: true,
     },
-    async ({ partialName }) => {
+    async ({ partialName, skip, take }) => {
       const configuration = getClientConfigurationFromEnvironment();
       const client = await Client.create(configuration);
       const spaceRepository = new SpaceRepository(client);
 
-      const spacesResponse = await spaceRepository.list({ partialName });
-      const spaces = spacesResponse.Items.map((space) => ({
-        id: space.Id,
-        name: space.Name,
-        description: space.Description,
-        isDefault: space.IsDefault,
-        taskQueueStopped: space.TaskQueueStopped,
-      }));
+      const spacesResponse = await spaceRepository.list({ partialName, skip, take });
 
       return {
         content: [
           {
             type: "text",
-            text: JSON.stringify(spaces),
+            text: JSON.stringify({
+              totalResults: spacesResponse.TotalResults,
+              itemsPerPage: spacesResponse.ItemsPerPage,
+              numberOfPages: spacesResponse.NumberOfPages,
+              lastPageNumber: spacesResponse.LastPageNumber,
+              items: spacesResponse.Items.map((space) => ({
+                id: space.Id,
+                name: space.Name,
+                description: space.Description,
+                isDefault: space.IsDefault,
+                taskQueueStopped: space.TaskQueueStopped,
+              }))
+            }),
           },
         ],
       };
