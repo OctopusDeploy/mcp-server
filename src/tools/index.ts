@@ -1,9 +1,9 @@
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { 
-  type ToolsetConfig, 
-  TOOL_REGISTRY, 
-  DEFAULT_TOOLSETS, 
-  type ToolRegistration
+import {
+  type ToolsetConfig,
+  TOOL_REGISTRY,
+  DEFAULT_TOOLSETS,
+  type ToolRegistration,
 } from "../types/toolConfig.js";
 
 // Import all tool files to trigger their self-registration
@@ -11,41 +11,45 @@ import "./listSpaces.js";
 import "./listProjects.js";
 import "./listEnvironments.js";
 import "./listDeployments.js";
-import "./getReleaseById.js";
-import "./listReleases.js";
 import "./listReleasesForProject.js";
 import "./getTaskById.js";
 import "./getTaskDetails.js";
 import "./getTaskRaw.js";
-import "./listTenants.js";
-import "./getTenantById.js";
 import "./getTenantVariables.js";
 import "./getMissingTenantVariables.js";
 import "./getKubernetesLiveStatus.js";
-import "./listDeploymentTargets.js";
-import './getDeploymentTarget.js';
-import './getDeploymentProcess.js';
-import './getBranches.js';
-import './getCurrentUser.js';
-import './listCertificates.js';
-import './getCertificate.js';
-import './listAccounts.js';
-import './getAccount.js';
-import './getVariables.js';
-import './getTaskFromUrl.js';
-import './getDeploymentFromUrl.js';
+import "./getDeploymentProcess.js";
+import "./getBranches.js";
+import "./getCurrentUser.js";
+import "./getVariables.js";
+import "./getTaskFromUrl.js";
+import "./getDeploymentFromUrl.js";
 
-function isToolEnabled(toolRegistration: ToolRegistration, config: ToolsetConfig): boolean {
+// Unified Find endpoints (replacing separate list/get pairs)
+import "./findReleases.js";
+import "./findTenants.js";
+import "./findDeploymentTargets.js";
+import "./findCertificates.js";
+import "./findAccounts.js";
+
+function isToolEnabled(
+  toolRegistration: ToolRegistration,
+  config: ToolsetConfig,
+): boolean {
   if (!toolRegistration) {
     return false;
   }
 
   // Check if toolset is enabled
-  const enabledToolsets = config.enabledToolsets === "all" 
-    ? DEFAULT_TOOLSETS 
-    : (config.enabledToolsets || DEFAULT_TOOLSETS);
-  
-  if (toolRegistration.config.toolset !== "core" && !enabledToolsets.includes(toolRegistration.config.toolset)) {
+  const enabledToolsets =
+    config.enabledToolsets === "all"
+      ? DEFAULT_TOOLSETS
+      : config.enabledToolsets || DEFAULT_TOOLSETS;
+
+  if (
+    toolRegistration.config.toolset !== "core" &&
+    !enabledToolsets.includes(toolRegistration.config.toolset)
+  ) {
     return false;
   }
 
