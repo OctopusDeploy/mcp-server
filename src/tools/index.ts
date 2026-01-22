@@ -11,32 +11,30 @@ import "./listSpaces.js";
 import "./listProjects.js";
 import "./listEnvironments.js";
 import "./listDeployments.js";
-import "./getReleaseById.js";
-import "./listReleases.js";
 import "./listReleasesForProject.js";
 import "./getTaskById.js";
 import "./getTaskDetails.js";
 import "./getTaskRaw.js";
-import "./listTenants.js";
-import "./getTenantById.js";
 import "./getTenantVariables.js";
 import "./getMissingTenantVariables.js";
 import "./getKubernetesLiveStatus.js";
-import "./listDeploymentTargets.js";
-import "./getDeploymentTarget.js";
 import "./getDeploymentProcess.js";
 import "./getBranches.js";
 import "./getCurrentUser.js";
-import "./listCertificates.js";
-import "./getCertificate.js";
-import "./listAccounts.js";
-import "./getAccount.js";
 import "./getVariables.js";
 import "./getTaskFromUrl.js";
 import "./getDeploymentFromUrl.js";
+
+// Unified Find endpoints (replacing separate list/get pairs)
+import "./findReleases.js";
+import "./findTenants.js";
+import "./findDeploymentTargets.js";
+import "./findCertificates.js";
+import "./findAccounts.js";
+
+// Write operations
 import "./createRelease.js";
 import "./deployRelease.js";
-
 function isToolEnabled(
   toolRegistration: ToolRegistration,
   config: ToolsetConfig,

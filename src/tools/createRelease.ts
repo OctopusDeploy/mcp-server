@@ -116,7 +116,7 @@ This tool creates a new release for a project. The space name and project name a
                   releaseVersion: response.ReleaseVersion,
                   message: `Release ${response.ReleaseVersion} created successfully`,
                   helpText:
-                    "Use get_release_by_id or list_releases_for_project to view release details, or use deploy_release to deploy this release to environments.",
+                    "Use find_releases to view release details, or use deploy_release to deploy this release to environments.",
                 },
                 null,
                 2,

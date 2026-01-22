@@ -215,7 +215,7 @@ The tool automatically determines which deployment type to use based on the para
                     deploymentId: task.DeploymentId,
                   })),
                   message: `Successfully created ${tasks.length} deployment(s) for release ${releaseVersion}`,
-                  helpText: `Use get_task_by_id with the taskId values to monitor deployment progress. Use list_deployments to view deployment details.`,
+                  helpText: `Use get_task_by_id with the taskId values to monitor deployment progress. Use list_deployments to view deployment details. Use find_releases to verify the release exists.`,
                 },
                 null,
                 2,
@@ -249,7 +249,7 @@ The tool automatically determines which deployment type to use based on the para
           entityType: "deployment",
           spaceName,
           helpText:
-            "Use list_projects to find valid project names, list_environments for environment names, and list_releases_for_project to verify the release exists. Ensure you have permissions to create deployments.",
+            "Use list_projects to find valid project names, list_environments for environment names, find_releases to verify the release exists, and find_tenants for tenant information. Ensure you have permissions to create deployments.",
         });
       }
     },

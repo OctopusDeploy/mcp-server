@@ -204,8 +204,7 @@ npx -y @octopusdeploy/mcp-server --no-read-only --server-url https://your-octopu
 
 ### Releases
 - `create_release`: Create a new release for a project
-- `get_release_by_id`: Get details for a specific release by its ID
-- `list_releases`: List all releases in a given space
+- `find_releases`: Find releases in a space (can get a specific release by ID or list all releases)
 - `list_releases_for_project`: List all releases for a specific project
 
 ### Tasks
@@ -214,8 +213,7 @@ npx -y @octopusdeploy/mcp-server --no-read-only --server-url https://your-octopu
 - `get_task_raw`: Get raw details for a specific server task
 
 ### Tenants
-- `list_tenants`: List all tenants in a given space
-- `get_tenant_by_id`: Get details for a specific tenant by its ID
+- `find_tenants`: Find tenants in a space (can get a specific tenant by ID or list/search tenants with filters)
 - `get_tenant_variables`: Get tenant variables by type (all, common, or project)
 - `get_missing_tenant_variables`: Get tenant variables that are missing values
 
@@ -223,16 +221,13 @@ npx -y @octopusdeploy/mcp-server --no-read-only --server-url https://your-octopu
 - `get_kubernetes_live_status`: Get live status of Kubernetes resources for a project and environment (minimum supported version: `2025.3`)
 
 ### Machines (Deployment Targets)
-- `list_deployment_targets`: List all deployment targets in a space with optional filtering
-- `get_deployment_target`: Get detailed information about a specific deployment target
+- `find_deployment_targets`: Find deployment targets in a space (can get a specific target by ID or list/search targets with filters)
 
 ### Certificates
-- `list_certificates`: List all certificates in a space with optional filtering
-- `get_certificate`: Get detailed information about a specific certificate by its ID
+- `find_certificates`: Find certificates in a space (can get a specific certificate by ID or list/search certificates with filters)
 
 ### Accounts
-- `list_accounts`: List all accounts in a space with optional filtering
-- `get_accounts`: Get detailed information about a specific account by its ID
+- `find_accounts`: Find accounts in a space (can get a specific account by ID or list/search accounts with filters)
 
 ### Additional Tools
 - `get_deployment_process`: Get deployment process by ID for projects or releases
