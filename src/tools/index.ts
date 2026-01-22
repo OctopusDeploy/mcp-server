@@ -32,6 +32,9 @@ import "./findDeploymentTargets.js";
 import "./findCertificates.js";
 import "./findAccounts.js";
 
+// Write operations
+import "./createRelease.js";
+import "./deployRelease.js";
 function isToolEnabled(
   toolRegistration: ToolRegistration,
   config: ToolsetConfig,
