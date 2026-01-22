@@ -37,7 +37,10 @@ program
     "--toolsets <toolsets>",
     `Comma-separated list of toolsets to enable, or "all" (default: all). Available toolsets: ${DEFAULT_TOOLSETS.join(", ")}`,
   )
-  .option("--read-only", "Enable read-only mode (default: enabled)", true)
+  .option(
+    "--no-read-only",
+    "Disable read-only mode to enable write operations (default: read-only enabled)",
+  )
   .option("--log-level <level>", "Minimum log level (info, error)", "info")
   .option(
     "--log-file <path>",

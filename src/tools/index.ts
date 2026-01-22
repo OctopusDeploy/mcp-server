@@ -1,9 +1,9 @@
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { 
-  type ToolsetConfig, 
-  TOOL_REGISTRY, 
-  DEFAULT_TOOLSETS, 
-  type ToolRegistration
+import {
+  type ToolsetConfig,
+  TOOL_REGISTRY,
+  DEFAULT_TOOLSETS,
+  type ToolRegistration,
 } from "../types/toolConfig.js";
 
 // Import all tool files to trigger their self-registration
@@ -23,29 +23,38 @@ import "./getTenantVariables.js";
 import "./getMissingTenantVariables.js";
 import "./getKubernetesLiveStatus.js";
 import "./listDeploymentTargets.js";
-import './getDeploymentTarget.js';
-import './getDeploymentProcess.js';
-import './getBranches.js';
-import './getCurrentUser.js';
-import './listCertificates.js';
-import './getCertificate.js';
-import './listAccounts.js';
-import './getAccount.js';
-import './getVariables.js';
-import './getTaskFromUrl.js';
-import './getDeploymentFromUrl.js';
+import "./getDeploymentTarget.js";
+import "./getDeploymentProcess.js";
+import "./getBranches.js";
+import "./getCurrentUser.js";
+import "./listCertificates.js";
+import "./getCertificate.js";
+import "./listAccounts.js";
+import "./getAccount.js";
+import "./getVariables.js";
+import "./getTaskFromUrl.js";
+import "./getDeploymentFromUrl.js";
+import "./createRelease.js";
+import "./deployRelease.js";
 
-function isToolEnabled(toolRegistration: ToolRegistration, config: ToolsetConfig): boolean {
+function isToolEnabled(
+  toolRegistration: ToolRegistration,
+  config: ToolsetConfig,
+): boolean {
   if (!toolRegistration) {
     return false;
   }
 
   // Check if toolset is enabled
-  const enabledToolsets = config.enabledToolsets === "all" 
-    ? DEFAULT_TOOLSETS 
-    : (config.enabledToolsets || DEFAULT_TOOLSETS);
-  
-  if (toolRegistration.config.toolset !== "core" && !enabledToolsets.includes(toolRegistration.config.toolset)) {
+  const enabledToolsets =
+    config.enabledToolsets === "all"
+      ? DEFAULT_TOOLSETS
+      : config.enabledToolsets || DEFAULT_TOOLSETS;
+
+  if (
+    toolRegistration.config.toolset !== "core" &&
+    !enabledToolsets.includes(toolRegistration.config.toolset)
+  ) {
     return false;
   }
 

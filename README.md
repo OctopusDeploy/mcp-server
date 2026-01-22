@@ -70,6 +70,8 @@ We are planning to release a native ARM build shortly so that those arguments wi
 #### Configuration
 
 Full example configuration (for Claude Desktop, Claude Code, and Cursor):
+
+**Read-only mode (default, recommended for production):**
 ```json
 {
   "mcpServers": {
@@ -77,6 +79,19 @@ Full example configuration (for Claude Desktop, Claude Code, and Cursor):
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "@octopusdeploy/mcp-server", "--api-key", "YOUR_API_KEY", "--server-url", "https://your-octopus.com"]
+    }
+  }
+}
+```
+
+**Write mode enabled (for development/testing):**
+```json
+{
+  "mcpServers": {
+    "octopusdeploy": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@octopusdeploy/mcp-server", "--api-key", "YOUR_API_KEY", "--server-url", "https://your-octopus.com", "--no-read-only"]
     }
   }
 }
@@ -136,15 +151,23 @@ Available toolsets:
 - **accounts** - Account operations
 
 #### Read-Only Mode
-The server runs in read-only mode by default for security. All current tools are read-only operations.
+The server runs in read-only mode by default for security. Most tools are read-only operations, but some tools can perform write operations (like creating releases and deployments).
+
+**Write-enabled tools:**
+- `create_release` - Create new releases
+- `deploy_release` - Deploy releases to environments and tenants
+
+To use write-enabled tools, you must explicitly disable read-only mode:
 
 ```bash
-# Run in read-only mode (default)
-npx -y @octopusdeploy/mcp-server --read-only
+# Run in read-only mode (default) - write tools are disabled
+npx -y @octopusdeploy/mcp-server
 
-# Disable read-only mode (currently no effect as all tools are read-only)
-npx -y @octopusdeploy/mcp-server --read-only=false
+# Disable read-only mode to enable write operations
+npx -y @octopusdeploy/mcp-server --no-read-only
 ```
+
+**Security Note:** When disabling read-only mode, ensure you use an API key with appropriate, least-privilege permissions. Write operations can create releases and trigger deployments in your Octopus instance.
 
 #### Complete Examples
 
@@ -152,8 +175,11 @@ npx -y @octopusdeploy/mcp-server --read-only=false
 # Development setup with only core and project tools
 npx -y @octopusdeploy/mcp-server --toolsets core,projects --server-url https://your-octopus.com --api-key YOUR_API_KEY
 
-# Full production setup with all tools
-npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https://your-octopus.com --api-key YOUR_API_KEY
+# Full production setup with all tools (read-only by default)
+npx -y @octopusdeploy/mcp-server --toolsets all --server-url https://your-octopus.com --api-key YOUR_API_KEY
+
+# Development setup with write operations enabled
+npx -y @octopusdeploy/mcp-server --no-read-only --server-url https://your-octopus.com --api-key YOUR_API_KEY
 ```
 
 #### Other command line arguments
@@ -173,9 +199,11 @@ npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https:/
 - `list_projects`: List all projects in a given space
 
 ### Deployments
+- `deploy_release`: Deploy a release to environments (supports both tenanted and untenanted deployments)
 - `list_deployments`: List deployments in a space with optional filtering
 
 ### Releases
+- `create_release`: Create a new release for a project
 - `get_release_by_id`: Get details for a specific release by its ID
 - `list_releases`: List all releases in a given space
 - `list_releases_for_project`: List all releases for a specific project
@@ -213,11 +241,24 @@ npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https:/
 
 ## 🔒 Security Considerations
 
-While the Octopus MCP Server at this stage is a read-only tool, it **can read full deployment logs, which could include production secrets.** Exercise caution when connecting Octopus MCP to tools and models you do not fully trust.
+The Octopus MCP Server includes both read and write operations. Important security considerations:
 
-Running agents in a fully automated fashion could make you vulnerable to exposure via prompt-injection attacks that exfiltrate tokens.
+### Read Operations
+- Can read full deployment logs, which could include production secrets if they were not marked as secrets
+- Access to sensitive configuration data and variables
+- Exercise caution when connecting to tools and models you do not fully trust
 
-Exercise caution and mitigate the risks by using least-privileged accounts when connecting to Octopus Server.
+### Write Operations
+When read-only mode is disabled (`--no-read-only`), the following write operations are available:
+- **Creating releases**: Can create new releases for projects
+- **Deploying releases**: Can trigger deployments to environments (including production)
+
+**Critical Security Measures:**
+1. **Least Privilege**: Use API keys with the minimum permissions needed for your use case
+2. **Read-Only by Default**: The server defaults to read-only mode - you must explicitly opt-in to write operations
+3. **Prompt Injection Risk**: Running agents in fully automated fashion could make you vulnerable to prompt-injection attacks
+
+**Recommendation**: For production environments, use read-only mode unless you have a specific, controlled use case for write operations.
 
 ## ⚠️ Limitations
 
