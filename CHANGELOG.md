@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.1.0](https://github.com/OctopusDeploy/mcp-server/compare/v1.0.1...v1.1.0) (2026-01-22)
+
+
+### Features
+
+* Add create release / deploy release tools ([#61](https://github.com/OctopusDeploy/mcp-server/issues/61)) ([6caa0f8](https://github.com/OctopusDeploy/mcp-server/commit/6caa0f8c168e4a4fa26014c35e679239917e34e7))
+* Combine some get/list tools into find tools for better tool discovery ([#60](https://github.com/OctopusDeploy/mcp-server/issues/60)) ([4f7c3a5](https://github.com/OctopusDeploy/mcp-server/commit/4f7c3a5d3408573cbf61c31fc33c3b1c0d5e8f18))
+* Improved error handling to guide models better ([#20](https://github.com/OctopusDeploy/mcp-server/issues/20)) ([7b7883d](https://github.com/OctopusDeploy/mcp-server/commit/7b7883d8c2a51da53d0b27faa0ccdf735f35ad9f))
+
+
+### Performance Improvements
+
+* optimize space resolver to use direct get() instead of list() ([#57](https://github.com/OctopusDeploy/mcp-server/issues/57)) ([bb6dd15](https://github.com/OctopusDeploy/mcp-server/commit/bb6dd15f1adbb955c722852f34838039264086e2))
+
 ## [1.0.1](https://github.com/OctopusDeploy/mcp-server/compare/v1.0.0...v1.0.1) (2025-12-12)
 
 
