@@ -15,7 +15,9 @@ import { setClientInfo } from "./utils/clientInfo.js";
 import { logger } from "./utils/logger.js";
 import packageJson from "../package.json" with { type: "json" };
 import { fileURLToPath } from "url";
-import { dirname, join } from "path";
+import path, { dirname, join } from "path";
+import fs from "node:fs/promises";
+import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 
 export const SEMVER_VERSION = packageJson.version;
 
@@ -64,6 +66,44 @@ const server = new McpServer({
   description: "Official Octopus Deploy MCP server.",
   version: SEMVER_VERSION,
 });
+
+const resourceUri = "ui://octopusdeploy/mcp-app.html";
+
+registerAppTool(
+  server,
+  "get_time_ui",
+  {
+    title: "Get Time with UI",
+    description: "Returns the current server time as MCP App.",
+    inputSchema: {},
+    _meta: { ui: { resourceUri } },
+  },
+  async () => {
+    const time = new Date().toISOString();
+    return {
+      content: [{ type: "text", text: time }],
+    };
+  },
+);
+
+registerAppResource(
+  server,
+  resourceUri,
+  resourceUri,
+  { mimeType: RESOURCE_MIME_TYPE },
+  async () => {
+    const html = await fs.readFile(
+      path.join(import.meta.dirname, "mcp-app.html"),
+      "utf-8",
+    );
+    return {
+      contents: [
+        { uri: resourceUri, mimeType: RESOURCE_MIME_TYPE, text: html },
+      ],
+    };
+  },
+);
+
 
 const toolsetConfig = createToolsetConfig(options.toolsets, options.readOnly);
 registerTools(server, toolsetConfig);
