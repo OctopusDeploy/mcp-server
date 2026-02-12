@@ -5,6 +5,7 @@
     "moduleResolution": "NodeNext",
     "module": "NodeNext",
     "target": "ES2022",
+    "jsx": "react",
     "strict": true,
     "sourceMap": true,
     "declaration": true,
