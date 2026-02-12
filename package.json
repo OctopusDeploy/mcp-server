@@ -43,6 +43,8 @@
     "@modelcontextprotocol/ext-apps": "^1.0.1",
     "@modelcontextprotocol/sdk": "^1.17.5",
     "@octopusdeploy/api-client": "^3.8.0",
+    "@octopusdeploy/design-system-components": "^2026.1.8828",
+    "@octopusdeploy/design-system-icons": "^2026.1.8828",
     "axios": "^1.12.2",
     "commander": "^14.0.0",
     "dotenv": "^17.2.2",
