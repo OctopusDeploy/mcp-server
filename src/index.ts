@@ -20,6 +20,7 @@ import fs from "node:fs/promises";
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
 import z from "zod";
 import { fetchEnvironments } from "./tools/listEnvironments.js";
+import { fetchProjects } from "./tools/listProjects.js";
 
 export const SEMVER_VERSION = packageJson.version;
 
@@ -86,7 +87,38 @@ registerAppTool(
     _meta: { ui: { resourceUri }, visibility: "app" },
   },
   async ({ spaceName, partialName, skip, take }) => {
-    return await fetchEnvironments({ spaceName, partialName, skip, take });
+    const type = "list_environments";
+    const data = await fetchEnvironments({ spaceName, partialName, skip, take });
+
+    return {
+      type,
+      ...data
+    }
+  },
+);
+
+registerAppTool(
+  server,
+  "list_projects_ui",
+  {
+    title: "List Projects in a space as interactive UI",
+    description: "This tool lists all projects in a given space. The space name is required. Use this tool as early as possible to understand which projects are configured. Optionally filter by partial name match using partialName parameter.",
+    inputSchema: {
+      spaceName: z.string(),
+      partialName: z.string().optional(),
+      skip: z.number().optional(),
+      take: z.number().optional(),
+    },
+    _meta: { ui: { resourceUri } },
+  },
+  async ({ spaceName, partialName, skip, take }) => {
+    const type = "list_projects";
+    const data = await fetchProjects({ spaceName, partialName, skip, take });
+
+    return {
+      type,
+      ...data
+    }
   },
 );
 

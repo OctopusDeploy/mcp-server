@@ -26,6 +26,7 @@ function OctopusMcpApp() {
 
             app.ontoolresult = async (result) => {
                 console.info("Received tool call result:", result);
+                await app.sendLog({level: "info", data: `***  result received: ${result[0]}`})
                 setToolResult(result);
             };
 
@@ -50,7 +51,16 @@ function OctopusMcpApp() {
     if (error) return <div><strong>ERROR:</strong> {error.message}</div>;
     if (!app) return <div>Connecting...</div>;
 
-    return <Environments app={app} toolResult={toolResult} hostContext={hostContext} />;
+
+    switch (toolResult?.type) {
+        case "list_environments":
+            return <Environments app={app} toolResult={toolResult} hostContext={hostContext} />;
+        case "list_projects":
+            return <Projects app={app} toolResult={toolResult} hostContext={hostContext} />;
+        default:
+            return <div>Waiting data....</div>
+    }
+
 }
 
 function extractEnvironments(callToolResult: CallToolResult): string[] {
@@ -79,7 +89,34 @@ function Environments({ app, toolResult }: EnvironmentsProps) {
             ))}
         </ul>
     </main>
+}
 
+function extractProjects(callToolResult: CallToolResult): string[] {
+    const { text } = callToolResult.content?.find((c) => c.type === "text")!;
+    return text.split(", ");
+}
+
+interface ProjectsProps {
+    app: App;
+    toolResult: CallToolResult | null;
+    hostContext?: PostMessageTransport;
+}
+function Projects({ app, toolResult }: ProjectsProps) {
+    const [projects, setProjects] = useState<string[]>([]);
+    useEffect(() => {
+        if (toolResult) {
+            setProjects(extractProjects(toolResult));
+        }
+    }, [toolResult]);
+
+    return <main>
+        <h1>Projects</h1>
+        <ul>
+            {projects.map((project) => (
+                <li key={project}>{project}</li>
+            ))}
+        </ul>
+    </main>
 }
 
 // interface GetTimeAppInnerProps {

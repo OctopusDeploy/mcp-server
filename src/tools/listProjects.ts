@@ -25,64 +25,74 @@ export function registerListProjectsTool(server: McpServer) {
       readOnlyHint: true,
     },
     async ({ spaceName, partialName, skip, take }) => {
-      try {
-        const configuration = getClientConfigurationFromEnvironment();
-        const client = await Client.create(configuration);
-        const projectRepository = new ProjectRepository(client, spaceName);
-
-        const projectsResponse = await projectRepository.list({
-          partialName,
-          skip,
-          take,
-        });
-
-        if (projectsResponse.Items.length === 0) {
-          const message = partialName
-            ? `No projects found matching '${partialName}' in space '${spaceName}'. Project names are case-sensitive.`
-            : `No projects found in space '${spaceName}'. This space may be empty or you may not have permission to view projects.`;
-
-          return {
-            content: [
-              {
-                type: "text",
-                text: message,
-              },
-            ],
-          };
-        }
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({
-                totalResults: projectsResponse.TotalResults,
-                itemsPerPage: projectsResponse.ItemsPerPage,
-                numberOfPages: projectsResponse.NumberOfPages,
-                lastPageNumber: projectsResponse.LastPageNumber,
-                items: projectsResponse.Items.map((project: Project) => ({
-                  spaceId: project.SpaceId,
-                  id: project.Id,
-                  name: project.Name,
-                  description: project.Description,
-                  slug: project.Slug,
-                  deploymentProcessId: project.DeploymentProcessId,
-                  lifecycleId: project.LifecycleId,
-                  isDisabled: project.IsDisabled,
-                  repositoryUrl:
-                    project.PersistenceSettings.Type === "VersionControlled"
-                      ? project.PersistenceSettings.Url
-                      : null,
-                })),
-              }),
-            },
-          ],
-        };
-      } catch (error) {
-        handleOctopusApiError(error, { spaceName });
-      }
+      return fetchProjects({ spaceName, partialName, skip, take })
     },
   );
+}
+
+interface FetchProjectsParams {
+  spaceName: string;
+  partialName?: string;
+  skip?: number;
+  take?: number;
+}
+export async function fetchProjects({ spaceName, partialName, skip, take }: FetchProjectsParams) {
+  try {
+    const configuration = getClientConfigurationFromEnvironment();
+    const client = await Client.create(configuration);
+    const projectRepository = new ProjectRepository(client, spaceName);
+
+    const projectsResponse = await projectRepository.list({
+      partialName,
+      skip,
+      take,
+    });
+
+    if (projectsResponse.Items.length === 0) {
+      const message = partialName
+        ? `No projects found matching '${partialName}' in space '${spaceName}'. Project names are case-sensitive.`
+        : `No projects found in space '${spaceName}'. This space may be empty or you may not have permission to view projects.`;
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: message,
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify({
+            totalResults: projectsResponse.TotalResults,
+            itemsPerPage: projectsResponse.ItemsPerPage,
+            numberOfPages: projectsResponse.NumberOfPages,
+            lastPageNumber: projectsResponse.LastPageNumber,
+            items: projectsResponse.Items.map((project: Project) => ({
+              spaceId: project.SpaceId,
+              id: project.Id,
+              name: project.Name,
+              description: project.Description,
+              slug: project.Slug,
+              deploymentProcessId: project.DeploymentProcessId,
+              lifecycleId: project.LifecycleId,
+              isDisabled: project.IsDisabled,
+              repositoryUrl:
+                project.PersistenceSettings.Type === "VersionControlled"
+                  ? project.PersistenceSettings.Url
+                  : null,
+            })),
+          }),
+        },
+      ],
+    };
+  } catch (error) {
+    handleOctopusApiError(error, { spaceName });
+  }
 }
 
 registerToolDefinition({
