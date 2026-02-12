@@ -5,6 +5,8 @@ import { createRoot } from "react-dom/client";
 import * as React from "react";
 // @ts-ignore
 import { useApp } from "@modelcontextprotocol/ext-apps/react";
+import {ListEnvironments} from "./pages/ListEnvironments.js";
+import {ListProjects} from "./pages/ListProjects.js";
 
 function OctopusMcpApp() {
     const [toolResult, setToolResult] = useState<CallToolResult | null>(null);
@@ -54,69 +56,13 @@ function OctopusMcpApp() {
 
     switch (toolResult?.type) {
         case "list_environments":
-            return <Environments app={app} toolResult={toolResult} hostContext={hostContext} />;
+            return <ListEnvironments app={app} toolResult={toolResult} hostContext={hostContext} />;
         case "list_projects":
-            return <Projects app={app} toolResult={toolResult} hostContext={hostContext} />;
+            return <ListProjects app={app} toolResult={toolResult} hostContext={hostContext} />;
         default:
             return <div>Waiting data....</div>
     }
 
-}
-
-function extractEnvironments(callToolResult: CallToolResult): string[] {
-    const { text } = callToolResult.content?.find((c) => c.type === "text")!;
-    return text.split(", ");
-}
-
-interface EnvironmentsProps {
-    app: App;
-    toolResult: CallToolResult | null;
-    hostContext?: PostMessageTransport;
-}
-function Environments({ app, toolResult }: EnvironmentsProps) {
-    const [environments, setEnvironments] = useState<string[]>([]);
-    useEffect(() => {
-        if (toolResult) {
-            setEnvironments(extractEnvironments(toolResult));
-        }
-    }, [toolResult]);
-
-    return <main>
-        <h1>Environments</h1>
-        <ul>
-            {environments.map((env) => (
-                <li key={env}>{env}</li>
-            ))}
-        </ul>
-    </main>
-}
-
-function extractProjects(callToolResult: CallToolResult): string[] {
-    const { text } = callToolResult.content?.find((c) => c.type === "text")!;
-    return text.split(", ");
-}
-
-interface ProjectsProps {
-    app: App;
-    toolResult: CallToolResult | null;
-    hostContext?: PostMessageTransport;
-}
-function Projects({ app, toolResult }: ProjectsProps) {
-    const [projects, setProjects] = useState<string[]>([]);
-    useEffect(() => {
-        if (toolResult) {
-            setProjects(extractProjects(toolResult));
-        }
-    }, [toolResult]);
-
-    return <main>
-        <h1>Projects</h1>
-        <ul>
-            {projects.map((project) => (
-                <li key={project}>{project}</li>
-            ))}
-        </ul>
-    </main>
 }
 
 // interface GetTimeAppInnerProps {
