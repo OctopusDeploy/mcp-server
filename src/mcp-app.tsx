@@ -65,67 +65,6 @@ function OctopusMcpApp() {
 
 }
 
-// interface GetTimeAppInnerProps {
-//     app: App;
-//     toolResult: CallToolResult | null;
-//     hostContext?: PostMessageTransport;
-// }
-// function GetTimeAppInner({ app, toolResult, hostContext }: GetTimeAppInnerProps) {
-//     const [serverTime, setServerTime] = useState("Loading...");
-//     const [messageText, setMessageText] = useState("This is message text.");
-//     const [logText, setLogText] = useState("This is log text.");
-//     const [linkUrl, setLinkUrl] = useState("https://modelcontextprotocol.io/");
-//
-//     useEffect(() => {
-//         if (toolResult) {
-//             setServerTime(extractTime(toolResult));
-//         }
-//     }, [toolResult]);
-//
-//     const handleGetTime = useCallback(async () => {
-//         try {
-//             console.info("Calling get-time tool...");
-//             const result = await app.callServerTool({ name: "get_time_ui", arguments: {} });
-//             console.info("get-time result:", result);
-//             setServerTime(extractTime(result));
-//         } catch (e) {
-//             console.error(e);
-//             setServerTime("[ERROR]");
-//         }
-//     }, [app]);
-//
-//     const handleSendMessage = useCallback(async () => {
-//         const signal = AbortSignal.timeout(5000);
-//         try {
-//             console.info("Sending message text to Host:", messageText);
-//             const { isError } = await app.sendMessage(
-//                 { role: "user", content: [{ type: "text", text: messageText }] },
-//                 { signal },
-//             );
-//             console.info("Message", isError ? "rejected" : "accepted");
-//         } catch (e) {
-//             console.error("Message send error:", signal.aborted ? "timed out" : e);
-//         }
-//     }, [app, messageText]);
-//
-//     const handleSendLog = useCallback(async () => {
-//         console.info("Sending log text to Host:", logText);
-//         await app.sendLog({ level: "info", data: logText });
-//     }, [app, logText]);
-//
-//     const handleOpenLink = useCallback(async () => {
-//         console.info("Sending open link request to Host:", linkUrl);
-//         const { isError } = await app.openLink({ url: linkUrl });
-//         console.info("Open link request", isError ? "rejected" : "accepted");
-//     }, [app, linkUrl]);
-//
-//     return (
-//         <main style={{ background: "yellow" }}>
-//         </main>
-//     );
-// }
-
-
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
         <OctopusMcpApp />
