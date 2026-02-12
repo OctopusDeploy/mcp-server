@@ -18,6 +18,8 @@ import { fileURLToPath } from "url";
 import path, { dirname, join } from "path";
 import fs from "node:fs/promises";
 import { registerAppResource, registerAppTool, RESOURCE_MIME_TYPE } from "@modelcontextprotocol/ext-apps/server";
+import z from "zod";
+import { fetchEnvironments } from "./tools/listEnvironments.js";
 
 export const SEMVER_VERSION = packageJson.version;
 
@@ -71,18 +73,20 @@ const resourceUri = "ui://octopusdeploy/mcp-app.html";
 
 registerAppTool(
   server,
-  "get_time_ui",
+  "list_environments_ui",
   {
-    title: "Get Time with UI",
-    description: "Returns the current server time as MCP App.",
-    inputSchema: {},
-    _meta: { ui: { resourceUri } },
+    title: "List Environments in a space as interactive UI",
+    description: "This tool lists all environments in a given space. The space name is required. Use this tool as early as possible to understand which environments are configured. Optionally filter by partial name match using partialName parameter.",
+    inputSchema: {
+      spaceName: z.string(),
+      partialName: z.string().optional(),
+      skip: z.number().optional(),
+      take: z.number().optional(),
+    },
+    _meta: { ui: { resourceUri }, visibility: "app" },
   },
-  async () => {
-    const time = new Date().toISOString();
-    return {
-      content: [{ type: "text", text: time }],
-    };
+  async ({ spaceName, partialName, skip, take }) => {
+    return await fetchEnvironments({ spaceName, partialName, skip, take });
   },
 );
 

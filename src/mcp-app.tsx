@@ -6,13 +6,7 @@ import * as React from "react";
 // @ts-ignore
 import { useApp } from "@modelcontextprotocol/ext-apps/react";
 
-function extractTime(callToolResult: CallToolResult): string {
-    const { text } = callToolResult.content?.find((c) => c.type === "text")!;
-    return text;
-}
-
-
-function GetTimeApp() {
+function OctopusMcpApp() {
     const [toolResult, setToolResult] = useState<CallToolResult | null>(null);
     const [hostContext, setHostContext] = useState<PostMessageTransport | undefined>();
 
@@ -56,94 +50,101 @@ function GetTimeApp() {
     if (error) return <div><strong>ERROR:</strong> {error.message}</div>;
     if (!app) return <div>Connecting...</div>;
 
-    return <GetTimeAppInner app={app} toolResult={toolResult} hostContext={hostContext} />;
+    return <Environments app={app} toolResult={toolResult} hostContext={hostContext} />;
 }
 
-interface GetTimeAppInnerProps {
+function extractEnvironments(callToolResult: CallToolResult): string[] {
+    const { text } = callToolResult.content?.find((c) => c.type === "text")!;
+    return text.split(", ");
+}
+
+interface EnvironmentsProps {
     app: App;
     toolResult: CallToolResult | null;
     hostContext?: PostMessageTransport;
 }
-function GetTimeAppInner({ app, toolResult, hostContext }: GetTimeAppInnerProps) {
-    const [serverTime, setServerTime] = useState("Loading...");
-    const [messageText, setMessageText] = useState("This is message text.");
-    const [logText, setLogText] = useState("This is log text.");
-    const [linkUrl, setLinkUrl] = useState("https://modelcontextprotocol.io/");
-
+function Environments({ app, toolResult }: EnvironmentsProps) {
+    const [environments, setEnvironments] = useState<string[]>([]);
     useEffect(() => {
         if (toolResult) {
-            setServerTime(extractTime(toolResult));
+            setEnvironments(extractEnvironments(toolResult));
         }
     }, [toolResult]);
 
-    const handleGetTime = useCallback(async () => {
-        try {
-            console.info("Calling get-time tool...");
-            const result = await app.callServerTool({ name: "get_time_ui", arguments: {} });
-            console.info("get-time result:", result);
-            setServerTime(extractTime(result));
-        } catch (e) {
-            console.error(e);
-            setServerTime("[ERROR]");
-        }
-    }, [app]);
+    return <main>
+        <h1>Environments</h1>
+        <ul>
+            {environments.map((env) => (
+                <li key={env}>{env}</li>
+            ))}
+        </ul>
+    </main>
 
-    const handleSendMessage = useCallback(async () => {
-        const signal = AbortSignal.timeout(5000);
-        try {
-            console.info("Sending message text to Host:", messageText);
-            const { isError } = await app.sendMessage(
-                { role: "user", content: [{ type: "text", text: messageText }] },
-                { signal },
-            );
-            console.info("Message", isError ? "rejected" : "accepted");
-        } catch (e) {
-            console.error("Message send error:", signal.aborted ? "timed out" : e);
-        }
-    }, [app, messageText]);
-
-    const handleSendLog = useCallback(async () => {
-        console.info("Sending log text to Host:", logText);
-        await app.sendLog({ level: "info", data: logText });
-    }, [app, logText]);
-
-    const handleOpenLink = useCallback(async () => {
-        console.info("Sending open link request to Host:", linkUrl);
-        const { isError } = await app.openLink({ url: linkUrl });
-        console.info("Open link request", isError ? "rejected" : "accepted");
-    }, [app, linkUrl]);
-
-    return (
-        <main style={{ background: "yellow" }}>
-            <p>Watch activity in the DevTools console!</p>
-            <div>
-                <p>
-                    <strong>Server Time:</strong> <code>{serverTime}</code>
-                </p>
-                <button onClick={handleGetTime}>Get Server Time</button>
-            </div>
-
-            <div>
-                <textarea value={messageText} onChange={(e) => setMessageText(e.target.value)} />
-                <button onClick={handleSendMessage}>Send Message</button>
-            </div>
-
-            <div>
-                <input type="text" value={logText} onChange={(e) => setLogText(e.target.value)} />
-                <button onClick={handleSendLog}>Send Log</button>
-            </div>
-
-            <div>
-                <input type="url" value={linkUrl} onChange={(e) => setLinkUrl(e.target.value)} />
-                <button onClick={handleOpenLink}>Open Link</button>
-            </div>
-        </main>
-    );
 }
+
+// interface GetTimeAppInnerProps {
+//     app: App;
+//     toolResult: CallToolResult | null;
+//     hostContext?: PostMessageTransport;
+// }
+// function GetTimeAppInner({ app, toolResult, hostContext }: GetTimeAppInnerProps) {
+//     const [serverTime, setServerTime] = useState("Loading...");
+//     const [messageText, setMessageText] = useState("This is message text.");
+//     const [logText, setLogText] = useState("This is log text.");
+//     const [linkUrl, setLinkUrl] = useState("https://modelcontextprotocol.io/");
+//
+//     useEffect(() => {
+//         if (toolResult) {
+//             setServerTime(extractTime(toolResult));
+//         }
+//     }, [toolResult]);
+//
+//     const handleGetTime = useCallback(async () => {
+//         try {
+//             console.info("Calling get-time tool...");
+//             const result = await app.callServerTool({ name: "get_time_ui", arguments: {} });
+//             console.info("get-time result:", result);
+//             setServerTime(extractTime(result));
+//         } catch (e) {
+//             console.error(e);
+//             setServerTime("[ERROR]");
+//         }
+//     }, [app]);
+//
+//     const handleSendMessage = useCallback(async () => {
+//         const signal = AbortSignal.timeout(5000);
+//         try {
+//             console.info("Sending message text to Host:", messageText);
+//             const { isError } = await app.sendMessage(
+//                 { role: "user", content: [{ type: "text", text: messageText }] },
+//                 { signal },
+//             );
+//             console.info("Message", isError ? "rejected" : "accepted");
+//         } catch (e) {
+//             console.error("Message send error:", signal.aborted ? "timed out" : e);
+//         }
+//     }, [app, messageText]);
+//
+//     const handleSendLog = useCallback(async () => {
+//         console.info("Sending log text to Host:", logText);
+//         await app.sendLog({ level: "info", data: logText });
+//     }, [app, logText]);
+//
+//     const handleOpenLink = useCallback(async () => {
+//         console.info("Sending open link request to Host:", linkUrl);
+//         const { isError } = await app.openLink({ url: linkUrl });
+//         console.info("Open link request", isError ? "rejected" : "accepted");
+//     }, [app, linkUrl]);
+//
+//     return (
+//         <main style={{ background: "yellow" }}>
+//         </main>
+//     );
+// }
 
 
 createRoot(document.getElementById("root")!).render(
     <StrictMode>
-        <GetTimeApp />
+        <OctopusMcpApp />
     </StrictMode>,
 );

@@ -1,7 +1,6 @@
 import {
   Client,
   EnvironmentRepository,
-  type DeploymentEnvironment,
 } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
@@ -26,66 +25,76 @@ export function registerListEnvironmentsTool(server: McpServer) {
       readOnlyHint: true,
     },
     async ({ spaceName, partialName, skip, take }) => {
-      try {
-        const configuration = getClientConfigurationFromEnvironment();
-        const client = await Client.create(configuration);
-        const environmentRepository = new EnvironmentRepository(
-          client,
-          spaceName,
-        );
-
-        const environmentsResponse = await environmentRepository.list({
-          partialName,
-          skip,
-          take,
-        });
-
-        if (environmentsResponse.Items.length === 0) {
-          const message = partialName
-            ? `No environments found matching '${partialName}' in space '${spaceName}'. Environment names are case-sensitive.`
-            : `No environments found in space '${spaceName}'. This space may not have any environments configured.`;
-
-          return {
-            content: [
-              {
-                type: "text",
-                text: message,
-              },
-            ],
-          };
-        }
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({
-                totalResults: environmentsResponse.TotalResults,
-                itemsPerPage: environmentsResponse.ItemsPerPage,
-                numberOfPages: environmentsResponse.NumberOfPages,
-                lastPageNumber: environmentsResponse.LastPageNumber,
-                items: environmentsResponse.Items.map(
-                  (environment: DeploymentEnvironment) => ({
-                    spaceId: environment.SpaceId,
-                    id: environment.Id,
-                    name: environment.Name,
-                    description: environment.Description,
-                    sortOrder: environment.SortOrder,
-                    useGuidedFailure: environment.UseGuidedFailure,
-                    allowDynamicInfrastructure:
-                      environment.AllowDynamicInfrastructure,
-                    extensionSettings: environment.ExtensionSettings,
-                  }),
-                ),
-              }),
-            },
-          ],
-        };
-      } catch (error) {
-        handleOctopusApiError(error, { spaceName });
-      }
+      return fetchEnvironments({ spaceName, partialName, skip, take })
     },
   );
+}
+
+interface FetchEnvironmentsParams {
+  spaceName: string;
+  partialName?: string;
+  skip?: number;
+  take?: number;
+}
+
+export async function fetchEnvironments({ spaceName, partialName, skip, take }: FetchEnvironmentsParams) {
+  try {
+    const configuration = getClientConfigurationFromEnvironment();
+    const client = await Client.create(configuration);
+    const environmentRepository = new EnvironmentRepository(
+      client,
+      spaceName,
+    );
+
+    const environmentsResponse = await environmentRepository.list({
+      partialName,
+      skip,
+      take,
+    });
+
+    if (environmentsResponse.Items.length === 0) {
+      const message = partialName
+        ? `No environments found matching '${partialName}' in space '${spaceName}'. Environment names are case-sensitive.`
+        : `No environments found in space '${spaceName}'. This space may not have any environments configured.`;
+
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: message,
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify({
+            totalResults: environmentsResponse.TotalResults,
+            itemsPerPage: environmentsResponse.ItemsPerPage,
+            numberOfPages: environmentsResponse.NumberOfPages,
+            lastPageNumber: environmentsResponse.LastPageNumber,
+            items: environmentsResponse.Items.map(
+              (environment) => ({
+                spaceId: environment.SpaceId,
+                id: environment.Id,
+                name: environment.Name,
+                description: environment.Description,
+                sortOrder: environment.SortOrder,
+                useGuidedFailure: environment.UseGuidedFailure,
+                allowDynamicInfrastructure: environment.AllowDynamicInfrastructure,
+                extensionSettings: environment.ExtensionSettings,
+              }),
+            ),
+          }),
+        },
+      ],
+    };
+  } catch (error) {
+    return handleOctopusApiError(error, { spaceName });
+  }
 }
 
 registerToolDefinition({
