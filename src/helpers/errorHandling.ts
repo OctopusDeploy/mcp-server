@@ -114,5 +114,6 @@ export const ENTITY_PREFIXES = {
   machine: "Machines-",
   certificate: "Certificates-",
   account: "Accounts-",
+  deployment: "Deployments-",
   deploymentProcess: "DeploymentProcesses-",
 } as const;

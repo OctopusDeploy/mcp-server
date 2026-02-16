@@ -191,6 +191,40 @@ npx -y @octopusdeploy/mcp-server --no-read-only --server-url https://your-octopu
 
 ## 🔨 Tools
 
+### URL-Based Tools
+
+**Quick start**: Paste Octopus URLs directly to investigate issues without manual ID extraction.
+
+- `get_deployment_from_url`: Get deployment details from deployment URL (returns taskId for follow-up)
+- `get_task_from_url`: Get task details and logs from task URL
+
+**Deployment investigation workflow:**
+```
+1. get_deployment_from_url with deployment URL
+   → Returns deployment context + taskIdForLogs
+
+2. get_task_details with spaceName and taskId
+   → Returns execution logs for troubleshooting
+```
+
+**Task investigation** (direct task URL):
+```
+get_task_from_url with task URL
+→ Returns task details and logs immediately
+```
+
+These tools eliminate manual ID extraction by:
+- Parsing URLs automatically
+- Resolving space IDs to space names
+- Validating ID formats
+- Providing clear error messages
+
+**Example URLs:**
+- Deployment: `https://your-octopus.com/app#/Spaces-1/projects/my-app/deployments/Deployments-123`
+- Task: `https://your-octopus.com/app#/Spaces-1/tasks/ServerTasks-456`
+
+See [Working with URLs](docs/working-with-urls.md) for detailed workflows, examples, and best practices.
+
 ### Core Tools
 - `list_spaces`: List all spaces in the Octopus Deploy instance
 - `list_environments`: List all environments in a given space

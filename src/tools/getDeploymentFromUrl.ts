@@ -6,6 +6,7 @@ import { registerToolDefinition } from '../types/toolConfig.js';
 import { parseOctopusUrl, extractDeploymentId } from '../helpers/urlParser.js';
 import { resolveSpaceNameFromId } from '../helpers/spaceResolver.js';
 import { getPublicUrl } from '../helpers/getPublicUrl.js';
+import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES } from '../helpers/errorHandling.js';
 
 export interface GetDeploymentFromUrlParams {
   url: string;
@@ -36,15 +37,19 @@ export async function getDeploymentFromUrl(client: Client, params: GetDeployment
     );
   }
 
-  const deploymentRepository = new DeploymentRepository(client, spaceName);
-  const deploymentsResponse = await deploymentRepository.list({});
-  const deployment = deploymentsResponse.Items.find(d => d.Id === deploymentId) as Deployment | undefined;
+  validateEntityId(deploymentId, 'deployment', ENTITY_PREFIXES.deployment);
 
-  if (!deployment) {
-    throw new Error(
-      `Deployment ${deploymentId} not found in space "${spaceName}". ` +
-      `The deployment may have been deleted or you may not have permission to view it.`
-    );
+  const deploymentRepository = new DeploymentRepository(client, spaceName);
+  let deployment: Deployment;
+  try {
+    deployment = await deploymentRepository.get(deploymentId);
+  } catch (error) {
+    handleOctopusApiError(error, {
+      entityType: 'deployment',
+      entityId: deploymentId,
+      spaceName,
+      helpText: 'The deployment may have been deleted or you may not have permission to view it. Use list_deployments to find valid deployment IDs.'
+    });
   }
 
   let releaseVersion: string | undefined;
@@ -121,17 +126,26 @@ export async function getDeploymentFromUrl(client: Client, params: GetDeployment
 export function registerGetDeploymentFromUrlTool(server: McpServer) {
   server.tool(
     'get_deployment_from_url',
-    `Get deployment details from an Octopus Deploy URL. This tool automatically extracts the deployment ID from the URL and returns deployment information including the task ID needed to view logs.
+    `Get deployment details from an Octopus Deploy deployment URL. Returns comprehensive deployment information including the task ID needed to view execution logs.
 
-This tool handles:
-- Deployment URLs (containing Deployments-XXXXX)
-- Automatic space ID to space name resolution
-- Returns the task ID for easy log access via get_task_details
+Accepts deployment URLs like:
+https://your-octopus.com/app#/Spaces-1/projects/my-app/deployments/releases/1.0.0/deployments/Deployments-123
 
-Example workflow:
+Returns:
+- Full deployment details (environment, release, project, created time)
+- taskIdForLogs: Use this with get_task_details to view execution logs
+- Public URL for web portal access
+
+Recommended workflow for investigating deployment issues:
 1. Call get_deployment_from_url with the deployment URL
-2. Use the returned taskId to call get_task_details for logs`,
-    { url: z.string() },
+2. Review deployment context (environment, release version, etc.)
+3. Use the returned taskIdForLogs with get_task_details to view execution logs and diagnose issues
+
+Handles space ID to space name resolution automatically.`,
+    {
+      url: z.string()
+        .describe("Full Octopus Deploy deployment URL (e.g., https://your-octopus.com/app#/Spaces-1/projects/my-app/deployments/releases/1.0.0/deployments/Deployments-123)")
+    },
     {
       title: 'Get deployment details from an Octopus Deploy URL',
       readOnlyHint: true,

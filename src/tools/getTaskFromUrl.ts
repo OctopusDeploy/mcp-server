@@ -1,11 +1,12 @@
-import { Client, SpaceServerTaskRepository, DeploymentRepository } from '@octopusdeploy/api-client';
+import { Client, SpaceServerTaskRepository } from '@octopusdeploy/api-client';
 import { z } from 'zod';
 import { getClientConfigurationFromEnvironment } from '../helpers/getClientConfigurationFromEnvironment.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerToolDefinition } from '../types/toolConfig.js';
 import { tasksDescription } from '../types/taskTypes.js';
-import { parseOctopusUrl, extractTaskId, extractDeploymentId } from '../helpers/urlParser.js';
+import { parseOctopusUrl, extractTaskId } from '../helpers/urlParser.js';
 import { resolveSpaceNameFromId } from '../helpers/spaceResolver.js';
+import { validateEntityId, ENTITY_PREFIXES } from '../helpers/errorHandling.js';
 
 export interface GetTaskFromUrlParams {
   url: string;
@@ -26,40 +27,18 @@ export async function getTaskFromUrl(client: Client, params: GetTaskFromUrlParam
 
   const spaceName = await resolveSpaceNameFromId(client, urlParts.spaceId);
 
-  let taskId = extractTaskId(url);
+  const taskId = extractTaskId(url);
 
   if (!taskId) {
-    const deploymentId = extractDeploymentId(url);
-
-    if (deploymentId) {
-      const deploymentRepository = new DeploymentRepository(client, spaceName);
-      const deploymentsResponse = await deploymentRepository.list({});
-      const deployment = deploymentsResponse.Items.find(d => d.Id === deploymentId);
-
-      if (!deployment) {
-        throw new Error(
-          `Deployment ${deploymentId} not found in space "${spaceName}". ` +
-          `The URL appears to be a deployment URL, but the task ID must be retrieved ` +
-          `from the deployment first.`
-        );
-      }
-
-      taskId = deployment.TaskId;
-
-      if (!taskId) {
-        throw new Error(
-          `Deployment ${deploymentId} found but has no associated task ID. ` +
-          `This is unusual and may indicate a problem with the deployment.`
-        );
-      }
-    } else {
-      throw new Error(
-        `Could not extract task ID or deployment ID from URL. ` +
-        `URL must contain either a task identifier (ServerTasks-XXXXX) ` +
-        `or a deployment identifier (Deployments-XXXXX).`
-      );
-    }
+    throw new Error(
+      `Could not extract task ID from URL. ` +
+      `URL must contain a task identifier (ServerTasks-XXXXX). ` +
+      `If you have a deployment URL, use get_deployment_from_url first to get the task ID, ` +
+      `then use get_task_details to view task logs.`
+    );
   }
+
+  validateEntityId(taskId, 'task', ENTITY_PREFIXES.task);
 
   const serverTaskRepository = new SpaceServerTaskRepository(client, spaceName);
   const response = await serverTaskRepository.getDetails(taskId);
@@ -71,8 +50,7 @@ export async function getTaskFromUrl(client: Client, params: GetTaskFromUrlParam
     urlInfo: {
       originalUrl: url,
       extractedSpaceId: urlParts.spaceId,
-      extractedTaskId: extractTaskId(url),
-      extractedDeploymentId: extractDeploymentId(url),
+      extractedTaskId: taskId,
       resourceType: urlParts.resourceType,
     }
   };
@@ -81,13 +59,27 @@ export async function getTaskFromUrl(client: Client, params: GetTaskFromUrlParam
 export function registerGetTaskFromUrlTool(server: McpServer) {
   server.tool(
     'get_task_from_url',
-    `Get task details from an Octopus Deploy URL. This tool automatically extracts the task ID from the URL, or if given a deployment URL, it will query the deployment to get the task ID first. ${tasksDescription}
+    `Get task details from an Octopus Deploy task URL. Returns full task details including execution logs and state.
 
-This tool handles:
-- Task URLs (containing ServerTasks-XXXXX)
-- Deployment URLs (containing Deployments-XXXXX) - automatically resolves to the deployment's task
-- Automatic space ID to space name resolution`,
-    { url: z.string() },
+Accepts task URLs like:
+https://your-octopus.com/app#/Spaces-1/tasks/ServerTasks-456
+
+Key features:
+- Returns full task details including execution logs
+- Handles space ID to space name resolution automatically
+- Validates task ID format
+
+For deployment URLs:
+If you have a deployment URL, use this workflow:
+1. Call get_deployment_from_url with the deployment URL
+2. Extract the taskId from the response
+3. Call get_task_details with spaceName and taskId to view logs
+
+${tasksDescription}`,
+    {
+      url: z.string()
+        .describe("Full Octopus Deploy task URL containing a task ID (e.g., https://your-octopus.com/app#/Spaces-1/tasks/ServerTasks-456)")
+    },
     {
       title: 'Get task details from an Octopus Deploy URL',
       readOnlyHint: true,
