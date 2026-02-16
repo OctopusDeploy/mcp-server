@@ -1,13 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { testConfig, parseToolResponse } from "./testSetup.js";
-import { listTenantsHandler } from "../listTenants.js";
+import { findTenantsHandler } from "../findTenants.js";
 
 describe("listTenants Integration Tests", () => {
   describe("Successful scenarios", () => {
     it(
       "should list all tenants in the test space",
       async () => {
-        const response = await listTenantsHandler({
+        const response = await findTenantsHandler({
           spaceName: testConfig.testSpaceName,
         });
 
@@ -45,7 +45,7 @@ describe("listTenants Integration Tests", () => {
     it(
       "should support pagination with skip and take parameters",
       async () => {
-        const response = await listTenantsHandler({
+        const response = await findTenantsHandler({
           spaceName: testConfig.testSpaceName,
           skip: 0,
           take: 5,
@@ -64,7 +64,7 @@ describe("listTenants Integration Tests", () => {
     it(
       "should support filtering by partial name",
       async () => {
-        const response = await listTenantsHandler({
+        const response = await findTenantsHandler({
           spaceName: testConfig.testSpaceName,
           partialName: "test",
         });
@@ -89,7 +89,7 @@ describe("listTenants Integration Tests", () => {
       "should throw error for non-existent space",
       async () => {
         await expect(
-          listTenantsHandler({
+          findTenantsHandler({
             spaceName: "NonExistentSpace123456",
           }),
         ).rejects.toThrow();
@@ -100,7 +100,7 @@ describe("listTenants Integration Tests", () => {
     it(
       "should handle empty results gracefully",
       async () => {
-        const response = await listTenantsHandler({
+        const response = await findTenantsHandler({
           spaceName: testConfig.testSpaceName,
           partialName: "ThisTenantNameShouldNotExist123456789",
         });
