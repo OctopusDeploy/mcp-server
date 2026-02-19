@@ -111,13 +111,18 @@ function setLogFilePath(filePath: string): void {
 ## Contribution Process
 
 This project uses:
-- **Conventional Commits**: All commits must follow the format (e.g., `feat:`, `fix:`, `chore:`)
 - **Branch Protection**: Direct pushes to `main` are not allowed
 - **GitHub Actions**: Automated build and publish workflows
 - **Release Please**: Automated version management and changelog generation
 
 When making changes:
 1. Create a feature branch
-2. Use conventional commit messages
+2. Use conventional commit messages (e.g., `feat:`, `fix:`, `chore:`)
 3. Submit a PR and use "Squash and Merge" when merging
 4. The release workflow handles npm publishing automatically
+
+## Creating Pull Requests
+
+PR titles **must** follow Conventional Commits format (e.g., `feat: add action templates tool`,
+`fix: handle missing space name`). This project uses "Squash and Merge" — the PR title becomes
+the commit message that Release Please reads to generate changelogs and bump versions.
