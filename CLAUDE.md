@@ -121,3 +121,5 @@ When making changes:
 2. Use conventional commit messages
 3. Submit a PR and use "Squash and Merge" when merging
 4. The release workflow handles npm publishing automatically
+
+**PR titles and descriptions**: PR titles must follow Conventional Commits format (e.g., `feat: add action templates tool`, `fix: handle missing space name`). Release Please uses the squashed PR title to generate changelogs and determine version bumps, so the title must be correct before merging.
