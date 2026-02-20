@@ -30,7 +30,7 @@ Run with CLI arguments
 docker run -i --rm octopusdeploy/mcp-server --server-url https://your-octopus.com --api-key YOUR_API_KEY
 ```
 
-Full example configuration (for Claude Desktop, Claude Code, and Cursor):
+Full example configuration (for Claude Desktop, Claude Code, Cursor, and GitHub Copilot CLI):
 ```json
 {
   "mcpServers": {
@@ -69,7 +69,7 @@ We are planning to release a native ARM build shortly so that those arguments wi
 
 #### Configuration
 
-Full example configuration (for Claude Desktop, Claude Code, and Cursor):
+Full example configuration (for Claude Desktop, Claude Code, Cursor, and GitHub Copilot CLI):
 
 **Read-only mode (default, recommended for production):**
 ```json
