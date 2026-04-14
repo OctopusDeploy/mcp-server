@@ -65,7 +65,7 @@ We are planning to release a native ARM build shortly so that those arguments wi
 #### Requirements
 - Node.js >= v20.0.0
 - Octopus Deploy instance that can be accessed by the MCP server via HTTPS
-- Octopus Deploy API Key
+- Octopus Deploy API Key or Access Token (see [Authentication](#authentication) below)
 
 #### Configuration
 
@@ -117,6 +117,49 @@ Or with configuration supplied via the command line:
 ```bash
 npx -y @octopusdeploy/mcp-server --server-url https://your-octopus.com --api-key YOUR_API_KEY
 ```
+
+### Authentication
+
+The MCP server supports two authentication methods:
+
+#### API Key (recommended for interactive use)
+
+API keys are the standard authentication method for Octopus Deploy. You can generate one from your Octopus Deploy user profile.
+
+```bash
+# Via environment variable
+OCTOPUS_API_KEY=API-XXXXXXXXXXXXXXXXXXXXXXXXXX
+
+# Via command line argument
+npx -y @octopusdeploy/mcp-server --api-key YOUR_API_KEY --server-url https://your-octopus.com
+```
+
+#### Access Token / Bearer Token (automated scenarios only)
+
+The server also supports short-lived access tokens (Bearer tokens) as an alternative to API keys. This authentication method is intended **only for automated scenarios** where an external system issues a short-lived token to the MCP server (e.g., CI/CD pipelines, automated orchestration, or machine-to-machine workflows). Do not use long-lived Bearer tokens — use API keys instead for interactive or long-running sessions.
+
+```bash
+# Via environment variable
+OCTOPUS_ACCESS_TOKEN=your-short-lived-token
+
+# Via command line argument
+npx -y @octopusdeploy/mcp-server --access-token YOUR_TOKEN --server-url https://your-octopus.com
+```
+
+Full example configuration with an access token:
+```json
+{
+  "mcpServers": {
+    "octopusdeploy": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@octopusdeploy/mcp-server", "--access-token", "YOUR_TOKEN", "--server-url", "https://your-octopus.com"]
+    }
+  }
+}
+```
+
+If both an API key and an access token are provided, the access token takes precedence.
 
 ### Configuration Options
 

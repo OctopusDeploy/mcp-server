@@ -58,7 +58,7 @@ export function handleOctopusApiError(
     isErrorWithMessage(error, "provide a valid API key")
   ) {
     throw new Error(
-      "Authentication failed. Ensure OCTOPUS_API_KEY environment variable is set with a valid API key. " +
+      "Authentication failed. Ensure a valid API key (OCTOPUS_API_KEY) or access token (OCTOPUS_ACCESS_TOKEN) is provided. " +
         "You can generate an API key from your Octopus Deploy user profile.",
     );
   }

@@ -8,6 +8,7 @@ const USER_AGENT_NAME = "octopus-mcp-server";
 export interface ConfigurationOptions {
   instanceURL?: string;
   apiKey?: string;
+  accessToken?: string;
 }
 
 function isEmpty(value: string | undefined): value is undefined | "" {
@@ -22,13 +23,30 @@ function constructUserAgent(): string {
 }
 
 function getClientConfiguration(options: ConfigurationOptions = {}): ClientConfiguration {
-  if (isEmpty(options.instanceURL) || isEmpty(options.apiKey)) {
+  const hasApiKey = !isEmpty(options.apiKey);
+  const hasAccessToken = !isEmpty(options.accessToken);
+
+  if (isEmpty(options.instanceURL)) {
     throw new Error(
-      "Octopus server URL and API key must be provided either via command line arguments (--server-url, --api-key) or environment variables (OCTOPUS_SERVER_URL, OCTOPUS_API_KEY)."
+      "Octopus server URL must be provided either via command line argument (--server-url) or environment variable (OCTOPUS_SERVER_URL)."
+    );
+  }
+
+  if (!hasApiKey && !hasAccessToken) {
+    throw new Error(
+      "Octopus authentication must be provided. Supply either an API key (--api-key or OCTOPUS_API_KEY) or an access token (--access-token or OCTOPUS_ACCESS_TOKEN)."
     );
   }
 
   const userAgent = constructUserAgent();
+
+  if (hasAccessToken) {
+    return {
+      userAgentApp: userAgent,
+      instanceURL: options.instanceURL,
+      accessToken: options.accessToken,
+    };
+  }
 
   return {
     userAgentApp: userAgent,
@@ -41,5 +59,6 @@ export function getClientConfigurationFromEnvironment(): ClientConfiguration {
   return getClientConfiguration({
     instanceURL: env["CLI_SERVER_URL"] || env["OCTOPUS_SERVER_URL"],
     apiKey: env["CLI_API_KEY"] || env["OCTOPUS_API_KEY"],
+    accessToken: env["CLI_ACCESS_TOKEN"] || env["OCTOPUS_ACCESS_TOKEN"],
   });
 }
