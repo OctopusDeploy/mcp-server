@@ -53,13 +53,16 @@ export async function getDeploymentFromUrl(client: Client, params: GetDeployment
   }
 
   let releaseVersion: string | undefined;
+  let versionControlReference: { GitRef?: string; GitCommit?: string } | undefined;
   if (deployment.ReleaseId) {
     const releaseRepository = new ReleaseRepository(client, spaceName);
     try {
       const release = await releaseRepository.get(deployment.ReleaseId);
       releaseVersion = release.Version;
+      versionControlReference = release.VersionControlReference;
     } catch {
       releaseVersion = undefined;
+      versionControlReference = undefined;
     }
   }
 
@@ -83,6 +86,7 @@ export async function getDeploymentFromUrl(client: Client, params: GetDeployment
       name: deployment.Name,
       releaseId: deployment.ReleaseId,
       releaseVersion,
+      versionControlReference,
       environmentId: deployment.EnvironmentId,
       tenantId: deployment.TenantId,
       projectId: deployment.ProjectId,

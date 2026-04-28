@@ -105,6 +105,14 @@ This tool creates a new release for a project. The space name and project name a
 
         const response = await releaseRepository.create(command);
 
+        let versionControlReference: { GitRef?: string; GitCommit?: string } | undefined;
+        try {
+          const release = await releaseRepository.get(response.ReleaseId);
+          versionControlReference = release.VersionControlReference;
+        } catch {
+          versionControlReference = undefined;
+        }
+
         return {
           content: [
             {
@@ -114,6 +122,7 @@ This tool creates a new release for a project. The space name and project name a
                   success: true,
                   releaseId: response.ReleaseId,
                   releaseVersion: response.ReleaseVersion,
+                  versionControlReference,
                   message: `Release ${response.ReleaseVersion} created successfully`,
                   helpText:
                     "Use find_releases to view release details, or use deploy_release to deploy this release to environments.",
