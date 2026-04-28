@@ -51,6 +51,7 @@ export function registerListReleasesForProjectTool(server: McpServer) {
                 ignoreChannelRules: release.IgnoreChannelRules,
                 selectedPackages: release.SelectedPackages,
                 selectedGitResources: release.SelectedGitResources,
+                versionControlReference: release.VersionControlReference,
                 buildInformation: release.BuildInformation,
                 customFields: release.CustomFields
               }))
