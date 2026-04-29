@@ -50,6 +50,7 @@ export function registerListDeploymentsTool(server: McpServer) {
       );
 
       const releaseVersions = new Map<string, string>();
+      const releaseVersionControlReferences = new Map<string, { GitRef?: string; GitCommit?: string }>();
 
       if (releaseIds.length > 0) {
         const releaseRepository = new ReleaseRepository(client, spaceName);
@@ -58,6 +59,9 @@ export function registerListDeploymentsTool(server: McpServer) {
         releaseResults.forEach((result, index) => {
           if (result.status === "fulfilled") {
             releaseVersions.set(releaseIds[index]!, result.value.Version);
+            if (result.value.VersionControlReference) {
+              releaseVersionControlReferences.set(releaseIds[index]!, result.value.VersionControlReference);
+            }
           }
         });
       }
@@ -73,6 +77,7 @@ export function registerListDeploymentsTool(server: McpServer) {
               lastPageNumber: deploymentsResponse.LastPageNumber,
               items: deployments.map((deployment) => {
                 const releaseVersion = deployment.ReleaseId ? releaseVersions.get(deployment.ReleaseId) : undefined;
+                const versionControlReference = deployment.ReleaseId ? releaseVersionControlReferences.get(deployment.ReleaseId) : undefined;
                 const publicUrl = releaseVersion
                   ? getPublicUrl(
                       `${configuration.instanceURL}/app#/{spaceId}/projects/{projectId}/deployments/releases/{releaseVersion}/deployments/{deploymentId}`,
@@ -91,6 +96,7 @@ export function registerListDeploymentsTool(server: McpServer) {
                   name: deployment.Name,
                   releaseId: deployment.ReleaseId,
                   releaseVersion,
+                  versionControlReference,
                   environmentId: deployment.EnvironmentId,
                   tenantId: deployment.TenantId,
                   projectId: deployment.ProjectId,
