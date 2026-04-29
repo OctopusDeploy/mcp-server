@@ -20,14 +20,10 @@ Most tools exposed by the MCP Server use stable APIs that have been available fr
 
 ### Install via Docker
 
-Run with environment variables
+Credentials must be supplied via environment variables to avoid exposing them in the host process list (`ps aux` / `/proc/<pid>/cmdline`). The Octopus server URL can still be supplied via the `--server-url` flag.
+
 ```bash
 docker run -i --rm -e OCTOPUS_API_KEY=your-key -e OCTOPUS_SERVER_URL=https://your-octopus.com octopusdeploy/mcp-server
-```
-
-Run with CLI arguments
-```bash
-docker run -i --rm octopusdeploy/mcp-server --server-url https://your-octopus.com --api-key YOUR_API_KEY
 ```
 
 Full example configuration (for Claude Desktop, Claude Code, and Cursor):
@@ -41,12 +37,16 @@ Full example configuration (for Claude Desktop, Claude Code, and Cursor):
         "run",
         "-i",
         "--rm",
-        "octopusdeploy/mcp-server",
-        "--server-url",
-        "https://your-octopus.com",
-        "--api-key",
-        "YOUR_API_KEY"
-      ]
+        "-e",
+        "OCTOPUS_SERVER_URL",
+        "-e",
+        "OCTOPUS_API_KEY",
+        "octopusdeploy/mcp-server"
+      ],
+      "env": {
+        "OCTOPUS_SERVER_URL": "https://your-octopus.com",
+        "OCTOPUS_API_KEY": "YOUR_API_KEY"
+      }
     },
   }
 }
@@ -78,7 +78,11 @@ Full example configuration (for Claude Desktop, Claude Code, and Cursor):
     "octopusdeploy": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@octopusdeploy/mcp-server", "--api-key", "YOUR_API_KEY", "--server-url", "https://your-octopus.com"]
+      "args": ["-y", "@octopusdeploy/mcp-server"],
+      "env": {
+        "OCTOPUS_SERVER_URL": "https://your-octopus.com",
+        "OCTOPUS_API_KEY": "YOUR_API_KEY"
+      }
     }
   }
 }
@@ -91,47 +95,44 @@ Full example configuration (for Claude Desktop, Claude Code, and Cursor):
     "octopusdeploy": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@octopusdeploy/mcp-server", "--api-key", "YOUR_API_KEY", "--server-url", "https://your-octopus.com", "--no-read-only"]
+      "args": ["-y", "@octopusdeploy/mcp-server", "--no-read-only"],
+      "env": {
+        "OCTOPUS_SERVER_URL": "https://your-octopus.com",
+        "OCTOPUS_API_KEY": "YOUR_API_KEY"
+      }
     }
   }
 }
 ```
 
-The Octopus MCP Server is typically configured within your AI Client of choice. 
+The Octopus MCP Server is typically configured within your AI Client of choice.
 
-It is packaged as an npm package and executed via Node's `npx` command. Your configuration will include the command invocation `npx`, and a set of arguments that supply the Octopus MCP Server package and provide the Octopus Server URL and API key required, if they are not available as environment variables.
-
-The command line invocation you will be configuring will be one of the two following variants:
+It is packaged as an npm package and executed via Node's `npx` command. Credentials (API key or access token) must be supplied via environment variables — they are not accepted as command-line arguments to avoid exposing secrets in the process list. The Octopus server URL may be supplied via either the `OCTOPUS_SERVER_URL` environment variable or the `--server-url` flag.
 
 ```bash
+OCTOPUS_API_KEY=API-KEY \
+OCTOPUS_SERVER_URL=https://your-octopus.com \
 npx -y @octopusdeploy/mcp-server
 ```
 
-With configuration provided via environment variables:
+Or with the server URL on the command line:
 ```bash
-OCTOPUS_API_KEY=API-KEY
-OCTOPUS_SERVER_URL=https://your-octopus.com
-```
-
-Or with configuration supplied via the command line:
-```bash
-npx -y @octopusdeploy/mcp-server --server-url https://your-octopus.com --api-key YOUR_API_KEY
+OCTOPUS_API_KEY=API-KEY \
+npx -y @octopusdeploy/mcp-server --server-url https://your-octopus.com
 ```
 
 ### Authentication
 
-The MCP server supports two authentication methods:
+The MCP server supports two authentication methods. Both are supplied via environment variables — credentials are not accepted on the command line because flags are visible in the host process list to any local user.
 
 #### API Key (recommended for interactive use)
 
 API keys are the standard authentication method for Octopus Deploy. You can generate one from your Octopus Deploy user profile.
 
 ```bash
-# Via environment variable
-OCTOPUS_API_KEY=API-XXXXXXXXXXXXXXXXXXXXXXXXXX
-
-# Via command line argument
-npx -y @octopusdeploy/mcp-server --api-key YOUR_API_KEY --server-url https://your-octopus.com
+OCTOPUS_API_KEY=API-XXXXXXXXXXXXXXXXXXXXXXXXXX \
+OCTOPUS_SERVER_URL=https://your-octopus.com \
+npx -y @octopusdeploy/mcp-server
 ```
 
 #### Access Token / Bearer Token (automated scenarios only)
@@ -139,11 +140,9 @@ npx -y @octopusdeploy/mcp-server --api-key YOUR_API_KEY --server-url https://you
 The server also supports short-lived access tokens (Bearer tokens) as an alternative to API keys. This authentication method is intended **only for automated scenarios** where an external system issues a short-lived token to the MCP server (e.g., CI/CD pipelines, automated orchestration, or machine-to-machine workflows). Do not use long-lived Bearer tokens — use API keys instead for interactive or long-running sessions.
 
 ```bash
-# Via environment variable
-OCTOPUS_ACCESS_TOKEN=your-short-lived-token
-
-# Via command line argument
-npx -y @octopusdeploy/mcp-server --access-token YOUR_TOKEN --server-url https://your-octopus.com
+OCTOPUS_ACCESS_TOKEN=your-short-lived-token \
+OCTOPUS_SERVER_URL=https://your-octopus.com \
+npx -y @octopusdeploy/mcp-server
 ```
 
 Full example configuration with an access token:
@@ -153,13 +152,17 @@ Full example configuration with an access token:
     "octopusdeploy": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@octopusdeploy/mcp-server", "--access-token", "YOUR_TOKEN", "--server-url", "https://your-octopus.com"]
+      "args": ["-y", "@octopusdeploy/mcp-server"],
+      "env": {
+        "OCTOPUS_SERVER_URL": "https://your-octopus.com",
+        "OCTOPUS_ACCESS_TOKEN": "YOUR_TOKEN"
+      }
     }
   }
 }
 ```
 
-If both an API key and an access token are provided, the access token takes precedence.
+If both an API key and an access token are provided, the access token takes precedence. The active authentication method is recorded in the log file (configurable with `--log-file`) so operators can confirm which credential is in use.
 
 ### Configuration Options
 
@@ -214,15 +217,17 @@ npx -y @octopusdeploy/mcp-server --no-read-only
 
 #### Complete Examples
 
+All examples below assume `OCTOPUS_API_KEY` is set in the environment. The `--server-url` flag is shown for clarity but can also be provided via `OCTOPUS_SERVER_URL`.
+
 ```bash
 # Development setup with only core and project tools
-npx -y @octopusdeploy/mcp-server --toolsets core,projects --server-url https://your-octopus.com --api-key YOUR_API_KEY
+npx -y @octopusdeploy/mcp-server --toolsets core,projects --server-url https://your-octopus.com
 
 # Full production setup with all tools (read-only by default)
-npx -y @octopusdeploy/mcp-server --toolsets all --server-url https://your-octopus.com --api-key YOUR_API_KEY
+npx -y @octopusdeploy/mcp-server --toolsets all --server-url https://your-octopus.com
 
 # Development setup with write operations enabled
-npx -y @octopusdeploy/mcp-server --no-read-only --server-url https://your-octopus.com --api-key YOUR_API_KEY
+npx -y @octopusdeploy/mcp-server --no-read-only --server-url https://your-octopus.com
 ```
 
 #### Other command line arguments

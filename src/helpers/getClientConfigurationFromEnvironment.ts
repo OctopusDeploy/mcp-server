@@ -2,6 +2,7 @@ import { type ClientConfiguration } from "@octopusdeploy/api-client";
 import { env } from "process";
 import { SEMVER_VERSION } from "../utils/version.js";
 import { getClientInfo } from "../utils/clientInfo.js";
+import { logger } from "../utils/logger.js";
 
 const USER_AGENT_NAME = "octopus-mcp-server";
 
@@ -22,7 +23,7 @@ function constructUserAgent(): string {
   return userAgent;
 }
 
-function getClientConfiguration(options: ConfigurationOptions = {}): ClientConfiguration {
+export function getClientConfiguration(options: ConfigurationOptions = {}): ClientConfiguration {
   const hasApiKey = !isEmpty(options.apiKey);
   const hasAccessToken = !isEmpty(options.accessToken);
 
@@ -34,13 +35,14 @@ function getClientConfiguration(options: ConfigurationOptions = {}): ClientConfi
 
   if (!hasApiKey && !hasAccessToken) {
     throw new Error(
-      "Octopus authentication must be provided. Supply either an API key (--api-key or OCTOPUS_API_KEY) or an access token (--access-token or OCTOPUS_ACCESS_TOKEN)."
+      "Octopus authentication must be provided via OCTOPUS_API_KEY or OCTOPUS_ACCESS_TOKEN environment variable."
     );
   }
 
   const userAgent = constructUserAgent();
 
   if (hasAccessToken) {
+    logger.info("Authenticating with access token (Bearer)");
     return {
       userAgentApp: userAgent,
       instanceURL: options.instanceURL,
@@ -48,6 +50,7 @@ function getClientConfiguration(options: ConfigurationOptions = {}): ClientConfi
     };
   }
 
+  logger.info("Authenticating with API key");
   return {
     userAgentApp: userAgent,
     instanceURL: options.instanceURL,
@@ -58,7 +61,7 @@ function getClientConfiguration(options: ConfigurationOptions = {}): ClientConfi
 export function getClientConfigurationFromEnvironment(): ClientConfiguration {
   return getClientConfiguration({
     instanceURL: env["CLI_SERVER_URL"] || env["OCTOPUS_SERVER_URL"],
-    apiKey: env["CLI_API_KEY"] || env["OCTOPUS_API_KEY"],
-    accessToken: env["CLI_ACCESS_TOKEN"] || env["OCTOPUS_ACCESS_TOKEN"],
+    apiKey: env["OCTOPUS_API_KEY"],
+    accessToken: env["OCTOPUS_ACCESS_TOKEN"],
   });
 }
