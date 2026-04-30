@@ -32,7 +32,6 @@ program
   .description("Octopus Deploy MCP Server")
   .version(SEMVER_VERSION)
   .option("-s, --server-url <url>", "Octopus server URL")
-  .option("-k, --api-key <key>", "Octopus API key")
   .option(
     "--toolsets <toolsets>",
     `Comma-separated list of toolsets to enable, or "all" (default: all). Available toolsets: ${DEFAULT_TOOLSETS.join(", ")}`,
@@ -86,9 +85,6 @@ logger.setQuietMode(options.quiet);
 
 if (options.serverUrl) {
   process.env.CLI_SERVER_URL = options.serverUrl;
-}
-if (options.apiKey) {
-  process.env.CLI_API_KEY = options.apiKey;
 }
 
 // Set up initialization callback to capture client info

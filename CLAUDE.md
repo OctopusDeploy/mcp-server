@@ -19,11 +19,12 @@ npm start            # Run compiled server from dist/
 
 ### Testing the Server
 ```bash
-# Test with environment variables
+# Credentials must be supplied via environment variables (they are not accepted as CLI flags
+# to avoid exposure in the host process list).
 OCTOPUS_API_KEY=API-KEY OCTOPUS_SERVER_URL=https://your-octopus.com npm start
 
-# Test with command line arguments
-npm start -- --server-url https://your-octopus.com --api-key YOUR_API_KEY
+# Server URL may also be supplied via the --server-url flag:
+OCTOPUS_API_KEY=API-KEY npm start -- --server-url https://your-octopus.com
 ```
 
 ## Architecture
@@ -47,10 +48,12 @@ Each tool file exports a registration that includes:
 
 ### Client Configuration
 The server accepts configuration via:
-1. Environment variables: `OCTOPUS_API_KEY`, `OCTOPUS_SERVER_URL`
-2. CLI arguments: `--api-key`, `--server-url`
+1. Credentials (env vars only): `OCTOPUS_API_KEY` or `OCTOPUS_ACCESS_TOKEN`
+2. Server URL: `OCTOPUS_SERVER_URL` env var or `--server-url` CLI flag
 3. Toolset filtering: `--toolsets` to enable specific tool groups
 4. Version checking: `--list-tools-by-version` to see tool compatibility
+
+Credentials are deliberately not accepted as CLI flags — they would be visible to any local user via `ps aux` / `/proc/<pid>/cmdline`.
 
 ## TypeScript Style Guide
 

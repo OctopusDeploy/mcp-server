@@ -1,4 +1,4 @@
-import { beforeAll, expect } from "vitest";
+import { expect } from "vitest";
 import { config } from "dotenv";
 
 // Load environment variables from .env files
@@ -6,7 +6,8 @@ config();
 
 export const testConfig = {
   octopusServerUrl: process.env.OCTOPUS_SERVER_URL || process.env.CLI_SERVER_URL,
-  octopusApiKey: process.env.OCTOPUS_API_KEY || process.env.CLI_API_KEY,
+  octopusApiKey: process.env.OCTOPUS_API_KEY,
+  octopusAccessToken: process.env.OCTOPUS_ACCESS_TOKEN,
   testSpaceName: process.env.TEST_SPACE_NAME || "Default",
   timeout: 30000, // 30 seconds
 };
@@ -18,8 +19,8 @@ export function validateTestEnvironment(): void {
     missing.push("OCTOPUS_SERVER_URL (or CLI_SERVER_URL)");
   }
 
-  if (!testConfig.octopusApiKey) {
-    missing.push("OCTOPUS_API_KEY (or CLI_API_KEY)");
+  if (!testConfig.octopusApiKey && !testConfig.octopusAccessToken) {
+    missing.push("OCTOPUS_API_KEY or OCTOPUS_ACCESS_TOKEN");
   }
 
   if (missing.length > 0) {
@@ -58,7 +59,3 @@ export function parseToolResponse(response: any): any {
   assertToolResponse(response);
   return JSON.parse(response.content[0].text);
 }
-
-beforeAll(() => {
-  validateTestEnvironment();
-});
