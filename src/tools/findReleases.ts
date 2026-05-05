@@ -3,73 +3,135 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
-import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES } from "../helpers/errorHandling.js";
+import {
+  validateEntityId,
+  handleOctopusApiError,
+  ENTITY_PREFIXES,
+} from "../helpers/errorHandling.js";
+
+type Release = Awaited<ReturnType<ReleaseRepository["get"]>>;
+
+/**
+ * Slim release shape returned by find_releases.
+ *
+ * Heavy fields (releaseNotes, selectedPackages, selectedGitResources,
+ * buildInformation, customFields) are deliberately omitted. Callers fetch
+ * the `resourceUri` (octopus://spaces/{spaceName}/releases/{releaseId})
+ * Resource for the full body when needed.
+ */
+function releaseSummary(release: Release, spaceName: string) {
+  const encodedSpace = encodeURIComponent(spaceName);
+  const encodedId = encodeURIComponent(release.Id);
+
+  return {
+    id: release.Id,
+    version: release.Version,
+    channelId: release.ChannelId,
+    projectId: release.ProjectId,
+    assembled: release.Assembled,
+    ignoreChannelRules: release.IgnoreChannelRules,
+    versionControlReference: release.VersionControlReference,
+    resourceUri: `octopus://spaces/${encodedSpace}/releases/${encodedId}`,
+  };
+}
+
+const findReleasesSchema = z
+  .object({
+    spaceName: z.string().describe("Space name."),
+    releaseId: z
+      .string()
+      .optional()
+      .describe(
+        "Fetch a single release by ID. Mutually exclusive with projectId and searchByVersion.",
+      ),
+    projectId: z
+      .string()
+      .optional()
+      .describe("Restrict listing to a single project. Mutually exclusive with releaseId."),
+    searchByVersion: z
+      .string()
+      .optional()
+      .describe("Filter by version string. Requires projectId."),
+    skip: z.number().optional().describe("Pagination offset."),
+    take: z.number().optional().describe("Pagination page size."),
+  })
+  .superRefine((args, ctx) => {
+    if (args.releaseId && args.projectId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Provide either releaseId or projectId, not both. Use releaseId to fetch a single release; use projectId to list releases for a project.",
+        path: ["projectId"],
+      });
+    }
+    if (args.searchByVersion && !args.projectId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "searchByVersion requires projectId.",
+        path: ["searchByVersion"],
+      });
+    }
+    if (args.releaseId && args.searchByVersion) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "searchByVersion is only valid when listing releases for a project; it cannot be combined with releaseId.",
+        path: ["searchByVersion"],
+      });
+    }
+  });
 
 export function registerFindReleasesTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "find_releases",
-    `Find releases in a space - can retrieve a single release by ID or list all releases
-
-  This unified tool can either:
-  - Get a specific release when releaseId is provided
-  - List all releases in a space when releaseId is omitted
-
-  Optionally provide skip and take parameters for pagination when listing.`,
     {
-      spaceName: z.string().describe("The space name"),
-      releaseId: z.string().optional().describe("The ID of a specific release to retrieve. If omitted, lists all releases."),
-      skip: z.number().optional().describe("Number of releases to skip for pagination (only used when listing)"),
-      take: z.number().optional().describe("Number of releases to take for pagination (only used when listing)")
+      title: "Find releases",
+      description: `Find releases in an Octopus Deploy space.
+
+  Three modes, picked by which arguments are supplied:
+  - releaseId  → fetch the summary for that release.
+  - projectId  → list releases for that project (optionally filtered by searchByVersion).
+  - neither    → list releases across the space.
+
+  Each summary includes a resourceUri for fetching the full release body
+  (release notes, packages, build information, custom fields).`,
+      inputSchema: findReleasesSchema,
+      annotations: { readOnlyHint: true },
     },
-    {
-      title: "Find releases in an Octopus Deploy space",
-      readOnlyHint: true,
-    },
-    async ({ spaceName, releaseId, skip, take }) => {
-      const configuration = getClientConfigurationFromEnvironment();
-      const client = await Client.create(configuration);
+    async ({ spaceName, releaseId, projectId, searchByVersion, skip, take }) => {
+      const client = await Client.create(getClientConfigurationFromEnvironment());
       const releaseRepository = new ReleaseRepository(client, spaceName);
 
-      // If releaseId is provided, get a single release
       if (releaseId) {
-        validateEntityId(releaseId, 'release', ENTITY_PREFIXES.release);
+        validateEntityId(releaseId, "release", ENTITY_PREFIXES.release);
 
         try {
           const release = await releaseRepository.get(releaseId);
-
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify({
-                  id: release.Id,
-                  version: release.Version,
-                  channelId: release.ChannelId,
-                  projectId: release.ProjectId,
-                  releaseNotes: release.ReleaseNotes,
-                  assembled: release.Assembled,
-                  ignoreChannelRules: release.IgnoreChannelRules,
-                  selectedPackages: release.SelectedPackages,
-                  selectedGitResources: release.SelectedGitResources,
-                  versionControlReference: release.VersionControlReference,
-                  buildInformation: release.BuildInformation,
-                  customFields: release.CustomFields
-                }),
+                text: JSON.stringify(releaseSummary(release, spaceName)),
               },
             ],
           };
         } catch (error) {
           handleOctopusApiError(error, {
-            entityType: 'release',
+            entityType: "release",
             entityId: releaseId,
             spaceName,
-            helpText: "Use find_releases without releaseId or list_releases_for_project to find valid release IDs."
+            helpText: "Call find_releases without releaseId to list valid IDs.",
           });
         }
       }
 
-      // Otherwise, list all releases
-      const releasesResponse = await releaseRepository.list({ skip, take });
+      const releasesResponse = projectId
+        ? await releaseRepository.listForProject(projectId, {
+            skip,
+            take,
+            searchByVersion,
+          })
+        : await releaseRepository.list({ skip, take });
 
       return {
         content: [
@@ -80,25 +142,14 @@ export function registerFindReleasesTool(server: McpServer) {
               itemsPerPage: releasesResponse.ItemsPerPage,
               numberOfPages: releasesResponse.NumberOfPages,
               lastPageNumber: releasesResponse.LastPageNumber,
-              items: releasesResponse.Items.map(release => ({
-                id: release.Id,
-                version: release.Version,
-                channelId: release.ChannelId,
-                projectId: release.ProjectId,
-                releaseNotes: release.ReleaseNotes,
-                assembled: release.Assembled,
-                ignoreChannelRules: release.IgnoreChannelRules,
-                selectedPackages: release.SelectedPackages,
-                selectedGitResources: release.SelectedGitResources,
-                versionControlReference: release.VersionControlReference,
-                buildInformation: release.BuildInformation,
-                customFields: release.CustomFields
-              }))
+              items: releasesResponse.Items.map((release) =>
+                releaseSummary(release, spaceName),
+              ),
             }),
           },
         ],
       };
-    }
+    },
   );
 }
 

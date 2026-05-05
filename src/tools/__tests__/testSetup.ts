@@ -46,16 +46,21 @@ export function createErrorTestCase(
   };
 }
 
-export function assertToolResponse(response: any): void {
-  expect(response).toBeDefined();
-  expect(response.content).toBeDefined();
-  expect(Array.isArray(response.content)).toBe(true);
-  expect(response.content.length).toBeGreaterThan(0);
-  expect(response.content[0].type).toBe("text");
-  expect(response.content[0].text).toBeDefined();
+export interface ToolResponse {
+  content: Array<{ type: string; text: string }>;
 }
 
-export function parseToolResponse(response: any): any {
+export function assertToolResponse(response: unknown): asserts response is ToolResponse {
+  expect(response).toBeDefined();
+  const r = response as ToolResponse;
+  expect(r.content).toBeDefined();
+  expect(Array.isArray(r.content)).toBe(true);
+  expect(r.content.length).toBeGreaterThan(0);
+  expect(r.content[0].type).toBe("text");
+  expect(r.content[0].text).toBeDefined();
+}
+
+export function parseToolResponse<T = unknown>(response: unknown): T {
   assertToolResponse(response);
-  return JSON.parse(response.content[0].text);
+  return JSON.parse(response.content[0].text) as T;
 }
