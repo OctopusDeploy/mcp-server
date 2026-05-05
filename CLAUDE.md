@@ -46,6 +46,29 @@ Each tool file exports a registration that includes:
 - Read-only flag (all tools are currently read-only)
 - Minimum Octopus version requirement (optional)
 
+#### MCP SDK: use `registerTool`, not `tool`
+
+`server.tool(...)` is **deprecated** in `@modelcontextprotocol/sdk` and only accepts a `ZodRawShapeCompat` (a flat object of zod schemas) as its input schema. Refined schemas (`z.object(...).superRefine(...)`, `z.discriminatedUnion(...)`, etc.) cannot be used with `tool()` — TypeScript will reject the assignment.
+
+New tools must use `server.registerTool(name, config, handler)`:
+
+```typescript
+server.registerTool(
+  "find_releases",
+  {
+    title: "Find releases",
+    description: "...",
+    inputSchema: refinedZodSchema, // accepts ZodRawShapeCompat OR a full zod schema with refinements
+    annotations: { readOnlyHint: true },
+  },
+  async (args) => { /* ... */ },
+);
+```
+
+Use `superRefine` (or a discriminated union) to encode cross-field invariants — mutually exclusive arguments, required-when-other-present rules, etc. — so the SDK rejects bad combinations during input validation and the LLM gets a structured error rather than a silent override at runtime. Constraints expressed only in description prose are not enforced.
+
+When migrating existing tools from `tool()` to `registerTool()`: the description and annotations move into the config object as named fields (`description`, `annotations`); the input schema becomes `inputSchema`. The handler signature is unchanged.
+
 ### Client Configuration
 The server accepts configuration via:
 1. Credentials (env vars only): `OCTOPUS_API_KEY` or `OCTOPUS_ACCESS_TOKEN`
