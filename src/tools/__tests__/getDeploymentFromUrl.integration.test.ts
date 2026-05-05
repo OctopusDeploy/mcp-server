@@ -45,7 +45,12 @@ describe('getDeploymentFromUrl Integration Tests', () => {
 
       // Verify next steps guidance
       expect(result.nextSteps).toBeDefined();
-      expect(result.nextSteps.suggestedTool).toBe('get_task_details');
+      expect(result.nextSteps.taskResourceUri).toMatch(
+        /^octopus:\/\/spaces\/.+\/tasks\/ServerTasks-\d+\/details$/,
+      );
+      expect(result.nextSteps.taskLogResourceUri).toMatch(
+        /^octopus:\/\/spaces\/.+\/tasks\/ServerTasks-\d+\/log$/,
+      );
     }, testConfig.timeout);
   });
 

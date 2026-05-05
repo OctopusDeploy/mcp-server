@@ -215,7 +215,7 @@ The tool automatically determines which deployment type to use based on the para
                     deploymentId: task.DeploymentId,
                   })),
                   message: `Successfully created ${tasks.length} deployment(s) for release ${releaseVersion}`,
-                  helpText: `Use get_task_by_id with the taskId values to monitor deployment progress. Use list_deployments to view deployment details. Use find_releases to verify the release exists.`,
+                  helpText: `Fetch the octopus://spaces/{spaceName}/tasks/{taskId} resource (or call read_resource with that URI) to monitor deployment progress; use the /details or /log suffix for the structured activity tree or raw log. Use list_deployments to view deployment details. Use find_releases to verify the release exists.`,
                 },
                 null,
                 2,

@@ -59,11 +59,28 @@ program
 
 const options = program.opts();
 
-const server = new McpServer({
-  name: "Octopus Deploy",
-  description: "Official Octopus Deploy MCP server.",
-  version: SEMVER_VERSION,
-});
+const SERVER_INSTRUCTIONS = `
+The official Octopus Deploy MCP server. Tools are grouped into toolsets (core, releases, deployments, tasks, tenants, kubernetes, machines, certificates) and you can filter them via --toolsets. Writes are gated behind --no-read-only.
+
+Resource URIs and how to dereference them:
+- Many tools return slim summaries plus an 'octopus://...' URI in fields like 'resourceUri', 'taskResourceUri', or 'taskLogResourceUri' instead of inlining heavy payloads (release notes, packaged versions, task activity logs, etc.). To fetch the full body, dereference the URI.
+- Resource-aware clients (Claude Code, MCP Inspector): call the standard 'resources/read' primitive with the URI.
+- Clients without native resources/read (Claude.ai web, several IDE integrations): call the 'read_resource' tool with { uri }. It returns the same body as resources/read. Always available, regardless of toolset filter.
+- The 'read_resource' tool is the universal bridge from any URI returned by any tool — if you see an 'octopus://' string in a response and don't know what to do with it, call read_resource with it.
+
+Currently exposed resource families: releases ('octopus://spaces/{spaceName}/releases/{releaseId}') and tasks ('octopus://spaces/{spaceName}/tasks/{taskId}', '/details', '/log'). More resource families will be added over time.
+`.trim();
+
+const server = new McpServer(
+  {
+    name: "Octopus Deploy",
+    description: "Official Octopus Deploy MCP server.",
+    version: SEMVER_VERSION,
+  },
+  {
+    instructions: SERVER_INSTRUCTIONS,
+  },
+);
 
 const toolsetConfig = createToolsetConfig(options.toolsets, options.readOnly);
 registerTools(server, toolsetConfig);

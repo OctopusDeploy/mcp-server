@@ -116,13 +116,10 @@ export async function getDeploymentFromUrl(client: Client, params: GetDeployment
       resourceType: urlParts.resourceType,
     },
     nextSteps: {
-      description: "To view task logs and execution details for this deployment",
+      description: "To view task logs and execution details for this deployment, fetch the corresponding task resource. Resource-aware clients can call resources/read directly; otherwise use the read_resource tool.",
       useTaskId: deployment.TaskId,
-      suggestedTool: "get_task_details",
-      suggestedParams: {
-        spaceName,
-        taskId: deployment.TaskId,
-      }
+      taskResourceUri: `octopus://spaces/${encodeURIComponent(spaceName)}/tasks/${encodeURIComponent(deployment.TaskId)}/details`,
+      taskLogResourceUri: `octopus://spaces/${encodeURIComponent(spaceName)}/tasks/${encodeURIComponent(deployment.TaskId)}/log`,
     }
   };
 }
@@ -137,13 +134,14 @@ https://your-octopus.com/app#/Spaces-1/projects/my-app/deployments/releases/1.0.
 
 Returns:
 - Full deployment details (environment, release, project, created time)
-- taskIdForLogs: Use this with get_task_details to view execution logs
+- taskIdForLogs: the ServerTasks- ID for this deployment
+- taskResourceUri / taskLogResourceUri: octopus:// URIs to fetch the task body or raw log via resources/read (or read_resource on clients without native resource support)
 - Public URL for web portal access
 
 Recommended workflow for investigating deployment issues:
 1. Call get_deployment_from_url with the deployment URL
 2. Review deployment context (environment, release version, etc.)
-3. Use the returned taskIdForLogs with get_task_details to view execution logs and diagnose issues
+3. Fetch the returned taskResourceUri (or taskLogResourceUri) to view execution details / raw log
 
 Handles space ID to space name resolution automatically.`,
     {

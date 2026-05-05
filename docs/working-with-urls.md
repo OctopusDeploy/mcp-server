@@ -10,8 +10,8 @@ The Octopus MCP Server provides powerful URL-based tools that allow you to inves
 User: "Why did this deployment fail? https://your-octopus.com/app#/Spaces-1/projects/my-app/deployments/releases/1.0.0/deployments/Deployments-123"
 
 AI: I'll investigate the deployment failure for you.
-[Step 1: Uses get_deployment_from_url to get deployment details and taskId]
-[Step 2: Uses get_task_details with the taskId to get execution logs]
+[Step 1: Uses get_deployment_from_url to get deployment details and the task resource URI]
+[Step 2: Reads octopus://spaces/{spaceName}/tasks/{taskId}/details (or /log) for execution data]
 [Analyzes the task logs and identifies the root cause]
 ```
 
@@ -107,8 +107,9 @@ Understanding how Octopus resources relate to each other is crucial for effectiv
   "taskIdForLogs": "ServerTasks-456",
   "resolvedSpaceName": "Production",
   "nextSteps": {
-    "suggestedTool": "get_task_details",
-    "useTaskId": "ServerTasks-456"
+    "useTaskId": "ServerTasks-456",
+    "taskResourceUri": "octopus://spaces/Production/tasks/ServerTasks-456/details",
+    "taskLogResourceUri": "octopus://spaces/Production/tasks/ServerTasks-456/log"
   }
 }
 ```
@@ -157,16 +158,16 @@ Understanding how Octopus resources relate to each other is crucial for effectiv
 1. list_spaces → find space name
 2. list_deployments → find deployment
 3. Extract TaskId from deployment
-4. get_task_details → view logs
+4. Fetch task details → view logs
 ```
 
-**New approach (2 tool calls):**
+**New approach (2 calls):**
 ```
 Step 1: get_deployment_from_url with deployment URL
-        → Returns deployment details + taskIdForLogs
+        → Returns deployment details + taskResourceUri / taskLogResourceUri
 
-Step 2: get_task_details with spaceName and taskIdForLogs
-        → Returns task execution logs
+Step 2: resources/read on the returned URI (or read_resource as a backstop)
+        → Returns task execution data (structured tree or raw log)
 ```
 
 **Example:**
@@ -178,11 +179,10 @@ Step 1: get_deployment_from_url
   ✓ Extracts Space ID (Spaces-1) and resolves to "Production"
   ✓ Extracts Deployment ID (Deployments-789)
   ✓ Fetches deployment details
-  ✓ Returns: Environment "Production", Release "2.1.0", taskIdForLogs: "ServerTasks-456"
+  ✓ Returns: Environment "Production", Release "2.1.0", taskResourceUri: "octopus://spaces/Production/tasks/ServerTasks-456/details"
 
-Step 2: get_task_details
-  ✓ Uses spaceName="Production" and taskId="ServerTasks-456"
-  ✓ Fetches task execution logs
+Step 2: read the task resource (resources/read or read_resource)
+  ✓ Fetches task execution logs from octopus://spaces/Production/tasks/ServerTasks-456/details
   ✓ Analyzes failure: "Connection timeout to database server"
 ```
 
@@ -225,12 +225,12 @@ AI uses get_deployment_from_url:
 ```
 Step 1: get_deployment_from_url
   Purpose: Get deployment context
-  Returns: Environment, release, project, taskIdForLogs
+  Returns: Environment, release, project, taskResourceUri (octopus:// URI)
 
-Step 2: get_task_details
+Step 2: resources/read (or read_resource backstop)
   Purpose: Get execution logs and diagnose issues
-  Input: spaceName and taskId from Step 1
-  Returns: Task state, logs, error messages
+  Input: the taskResourceUri from Step 1
+  Returns: Task state, structured activity tree, or raw log
 ```
 
 This separation provides:
@@ -251,8 +251,8 @@ get_task_from_url with deployment URL
 **Right:**
 ```
 get_deployment_from_url with deployment URL
-→ Get taskIdForLogs
-→ Use get_task_details with spaceName and taskId
+→ Returns taskResourceUri (octopus://...)
+→ Read the task resource via resources/read or read_resource
 ```
 
 ### ❌ Assuming Deployment URLs Contain Task IDs
@@ -265,17 +265,16 @@ Parse deployment URL to extract TaskId directly
 
 **Right:**
 ```
-Step 1: get_deployment_from_url → returns taskIdForLogs
-Step 2: get_task_details with the taskId → get logs
+Step 1: get_deployment_from_url → returns taskResourceUri
+Step 2: read_resource({ uri: taskResourceUri }) → get logs
 ```
 
 ### ❌ Using Space IDs Instead of Space Names
 
 **Wrong:**
 ```
-get_task_details({
-  spaceName: "Spaces-1",  // ❌ This is a space ID
-  taskId: "ServerTasks-456"
+read_resource({
+  uri: "octopus://spaces/Spaces-1/tasks/ServerTasks-456/details" // ❌ Spaces-1 is the ID, not the name
 })
 ```
 
@@ -345,8 +344,8 @@ Each tool accepts only its matching URL type. This makes behavior predictable an
 When investigating deployment failures:
 
 ```
-1. get_deployment_from_url → Get context + taskId
-2. get_task_details → Get execution logs
+1. get_deployment_from_url → Get context + taskResourceUri
+2. resources/read (or read_resource) on the URI → Get execution logs
 ```
 
 This provides both context and details in a structured way.
@@ -367,8 +366,8 @@ Don't manually extract IDs or resolve spaces. The URL tools handle:
 The tools provide actionable error messages:
 ```
 "Could not extract task ID from URL. URL must contain a task identifier (ServerTasks-XXXXX).
-If you have a deployment URL, use get_deployment_from_url first to get the task ID,
-then use get_task_details to view task logs."
+If you have a deployment URL, use get_deployment_from_url first to resolve the task ID,
+then fetch the octopus://spaces/{spaceName}/tasks/{taskId}/details resource (or call read_resource with that URI) to view task logs."
 ```
 
 ## Environment Variables for Testing

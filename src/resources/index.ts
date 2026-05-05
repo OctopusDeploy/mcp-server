@@ -9,6 +9,7 @@ import { flatten } from "./dispatch.js";
 
 // Side-effect imports populate RESOURCE_REGISTRY.
 import "./release.js";
+import "./task.js";
 
 function isToolsetEnabled(toolset: Toolset, config: ToolsetConfig): boolean {
   const enabled: Toolset[] =
