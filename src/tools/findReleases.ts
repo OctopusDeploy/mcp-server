@@ -35,10 +35,58 @@ function releaseSummary(release: Release, spaceName: string) {
   };
 }
 
+const findReleasesSchema = z
+  .object({
+    spaceName: z.string().describe("Space name."),
+    releaseId: z
+      .string()
+      .optional()
+      .describe(
+        "Fetch a single release by ID. Mutually exclusive with projectId and searchByVersion.",
+      ),
+    projectId: z
+      .string()
+      .optional()
+      .describe("Restrict listing to a single project. Mutually exclusive with releaseId."),
+    searchByVersion: z
+      .string()
+      .optional()
+      .describe("Filter by version string. Requires projectId."),
+    skip: z.number().optional().describe("Pagination offset."),
+    take: z.number().optional().describe("Pagination page size."),
+  })
+  .superRefine((args, ctx) => {
+    if (args.releaseId && args.projectId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "Provide either releaseId or projectId, not both. Use releaseId to fetch a single release; use projectId to list releases for a project.",
+        path: ["projectId"],
+      });
+    }
+    if (args.searchByVersion && !args.projectId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "searchByVersion requires projectId.",
+        path: ["searchByVersion"],
+      });
+    }
+    if (args.releaseId && args.searchByVersion) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          "searchByVersion is only valid when listing releases for a project; it cannot be combined with releaseId.",
+        path: ["searchByVersion"],
+      });
+    }
+  });
+
 export function registerFindReleasesTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "find_releases",
-    `Find releases in an Octopus Deploy space.
+    {
+      title: "Find releases",
+      description: `Find releases in an Octopus Deploy space.
 
   Three modes, picked by which arguments are supplied:
   - releaseId  → fetch the summary for that release.
@@ -47,28 +95,8 @@ export function registerFindReleasesTool(server: McpServer) {
 
   Each summary includes a resourceUri for fetching the full release body
   (release notes, packages, build information, custom fields).`,
-    {
-      spaceName: z.string().describe("Space name."),
-      releaseId: z
-        .string()
-        .optional()
-        .describe("Fetch a single release by ID. Mutually exclusive with projectId."),
-      projectId: z
-        .string()
-        .optional()
-        .describe("Restrict listing to a single project."),
-      searchByVersion: z
-        .string()
-        .optional()
-        .describe(
-          "Filter by version string. Only applied when projectId is supplied.",
-        ),
-      skip: z.number().optional().describe("Pagination offset."),
-      take: z.number().optional().describe("Pagination page size."),
-    },
-    {
-      title: "Find releases",
-      readOnlyHint: true,
+      inputSchema: findReleasesSchema,
+      annotations: { readOnlyHint: true },
     },
     async ({ spaceName, releaseId, projectId, searchByVersion, skip, take }) => {
       const client = await Client.create(getClientConfigurationFromEnvironment());
