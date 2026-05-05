@@ -69,6 +69,34 @@ Use `superRefine` (or a discriminated union) to encode cross-field invariants �
 
 When migrating existing tools from `tool()` to `registerTool()`: the description and annotations move into the config object as named fields (`description`, `annotations`); the input schema becomes `inputSchema`. The handler signature is unchanged.
 
+### Resource System
+
+Resources are addressable bodies fetched by URI (e.g. `octopus://spaces/Default/releases/Releases-1`). Each Resource is a single descriptor record in `RESOURCE_REGISTRY` with a URI template, mimeType, toolset, and an async `read` callback. Both the SDK Resource Template registration and the `read_resource` Tool backstop iterate the same registry, so adding a new resource type is one record — no edits to a central dispatcher.
+
+URI variables come back from the SDK's matcher percent-encoded; the dispatch layer URL-decodes before handing them to the `read` callback, so handlers receive plain strings.
+
+#### `stripLinks` for api-client passthrough
+
+Octopus REST responses include a HATEOAS `Links` map of hypermedia URLs (self, related collections, etc.) that LLM consumers don't need and that bloats the payload. **Resource handlers that return an api-client object as JSON should pass it through `stripLinks` (`src/helpers/stripLinks.ts`) first:**
+
+```typescript
+import { stripLinks } from "../helpers/stripLinks.js";
+
+read: async ({ spaceName, releaseId }) => {
+  const release = await new ReleaseRepository(client, spaceName).get(releaseId);
+  return {
+    mimeType: "application/json",
+    text: JSON.stringify(stripLinks(release)),
+  };
+},
+```
+
+When **not** to use it:
+- The handler is constructing a custom JSON shape from scratch (slim summaries, etc.) rather than passing an api-client object through. There's nothing to strip.
+- Tool responses that aren't api-client passthroughs (most `find_*` tools build their own shape).
+
+Don't hand-pick fields off an api-client object as a substitute — the LLM reads PascalCase as well as camelCase, and a manual field map adds maintenance burden without payoff. The api-client's TypeScript types don't always declare `Links` even though the runtime payload includes it; `stripLinks` accepts any `object` and returns `Record<string, unknown>` to handle that gap.
+
 ### Client Configuration
 The server accepts configuration via:
 1. Credentials (env vars only): `OCTOPUS_API_KEY` or `OCTOPUS_ACCESS_TOKEN`
