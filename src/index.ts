@@ -3,6 +3,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { registerTools } from "./tools/index.js";
+import { registerResources } from "./resources/index.js";
 import { Command } from "commander";
 import dotenv from "dotenv";
 import { createToolsetConfig } from "./utils/parseConfig.js";
@@ -66,6 +67,7 @@ const server = new McpServer({
 
 const toolsetConfig = createToolsetConfig(options.toolsets, options.readOnly);
 registerTools(server, toolsetConfig);
+registerResources(server, toolsetConfig);
 
 if (options.listToolsByVersion) {
   printToolVersionAnalysis();

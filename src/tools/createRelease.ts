@@ -113,6 +113,10 @@ This tool creates a new release for a project. The space name and project name a
           versionControlReference = undefined;
         }
 
+        const encodedSpace = encodeURIComponent(spaceName);
+        const encodedId = encodeURIComponent(response.ReleaseId);
+        const resourceUri = `octopus://spaces/${encodedSpace}/releases/${encodedId}`;
+
         return {
           content: [
             {
@@ -123,9 +127,10 @@ This tool creates a new release for a project. The space name and project name a
                   releaseId: response.ReleaseId,
                   releaseVersion: response.ReleaseVersion,
                   versionControlReference,
+                  resourceUri,
                   message: `Release ${response.ReleaseVersion} created successfully`,
                   helpText:
-                    "Use find_releases to view release details, or use deploy_release to deploy this release to environments.",
+                    "Read resourceUri for the full release body (includes releaseNotes). Use deploy_release to deploy this release to environments.",
                 },
                 null,
                 2,

@@ -2,6 +2,26 @@ import { describe, it, expect } from "vitest";
 import { testConfig, parseToolResponse } from "./testSetup.js";
 import { findTenantsHandler } from "../findTenants.js";
 
+interface TenantSummary {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  isDisabled: boolean;
+  tenantTags?: string[];
+  spaceId: string;
+  publicUrl: string;
+  publicUrlInstruction: string;
+}
+
+interface PaginatedTenants {
+  totalResults: number;
+  itemsPerPage: number;
+  numberOfPages: number;
+  lastPageNumber: number;
+  items: TenantSummary[];
+}
+
 describe("listTenants Integration Tests", () => {
   describe("Successful scenarios", () => {
     it(
@@ -11,7 +31,7 @@ describe("listTenants Integration Tests", () => {
           spaceName: testConfig.testSpaceName,
         });
 
-        const data = parseToolResponse(response);
+        const data = parseToolResponse<PaginatedTenants>(response);
 
         expect(data).toHaveProperty("totalResults");
         expect(data).toHaveProperty("itemsPerPage");
@@ -51,7 +71,7 @@ describe("listTenants Integration Tests", () => {
           take: 5,
         });
 
-        const data = parseToolResponse(response);
+        const data = parseToolResponse<PaginatedTenants>(response);
 
         expect(data).toHaveProperty("totalResults");
         expect(data).toHaveProperty("itemsPerPage");
@@ -69,12 +89,12 @@ describe("listTenants Integration Tests", () => {
           partialName: "test",
         });
 
-        const data = parseToolResponse(response);
+        const data = parseToolResponse<PaginatedTenants>(response);
         expect(data).toHaveProperty("items");
         expect(Array.isArray(data.items)).toBe(true);
 
         // If results are found, verify they contain the search term
-        data.items.forEach((tenant: any) => {
+        data.items.forEach((tenant) => {
           if (tenant.name) {
             expect(tenant.name.toLowerCase()).toContain("test");
           }
@@ -105,7 +125,7 @@ describe("listTenants Integration Tests", () => {
           partialName: "ThisTenantNameShouldNotExist123456789",
         });
 
-        const data = parseToolResponse(response);
+        const data = parseToolResponse<PaginatedTenants>(response);
         expect(data).toHaveProperty("items");
         expect(Array.isArray(data.items)).toBe(true);
         expect(data.items.length).toBe(0);

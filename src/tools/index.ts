@@ -11,7 +11,6 @@ import "./listSpaces.js";
 import "./listProjects.js";
 import "./listEnvironments.js";
 import "./listDeployments.js";
-import "./listReleasesForProject.js";
 import "./getTaskById.js";
 import "./getTaskDetails.js";
 import "./getTaskRaw.js";
@@ -35,6 +34,9 @@ import "./findAccounts.js";
 // Write operations
 import "./createRelease.js";
 import "./deployRelease.js";
+
+// Resource backstop for clients without native MCP resource support
+import "./readResource.js";
 function isToolEnabled(
   toolRegistration: ToolRegistration,
   config: ToolsetConfig,
