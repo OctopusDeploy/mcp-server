@@ -32,6 +32,9 @@ import "./findAccounts.js";
 import "./createRelease.js";
 import "./deployRelease.js";
 
+// Task log search
+import "./grepTaskLog.js";
+
 // Resource backstop for clients without native MCP resource support
 import "./readResource.js";
 function isToolEnabled(

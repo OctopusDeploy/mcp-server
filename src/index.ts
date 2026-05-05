@@ -69,6 +69,10 @@ Resource URIs and how to dereference them:
 - The 'read_resource' tool is the universal bridge from any URI returned by any tool — if you see an 'octopus://' string in a response and don't know what to do with it, call read_resource with it.
 
 Currently exposed resource families: releases ('octopus://spaces/{spaceName}/releases/{releaseId}') and tasks ('octopus://spaces/{spaceName}/tasks/{taskId}', '/details', '/log'). More resource families will be added over time.
+
+Searching task logs without fetching the whole thing:
+- The /log resource returns the entire activity log as plain text — fine for short tasks but expensive for long-running deployments.
+- When you know what you are looking for (an error string, a step name, a regex), call the 'grep_task_log' tool instead. Its parameters mirror GNU grep (pattern, caseInsensitive, invertMatch, fixedString, beforeContext, afterContext, maxCount). It returns only matching lines with optional context windows plus a totalMatches count, so you can scan a multi-megabyte log without inhaling it.
 `.trim();
 
 const server = new McpServer(

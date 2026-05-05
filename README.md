@@ -291,11 +291,15 @@ See [Working with URLs](docs/working-with-urls.md) for detailed workflows, examp
 - `list_releases_for_project`: List all releases for a specific project
 
 ### Tasks
-Tasks are exposed as MCP Resources rather than tools. Use `resources/read` (or the `read_resource` backstop tool) with one of:
+Task data is primarily exposed as MCP Resources rather than tools. Use `resources/read` (or the `read_resource` backstop tool) with one of:
 
 - `octopus://spaces/{spaceName}/tasks/{taskId}` — lightweight metadata (state, timing, completion flags)
 - `octopus://spaces/{spaceName}/tasks/{taskId}/details` — full ServerTaskDetails (Progress, ActivityLogs tree, etc.)
 - `octopus://spaces/{spaceName}/tasks/{taskId}/log` — raw plain-text task log
+
+The one task-related Tool is for searching:
+
+- `grep_task_log`: Search a task's activity log without fetching the full body. Parameters mirror GNU grep (`pattern`, `caseInsensitive`, `invertMatch`, `fixedString`, `beforeContext`, `afterContext`, `maxCount`). Returns matching lines with line numbers and optional context windows plus a `totalMatches` count.
 
 ### Tenants
 - `find_tenants`: Find tenants in a space (can get a specific tenant by ID or list/search tenants with filters)
