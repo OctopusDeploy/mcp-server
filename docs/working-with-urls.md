@@ -11,7 +11,7 @@ User: "Why did this deployment fail? https://your-octopus.com/app#/Spaces-1/proj
 
 AI: I'll investigate the deployment failure for you.
 [Step 1: Uses get_deployment_from_url to get deployment details and the task resource URI]
-[Step 2: Reads octopus://spaces/{spaceName}/tasks/{taskId}/details (or /log) for execution data]
+[Step 2: Reads octopus://spaces/{spaceName}/tasks/{taskId}/details for execution data, or calls grep_task_log to search for a specific error string]
 [Analyzes the task logs and identifies the root cause]
 ```
 
@@ -109,7 +109,11 @@ Understanding how Octopus resources relate to each other is crucial for effectiv
   "nextSteps": {
     "useTaskId": "ServerTasks-456",
     "taskResourceUri": "octopus://spaces/Production/tasks/ServerTasks-456/details",
-    "taskLogResourceUri": "octopus://spaces/Production/tasks/ServerTasks-456/log"
+    "grepTaskLogHint": {
+      "tool": "grep_task_log",
+      "spaceName": "Production",
+      "taskId": "ServerTasks-456"
+    }
   }
 }
 ```
@@ -164,10 +168,13 @@ Understanding how Octopus resources relate to each other is crucial for effectiv
 **New approach (2 calls):**
 ```
 Step 1: get_deployment_from_url with deployment URL
-        → Returns deployment details + taskResourceUri / taskLogResourceUri
+        → Returns deployment details + taskResourceUri + grepTaskLogHint
 
-Step 2: resources/read on the returned URI (or read_resource as a backstop)
-        → Returns task execution data (structured tree or raw log)
+Step 2a: resources/read on taskResourceUri (or read_resource backstop)
+         → Returns the structured ActivityLogs tree
+   OR
+Step 2b: grep_task_log with the taskId and a pattern
+         → Returns only matching log lines (mirrors GNU grep flags)
 ```
 
 **Example:**

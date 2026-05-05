@@ -34,7 +34,7 @@ export async function getTaskFromUrl(client: Client, params: GetTaskFromUrlParam
       `Could not extract task ID from URL. ` +
       `URL must contain a task identifier (ServerTasks-XXXXX). ` +
       `If you have a deployment URL, use get_deployment_from_url first to resolve the task ID, ` +
-      `then fetch the octopus://spaces/{spaceName}/tasks/{taskId}/details resource (or call read_resource with that URI) to view task logs.`
+      `then fetch octopus://spaces/{spaceName}/tasks/{taskId}/details for the structured activity tree, or call grep_task_log to search the raw log.`
     );
   }
 
@@ -72,7 +72,7 @@ Key features:
 For deployment URLs:
 If you have a deployment URL, use this workflow:
 1. Call get_deployment_from_url with the deployment URL
-2. Use the returned taskResourceUri / taskLogResourceUri (or fetch octopus://spaces/{spaceName}/tasks/{taskId}/details via resources/read or read_resource)
+2. Use the returned taskResourceUri (structured tree) or call grep_task_log with the returned taskId to search the raw log
 
 ${tasksDescription}`,
     {

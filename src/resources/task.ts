@@ -17,7 +17,7 @@ registerResourceDescriptor({
   toolset: "tasks",
   title: "Octopus task summary",
   description:
-    "Lightweight task metadata: state, timing, completion flags, and arguments. Cheap to fetch — use this for polling or status checks. For step timings and embedded log entries, use the /details URI; for the flat plain-text log, use the /log URI.",
+    "Lightweight task metadata: state, timing, completion flags, and arguments. Cheap to fetch — use this for polling or status checks. For step timings and embedded log entries use the /details URI; to search the raw activity log call the grep_task_log tool.",
   mimeType: "application/json",
   read: async ({ spaceName, taskId }) => {
     validateEntityId(taskId, "task", ENTITY_PREFIXES.task);
@@ -80,36 +80,10 @@ registerResourceDescriptor({
   },
 });
 
-registerResourceDescriptor({
-  name: "task-log",
-  uriTemplate: "octopus://spaces/{spaceName}/tasks/{taskId}/log",
-  toolset: "tasks",
-  title: "Octopus task raw activity log",
-  description:
-    "Raw plain-text task log as displayed in the Octopus portal. Use when you need to grep / read the log linearly. For programmatic access to individual log entries with categories and timestamps, use the /details URI instead.",
-  mimeType: "text/plain",
-  read: async ({ spaceName, taskId }) => {
-    validateEntityId(taskId, "task", ENTITY_PREFIXES.task);
-
-    try {
-      const client = await Client.create(
-        getClientConfigurationFromEnvironment(),
-      );
-      const log = await new SpaceServerTaskRepository(client, spaceName).getRaw(
-        taskId,
-      );
-
-      return {
-        mimeType: "text/plain",
-        text: log,
-      };
-    } catch (error) {
-      handleOctopusApiError(error, {
-        entityType: "task",
-        entityId: taskId,
-        spaceName,
-        helpText: TASK_HELP_TEXT,
-      });
-    }
-  },
-});
+// NOTE: There is intentionally no `octopus://spaces/{spaceName}/tasks/{taskId}/log`
+// resource. Activity logs can be multi-megabyte; exposing them as an addressable
+// resource invites agents to fetch the whole body when they only need a few
+// matching lines. Use the `grep_task_log` tool instead — its parameters mirror
+// GNU grep and it returns only matching slices with totalMatches/context.
+// For structured log entries with categories and timestamps, use the /details
+// URI above (it embeds ActivityLogs[] inline).

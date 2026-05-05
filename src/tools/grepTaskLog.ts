@@ -42,7 +42,11 @@ export interface GrepTaskLogResult {
   returnedMatches: number;
   truncated: boolean;
   matches: GrepMatch[];
-  fullLogResourceUri: string;
+  /**
+   * URI for the structured ActivityLogs tree if the agent needs more than
+   * grep can express (e.g. step hierarchy, category filtering, timing).
+   */
+  taskDetailsResourceUri: string;
 }
 
 const MAX_CONTEXT = 50;
@@ -189,9 +193,9 @@ export function registerGrepTaskLogTool(server: McpServer) {
     "grep_task_log",
     {
       title: "Grep an Octopus task activity log",
-      description: `Search a server task's raw activity log with grep-style semantics. Returns only matching lines (with optional symmetric context windows) instead of forcing the agent to fetch the full log via the octopus://spaces/{spaceName}/tasks/{taskId}/log resource.
+      description: `Search a server task's activity log with grep-style semantics. Returns only matching lines (with optional symmetric context windows). This is the canonical way to inspect task logs — there is no full-log resource URI, because exposing one would tempt callers to inhale multi-megabyte bodies when grep is almost always the better primitive.
 
-Use this when you know what to look for (a specific error string, a step name, a pattern). Use the /log resource only when you need to read the entire log linearly.
+Use this when you know what to look for (a specific error string, a step name, a pattern). For structured access to the activity tree (step hierarchy, categories, timing) use the octopus://spaces/{spaceName}/tasks/{taskId}/details resource instead.
 
 Parameter conventions mirror GNU grep so the schema is self-explanatory:
 - pattern (regex by default; set fixedString:true for literal text)
@@ -202,7 +206,7 @@ Parameter conventions mirror GNU grep so the schema is self-explanatory:
 - afterContext      (-A)
 - maxCount          (-m)
 
-Response includes totalMatches (true count across the whole log), the matched lines with 1-indexed lineNumber, optional before/after context arrays, and the fullLogResourceUri so a caller can fetch the entire log if grep was too narrow.`,
+Response includes totalMatches (true count across the whole log), totalLines, the matched lines with 1-indexed lineNumber, optional before/after context arrays, and a taskDetailsResourceUri for the structured fall-through.`,
       inputSchema,
       annotations: { readOnlyHint: true },
     },
@@ -232,7 +236,7 @@ Response includes totalMatches (true count across the whole log), the matched li
           returnedMatches: matches.length,
           truncated: totalMatches > matches.length,
           matches,
-          fullLogResourceUri: `octopus://spaces/${encodeURIComponent(spaceName)}/tasks/${encodeURIComponent(taskId)}/log`,
+          taskDetailsResourceUri: `octopus://spaces/${encodeURIComponent(spaceName)}/tasks/${encodeURIComponent(taskId)}/details`,
         };
 
         return {

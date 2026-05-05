@@ -63,16 +63,18 @@ const SERVER_INSTRUCTIONS = `
 The official Octopus Deploy MCP server. Tools are grouped into toolsets (core, releases, deployments, tasks, tenants, kubernetes, machines, certificates) and you can filter them via --toolsets. Writes are gated behind --no-read-only.
 
 Resource URIs and how to dereference them:
-- Many tools return slim summaries plus an 'octopus://...' URI in fields like 'resourceUri', 'taskResourceUri', or 'taskLogResourceUri' instead of inlining heavy payloads (release notes, packaged versions, task activity logs, etc.). To fetch the full body, dereference the URI.
+- Many tools return slim summaries plus an 'octopus://...' URI in fields like 'resourceUri' or 'taskResourceUri' instead of inlining heavy payloads (release notes, packaged versions, structured task activity trees, etc.). To fetch the full body, dereference the URI.
 - Resource-aware clients (Claude Code, MCP Inspector): call the standard 'resources/read' primitive with the URI.
 - Clients without native resources/read (Claude.ai web, several IDE integrations): call the 'read_resource' tool with { uri }. It returns the same body as resources/read. Always available, regardless of toolset filter.
 - The 'read_resource' tool is the universal bridge from any URI returned by any tool — if you see an 'octopus://' string in a response and don't know what to do with it, call read_resource with it.
 
-Currently exposed resource families: releases ('octopus://spaces/{spaceName}/releases/{releaseId}') and tasks ('octopus://spaces/{spaceName}/tasks/{taskId}', '/details', '/log'). More resource families will be added over time.
+Currently exposed resource families:
+- releases: 'octopus://spaces/{spaceName}/releases/{releaseId}'
+- tasks: 'octopus://spaces/{spaceName}/tasks/{taskId}' (metadata) and '/details' (structured ActivityLogs tree)
 
-Searching task logs without fetching the whole thing:
-- The /log resource returns the entire activity log as plain text — fine for short tasks but expensive for long-running deployments.
-- When you know what you are looking for (an error string, a step name, a regex), call the 'grep_task_log' tool instead. Its parameters mirror GNU grep (pattern, caseInsensitive, invertMatch, fixedString, beforeContext, afterContext, maxCount). It returns only matching lines with optional context windows plus a totalMatches count, so you can scan a multi-megabyte log without inhaling it.
+There is intentionally NO 'octopus://.../tasks/{id}/log' resource. Activity logs can be multi-megabyte; an addressable resource would tempt you to fetch the entire body when you almost always want only the matching lines. To search a task log, call the 'grep_task_log' tool — its parameters mirror GNU grep (pattern, caseInsensitive, invertMatch, fixedString, beforeContext, afterContext, maxCount) and it returns matching lines with totalMatches count and optional context windows. For step hierarchy / categories / timing, fetch the /details resource instead.
+
+More resource families will be added over time.
 `.trim();
 
 const server = new McpServer(

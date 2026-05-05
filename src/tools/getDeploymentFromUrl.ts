@@ -116,10 +116,14 @@ export async function getDeploymentFromUrl(client: Client, params: GetDeployment
       resourceType: urlParts.resourceType,
     },
     nextSteps: {
-      description: "To view task logs and execution details for this deployment, fetch the corresponding task resource. Resource-aware clients can call resources/read directly; otherwise use the read_resource tool.",
+      description: "To inspect this deployment's task: fetch the taskResourceUri for the structured activity tree (steps, timings, embedded log entries), or call grep_task_log with this taskId to search the raw log without inhaling the full body.",
       useTaskId: deployment.TaskId,
       taskResourceUri: `octopus://spaces/${encodeURIComponent(spaceName)}/tasks/${encodeURIComponent(deployment.TaskId)}/details`,
-      taskLogResourceUri: `octopus://spaces/${encodeURIComponent(spaceName)}/tasks/${encodeURIComponent(deployment.TaskId)}/log`,
+      grepTaskLogHint: {
+        tool: "grep_task_log",
+        spaceName,
+        taskId: deployment.TaskId,
+      },
     }
   };
 }
@@ -135,13 +139,15 @@ https://your-octopus.com/app#/Spaces-1/projects/my-app/deployments/releases/1.0.
 Returns:
 - Full deployment details (environment, release, project, created time)
 - taskIdForLogs: the ServerTasks- ID for this deployment
-- taskResourceUri / taskLogResourceUri: octopus:// URIs to fetch the task body or raw log via resources/read (or read_resource on clients without native resource support)
+- taskResourceUri: octopus:// URI for the structured activity tree (resources/read or read_resource)
+- grepTaskLogHint: pre-filled arguments for the grep_task_log tool — call it with a pattern to search the raw log without fetching the whole thing
 - Public URL for web portal access
 
 Recommended workflow for investigating deployment issues:
 1. Call get_deployment_from_url with the deployment URL
 2. Review deployment context (environment, release version, etc.)
-3. Fetch the returned taskResourceUri (or taskLogResourceUri) to view execution details / raw log
+3a. Fetch the taskResourceUri for the structured activity tree (step timings, embedded log entries by category), OR
+3b. Call grep_task_log with the taskId to search the raw log for a specific error / pattern
 
 Handles space ID to space name resolution automatically.`,
     {

@@ -48,8 +48,9 @@ describe('getDeploymentFromUrl Integration Tests', () => {
       expect(result.nextSteps.taskResourceUri).toMatch(
         /^octopus:\/\/spaces\/.+\/tasks\/ServerTasks-\d+\/details$/,
       );
-      expect(result.nextSteps.taskLogResourceUri).toMatch(
-        /^octopus:\/\/spaces\/.+\/tasks\/ServerTasks-\d+\/log$/,
+      expect(result.nextSteps.grepTaskLogHint.tool).toBe("grep_task_log");
+      expect(result.nextSteps.grepTaskLogHint.taskId).toMatch(
+        /^ServerTasks-\d+$/,
       );
     }, testConfig.timeout);
   });

@@ -125,21 +125,20 @@ describe("task resources", () => {
     });
   });
 
-  describe("octopus://spaces/{spaceName}/tasks/{taskId}/log", () => {
-    const descriptor = () => descriptorByName("task-log");
+  describe("no /log resource template", () => {
+    // Activity logs are deliberately not exposed as a resource: agents would be
+    // tempted to fetch the full multi-MB body when grep_task_log is the better
+    // primitive. This test guards against accidentally re-introducing the URI.
+    it("does not register a task-log descriptor", () => {
+      const found = RESOURCE_REGISTRY.find((d) => d.name === "task-log");
+      expect(found).toBeUndefined();
+    });
 
-    it("returns the raw log as text/plain without JSON wrapping", async () => {
-      const rawLog = "12:00:00 Info | Step 1\n12:00:01 Error | Boom\n";
-      getRaw.mockResolvedValueOnce(rawLog);
-
-      const payload = await descriptor().read({
-        spaceName: "Default",
-        taskId: "ServerTasks-42",
-      });
-
-      expect(payload.mimeType).toBe("text/plain");
-      expect(payload.text).toBe(rawLog);
-      expect(getRaw).toHaveBeenCalledWith("ServerTasks-42");
+    it("dispatching a /log URI returns null", async () => {
+      const payload = await dispatchOctopusUri(
+        "octopus://spaces/Default/tasks/ServerTasks-42/log",
+      );
+      expect(payload).toBeNull();
     });
   });
 
