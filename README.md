@@ -249,10 +249,14 @@ npx -y @octopusdeploy/mcp-server --no-read-only --server-url https://your-octopu
 **Deployment investigation workflow:**
 ```
 1. get_deployment_from_url with deployment URL
-   → Returns deployment context + taskIdForLogs
+   → Returns deployment context + taskResourceUri + grepTaskLogHint
 
-2. get_task_details with spaceName and taskId
-   → Returns execution logs for troubleshooting
+2a. Fetch the structured activity tree via resources/read (or read_resource)
+    octopus://spaces/{spaceName}/tasks/{taskId}/details
+
+2b. Or call grep_task_log with the taskId to search the raw log without
+    fetching the full body:
+       grep_task_log({ spaceName, taskId, pattern: "error|fail", caseInsensitive: true })
 ```
 
 **Task investigation** (direct task URL):
@@ -290,9 +294,16 @@ See [Working with URLs](docs/working-with-urls.md) for detailed workflows, examp
 - `list_releases_for_project`: List all releases for a specific project
 
 ### Tasks
-- `get_task_by_id`: Get details for a specific server task by its ID
-- `get_task_details`: Get detailed information for a specific server task
-- `get_task_raw`: Get raw details for a specific server task
+Task data is primarily exposed as MCP Resources. Use `resources/read` (or the `read_resource` backstop tool) with one of:
+
+- `octopus://spaces/{spaceName}/tasks/{taskId}` — lightweight metadata (state, timing, completion flags)
+- `octopus://spaces/{spaceName}/tasks/{taskId}/details` — full ServerTaskDetails (Progress, ActivityLogs tree, etc.)
+
+For log search, use the `grep_task_log` tool rather than a `/log` resource:
+
+- `grep_task_log`: Search a task's activity log without fetching the full body. Parameters mirror GNU grep (`pattern`, `caseInsensitive`, `invertMatch`, `fixedString`, `beforeContext`, `afterContext`, `maxCount`). Returns matching lines with 1-indexed `lineNumber`, optional before/after context arrays, and a `totalMatches` count across the whole log.
+
+There is intentionally no `/log` resource: activity logs can be multi-megabyte, and an addressable resource would tempt callers to fetch the entire body when grep is almost always the right primitive.
 
 ### Tenants
 - `find_tenants`: Find tenants in a space (can get a specific tenant by ID or list/search tenants with filters)

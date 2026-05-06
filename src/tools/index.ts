@@ -11,9 +11,6 @@ import "./listSpaces.js";
 import "./listProjects.js";
 import "./listEnvironments.js";
 import "./listDeployments.js";
-import "./getTaskById.js";
-import "./getTaskDetails.js";
-import "./getTaskRaw.js";
 import "./getTenantVariables.js";
 import "./getMissingTenantVariables.js";
 import "./getKubernetesLiveStatus.js";
@@ -34,6 +31,9 @@ import "./findAccounts.js";
 // Write operations
 import "./createRelease.js";
 import "./deployRelease.js";
+
+// Task log search
+import "./grepTaskLog.js";
 
 // Resource backstop for clients without native MCP resource support
 import "./readResource.js";

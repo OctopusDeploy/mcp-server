@@ -116,13 +116,14 @@ export async function getDeploymentFromUrl(client: Client, params: GetDeployment
       resourceType: urlParts.resourceType,
     },
     nextSteps: {
-      description: "To view task logs and execution details for this deployment",
+      description: "To inspect this deployment's task: fetch the taskResourceUri for the structured activity tree (steps, timings, embedded log entries), or call grep_task_log with this taskId to search the raw log without inhaling the full body.",
       useTaskId: deployment.TaskId,
-      suggestedTool: "get_task_details",
-      suggestedParams: {
+      taskResourceUri: `octopus://spaces/${encodeURIComponent(spaceName)}/tasks/${encodeURIComponent(deployment.TaskId)}/details`,
+      grepTaskLogHint: {
+        tool: "grep_task_log",
         spaceName,
         taskId: deployment.TaskId,
-      }
+      },
     }
   };
 }
@@ -137,13 +138,16 @@ https://your-octopus.com/app#/Spaces-1/projects/my-app/deployments/releases/1.0.
 
 Returns:
 - Full deployment details (environment, release, project, created time)
-- taskIdForLogs: Use this with get_task_details to view execution logs
+- taskIdForLogs: the ServerTasks- ID for this deployment
+- taskResourceUri: octopus:// URI for the structured activity tree (resources/read or read_resource)
+- grepTaskLogHint: pre-filled arguments for the grep_task_log tool — call it with a pattern to search the raw log without fetching the whole thing
 - Public URL for web portal access
 
 Recommended workflow for investigating deployment issues:
 1. Call get_deployment_from_url with the deployment URL
 2. Review deployment context (environment, release version, etc.)
-3. Use the returned taskIdForLogs with get_task_details to view execution logs and diagnose issues
+3a. Fetch the taskResourceUri for the structured activity tree (step timings, embedded log entries by category), OR
+3b. Call grep_task_log with the taskId to search the raw log for a specific error / pattern
 
 Handles space ID to space name resolution automatically.`,
     {

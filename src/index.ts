@@ -59,11 +59,48 @@ program
 
 const options = program.opts();
 
-const server = new McpServer({
-  name: "Octopus Deploy",
-  description: "Official Octopus Deploy MCP server.",
-  version: SEMVER_VERSION,
-});
+// Resolve the Octopus server URL up front so the MCP `instructions` string
+// can advertise which instance the client is connected to. Mirrors the
+// precedence used by getClientConfigurationFromEnvironment (CLI flag wins
+// over OCTOPUS_SERVER_URL env var).
+if (options.serverUrl) {
+  process.env.CLI_SERVER_URL = options.serverUrl;
+}
+const configuredServerUrl =
+  process.env.CLI_SERVER_URL ||
+  process.env.OCTOPUS_SERVER_URL ||
+  "(not configured — set OCTOPUS_SERVER_URL or pass --server-url)";
+
+const SERVER_INSTRUCTIONS = `
+The official Octopus Deploy MCP server, currently connected to: ${configuredServerUrl}
+
+Tools are grouped into toolsets (core, releases, deployments, tasks, tenants, kubernetes, machines, certificates) and you can filter them via --toolsets. Writes are gated behind --no-read-only.
+
+Resource URIs and how to dereference them:
+- Many tools return slim summaries plus an 'octopus://...' URI in fields like 'resourceUri' or 'taskResourceUri' instead of inlining heavy payloads (release notes, packaged versions, structured task activity trees, etc.). To fetch the full body, dereference the URI.
+- Resource-aware clients (Claude Code, MCP Inspector): call the standard 'resources/read' primitive with the URI.
+- Clients without native resources/read (Claude.ai web, several IDE integrations): call the 'read_resource' tool with { uri }. It returns the same body as resources/read. Always available, regardless of toolset filter.
+- The 'read_resource' tool is the universal bridge from any URI returned by any tool — if you see an 'octopus://' string in a response and don't know what to do with it, call read_resource with it.
+
+Currently exposed resource families:
+- releases: 'octopus://spaces/{spaceName}/releases/{releaseId}'
+- tasks: 'octopus://spaces/{spaceName}/tasks/{taskId}' (metadata) and '/details' (structured ActivityLogs tree)
+
+There is intentionally NO 'octopus://.../tasks/{id}/log' resource. Activity logs can be multi-megabyte; an addressable resource would tempt you to fetch the entire body when you almost always want only the matching lines. To search a task log, call the 'grep_task_log' tool — its parameters mirror GNU grep (pattern, caseInsensitive, invertMatch, fixedString, beforeContext, afterContext, maxCount) and it returns matching lines with totalMatches count and optional context windows. For step hierarchy / categories / timing, fetch the /details resource instead.
+
+More resource families will be added over time.
+`.trim();
+
+const server = new McpServer(
+  {
+    name: "Octopus Deploy",
+    description: "Official Octopus Deploy MCP server.",
+    version: SEMVER_VERSION,
+  },
+  {
+    instructions: SERVER_INSTRUCTIONS,
+  },
+);
 
 const toolsetConfig = createToolsetConfig(options.toolsets, options.readOnly);
 registerTools(server, toolsetConfig);
@@ -85,9 +122,7 @@ if (options.logFile) {
 logger.setLogLevel(logger.parseLogLevel(options.logLevel));
 logger.setQuietMode(options.quiet);
 
-if (options.serverUrl) {
-  process.env.CLI_SERVER_URL = options.serverUrl;
-}
+// CLI_SERVER_URL is set earlier so the MCP instructions string can reference it.
 
 // Set up initialization callback to capture client info
 server.server.oninitialized = () => {

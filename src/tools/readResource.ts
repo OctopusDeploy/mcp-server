@@ -8,19 +8,22 @@ export function registerReadResourceTool(server: McpServer) {
     "read_resource",
     {
       title: "Read an Octopus resource by URI",
-      description: `Dereference an octopus:// resource URI and return its body.
+      description: `Universal fetch for any 'octopus://' URI returned by any other tool. Use this whenever you see fields like 'resourceUri' or 'taskResourceUri' in a response and need the full body.
 
-  Backstop for MCP clients that do not natively support the resources/read primitive.
-  Resource-aware clients should call resources/read directly instead of this tool.
+How to use:
+- Pass the URI string verbatim. Examples: 'octopus://spaces/Default/releases/Releases-42', 'octopus://spaces/Default/tasks/ServerTasks-7', 'octopus://spaces/Default/tasks/ServerTasks-7/details'.
+- The response 'mimeType' tells you how to interpret 'text': 'application/json' → parse as JSON.
 
-  Pass any octopus:// URI returned by another tool (typically the resourceUri field).
-  The response 'mimeType' tells you how to interpret 'text': usually 'application/json'
-  (parse it) or 'text/markdown' (display as-is).`,
+This tool is the backstop for clients that do not natively implement the MCP 'resources/read' primitive. Clients that DO support resources/read (Claude Code, MCP Inspector) can call it directly and skip this tool. Either path returns byte-identical bodies.
+
+Tools that return resource URIs include: find_releases, get_deployment_from_url, get_task_from_url, and others. When in doubt, call read_resource on any 'octopus://' string you encounter.
+
+Note: there is intentionally no octopus://...tasks/{id}/log resource. Call the grep_task_log tool to search task logs without inhaling the full body.`,
       inputSchema: {
         uri: z
           .string()
           .describe(
-            "An octopus:// resource URI returned in the resourceUri field of a tool response.",
+            "Any 'octopus://...' URI returned by another tool (e.g. in the resourceUri or taskResourceUri field).",
           ),
       },
       annotations: { readOnlyHint: true },
