@@ -4,6 +4,7 @@ import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { handleOctopusApiError } from "../helpers/errorHandling.js";
+import { requireConfirmation } from "../helpers/requireConfirmation.js";
 
 export function registerDeployReleaseTool(server: McpServer) {
   server.tool(
@@ -86,6 +87,12 @@ The tool automatically determines which deployment type to use based on the para
         .array(z.string())
         .optional()
         .describe("Names of deployment freezes to override"),
+      confirm: z
+        .boolean()
+        .optional()
+        .describe(
+          "Required only when the MCP client does not support elicitation. Set to true to confirm deployment; otherwise the tool aborts.",
+        ),
     },
     {
       title: "Deploy a release to environments in Octopus Deploy",
@@ -110,6 +117,7 @@ The tool automatically determines which deployment type to use based on the para
       variables,
       deploymentFreezeOverrideReason,
       deploymentFreezeNames,
+      confirm,
     }) => {
       try {
         // Validate environment names
@@ -128,6 +136,59 @@ The tool automatically determines which deployment type to use based on the para
             `Tenanted deployments can only target one environment at a time. You provided ${environmentNames.length} environments. ` +
               `For tenanted deployments, specify exactly one environment in environmentNames, then use tenants or tenantTags to target specific tenants.`,
           );
+        }
+
+        const tenantSummary = isTenanted
+          ? ` for tenants [${(tenants ?? []).join(", ")}${
+              tenantTags?.length ? `; tags: ${tenantTags.join(", ")}` : ""
+            }]`
+          : "";
+        const confirmMessage =
+          `Deploy release ${releaseVersion} of ${projectName} to ` +
+          `[${environmentNames.join(", ")}]${tenantSummary} in space ${spaceName}?`;
+
+        const confirmation = await requireConfirmation(server, {
+          message: confirmMessage,
+          fallbackConfirm: confirm,
+        });
+        if (!confirmation.confirmed) {
+          if (confirmation.reason === "confirmationRequired") {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: JSON.stringify(
+                    {
+                      success: false,
+                      confirmationRequired: true,
+                      message:
+                        "This MCP client does not support elicitation, so the server cannot prompt the user to confirm this deployment directly. The user has NOT been asked. Stop and ask the user explicitly whether to proceed; if they approve, retry the call with confirm: true. Do not pass confirm: true without their explicit approval.",
+                    },
+                    null,
+                    2,
+                  ),
+                },
+              ],
+              isError: true,
+            };
+          }
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    success: false,
+                    cancelled: true,
+                    reason: confirmation.reason,
+                    message: "Deployment cancelled by user.",
+                  },
+                  null,
+                  2,
+                ),
+              },
+            ],
+          };
         }
 
         const configuration = getClientConfigurationFromEnvironment();
