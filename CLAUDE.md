@@ -89,36 +89,24 @@ confirm: z
   ),
 ```
 
-Pass it through as `fallbackConfirm`. The helper returns a discriminated `ConfirmationResult` so callers can distinguish "user said no" from "user was never asked" — surface the latter as a hard error so the LLM stops and asks the user instead of treating the response as a real cancellation:
+Pass it through as `fallbackConfirm`. The helper returns a discriminated `ConfirmationResult` so callers can distinguish "user said no" from "user was never asked" — surface the latter as a hard error so the LLM stops and asks the user instead of treating the response as a real cancellation. The `unconfirmedResponse` builder produces the standard tool response for both branches; pass it the result and a lowercase noun phrase for the gated action:
 
 ```typescript
+import {
+  requireConfirmation,
+  unconfirmedResponse,
+} from "../helpers/requireConfirmation.js";
+
 const confirmation = await requireConfirmation(server, {
   message: `Deploy release ${version} to ${environment}?`,
   fallbackConfirm: args.confirm,
 });
 if (!confirmation.confirmed) {
-  if (confirmation.reason === "confirmationRequired") {
-    // Client does not support elicitation AND no `confirm` arg was passed.
-    // The user has not been asked. Tell the LLM to ask them.
-    return {
-      content: [{ type: "text", text: JSON.stringify(
-        { success: false, confirmationRequired: true, message: "Ask the user before retrying with confirm: true." },
-        null, 2,
-      )}],
-      isError: true,
-    };
-  }
-  // reason is "declined" or "cancelled" — the user genuinely said no.
-  return {
-    content: [{ type: "text", text: JSON.stringify(
-      { success: false, cancelled: true, reason: confirmation.reason, message: "..." },
-      null, 2,
-    )}],
-  };
+  return unconfirmedResponse(confirmation, { action: "deployment" });
 }
 ```
 
-`reason` values: `accepted` / `envSkip` / `fallbackConfirm` (confirmed); `declined` / `cancelled` / `confirmationRequired` (not confirmed). `confirmationRequired` is the one to flag with `isError: true` — it means the gate is unreachable for this client+args combination, not that the user objected.
+`reason` values: `accepted` / `envSkip` / `fallbackConfirm` (confirmed); `declined` / `cancelled` / `confirmationRequired` (not confirmed). `confirmationRequired` is the one `unconfirmedResponse` flags with `isError: true` — it means the gate is unreachable for this client+args combination, not that the user objected.
 
 The handler closure captures `server` from the outer `register*Tool(server)` function — handlers do not receive `server` as an argument from the SDK. Place the gate after argument validation but before any expensive work (API client construction, network calls), so users don't spend an elicitation round-trip on a call that would have failed validation anyway.
 

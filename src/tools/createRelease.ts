@@ -4,7 +4,10 @@ import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { handleOctopusApiError } from "../helpers/errorHandling.js";
-import { requireConfirmation } from "../helpers/requireConfirmation.js";
+import {
+  requireConfirmation,
+  unconfirmedResponse,
+} from "../helpers/requireConfirmation.js";
 
 export function registerCreateReleaseTool(server: McpServer) {
   server.tool(
@@ -102,43 +105,9 @@ This tool creates a new release for a project. The space name and project name a
           fallbackConfirm: confirm,
         });
         if (!confirmation.confirmed) {
-          if (confirmation.reason === "confirmationRequired") {
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: JSON.stringify(
-                    {
-                      success: false,
-                      confirmationRequired: true,
-                      message:
-                        "This MCP client does not support elicitation, so the server cannot prompt the user to confirm this release creation directly. The user has NOT been asked. Stop and ask the user explicitly whether to proceed; if they approve, retry the call with confirm: true. Do not pass confirm: true without their explicit approval.",
-                    },
-                    null,
-                    2,
-                  ),
-                },
-              ],
-              isError: true,
-            };
-          }
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify(
-                  {
-                    success: false,
-                    cancelled: true,
-                    reason: confirmation.reason,
-                    message: "Release creation cancelled by user.",
-                  },
-                  null,
-                  2,
-                ),
-              },
-            ],
-          };
+          return unconfirmedResponse(confirmation, {
+            action: "release creation",
+          });
         }
 
         const configuration = getClientConfigurationFromEnvironment();

@@ -1,6 +1,9 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { requireConfirmation } from "../requireConfirmation.js";
+import {
+  requireConfirmation,
+  unconfirmedResponse,
+} from "../requireConfirmation.js";
 
 interface ServerStub {
   getClientCapabilities: ReturnType<typeof vi.fn>;
@@ -176,6 +179,78 @@ describe("requireConfirmation", () => {
       });
       await requireConfirmation(makeServer(stub), { message: "x" });
       expect(stub.elicitInput).not.toHaveBeenCalled();
+    });
+  });
+});
+
+describe("unconfirmedResponse", () => {
+  function parsePayload(response: { content: Array<{ text: string }> }): {
+    success: boolean;
+    confirmationRequired?: boolean;
+    cancelled?: boolean;
+    reason?: string;
+    message: string;
+  } {
+    return JSON.parse(response.content[0].text);
+  }
+
+  describe("when reason is 'confirmationRequired'", () => {
+    it("returns isError: true", () => {
+      const response = unconfirmedResponse(
+        { confirmed: false, reason: "confirmationRequired" },
+        { action: "release creation" },
+      );
+      expect(response.isError).toBe(true);
+    });
+
+    it("payload sets confirmationRequired: true and embeds the action", () => {
+      const response = unconfirmedResponse(
+        { confirmed: false, reason: "confirmationRequired" },
+        { action: "release creation" },
+      );
+      const payload = parsePayload(response);
+      expect(payload.success).toBe(false);
+      expect(payload.confirmationRequired).toBe(true);
+      expect(payload.message).toContain("release creation");
+      expect(payload.message).toContain("user has NOT been asked");
+    });
+
+    it("does not set the cancelled / reason fields", () => {
+      const response = unconfirmedResponse(
+        { confirmed: false, reason: "confirmationRequired" },
+        { action: "deployment" },
+      );
+      const payload = parsePayload(response);
+      expect(payload.cancelled).toBeUndefined();
+      expect(payload.reason).toBeUndefined();
+    });
+  });
+
+  describe("when reason is 'declined' or 'cancelled'", () => {
+    it.each(["declined", "cancelled"] as const)(
+      "returns soft cancellation shape with reason %s",
+      (reason) => {
+        const response = unconfirmedResponse(
+          { confirmed: false, reason },
+          { action: "release creation" },
+        );
+        expect(response.isError).toBeUndefined();
+        const payload = parsePayload(response);
+        expect(payload.success).toBe(false);
+        expect(payload.cancelled).toBe(true);
+        expect(payload.reason).toBe(reason);
+        expect(payload.confirmationRequired).toBeUndefined();
+      },
+    );
+
+    it("capitalizes the action for the cancelled message", () => {
+      const response = unconfirmedResponse(
+        { confirmed: false, reason: "declined" },
+        { action: "deployment" },
+      );
+      expect(parsePayload(response).message).toBe(
+        "Deployment cancelled by user.",
+      );
     });
   });
 });

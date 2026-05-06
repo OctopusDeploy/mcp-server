@@ -96,3 +96,75 @@ export async function requireConfirmation(
   }
   return { confirmed: false, reason: "confirmationRequired" };
 }
+
+export interface UnconfirmedResponseOptions {
+  /**
+   * Lowercase noun phrase describing the gated action — e.g. "release
+   * creation", "deployment", "runbook run". Embedded mid-sentence in the
+   * `confirmationRequired` message and capitalized for the cancelled message.
+   */
+  action: string;
+}
+
+/**
+ * Build the standard tool response for a non-confirmed gate result.
+ *
+ *   - `confirmationRequired` → `isError: true` with directive prose telling the
+ *     LLM to ask the user before retrying with `confirm: true`. This is the
+ *     "user was never asked" branch — distinct from a real cancellation, and
+ *     marked as an error so the LLM doesn't paper over it.
+ *   - `declined` / `cancelled` → soft cancellation shape with the original
+ *     reason preserved for telemetry.
+ *
+ * Centralized here so every gated tool produces identical responses; the only
+ * thing a caller varies is the `action` noun. Return type is inferred so it
+ * stays compatible with the SDK's tool-handler return shape (which carries an
+ * `[key: string]: unknown` index signature we don't want to redeclare).
+ */
+export function unconfirmedResponse(
+  result: Extract<ConfirmationResult, { confirmed: false }>,
+  opts: UnconfirmedResponseOptions,
+) {
+  if (result.reason === "confirmationRequired") {
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify(
+            {
+              success: false,
+              confirmationRequired: true,
+              message:
+                `This MCP client does not support elicitation, so the server cannot prompt the user to confirm this ${opts.action} directly. ` +
+                `The user has NOT been asked. Stop and ask the user explicitly whether to proceed; if they approve, retry the call with confirm: true. ` +
+                `Do not pass confirm: true without their explicit approval.`,
+            },
+            null,
+            2,
+          ),
+        },
+      ],
+      isError: true,
+    };
+  }
+
+  const capitalized =
+    opts.action.charAt(0).toUpperCase() + opts.action.slice(1);
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: JSON.stringify(
+          {
+            success: false,
+            cancelled: true,
+            reason: result.reason,
+            message: `${capitalized} cancelled by user.`,
+          },
+          null,
+          2,
+        ),
+      },
+    ],
+  };
+}
