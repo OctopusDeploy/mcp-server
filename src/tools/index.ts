@@ -38,6 +38,12 @@ import "./runRunbook.js";
 // Task log search
 import "./grepTaskLog.js";
 
+// API catalog search (llms.txt)
+import "./grepLlmsTxt.js";
+
+// REST backstop with hard read/write/delete gating
+import "./execute.js";
+
 // Resource backstop for clients without native MCP resource support
 import "./readResource.js";
 function isToolEnabled(

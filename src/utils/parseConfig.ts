@@ -20,10 +20,12 @@ export function parseToolsets(toolsetsArg: string | undefined): Toolset[] | "all
 
 export function createToolsetConfig(
   toolsetsArg: string | undefined,
-  readOnlyArg: boolean | undefined
+  readOnlyArg: boolean | undefined,
+  allowDeletesArg?: boolean | undefined,
 ): ToolsetConfig {
   return {
     enabledToolsets: parseToolsets(toolsetsArg),
-    readOnlyMode: readOnlyArg ?? true // Default to read-only mode
+    readOnlyMode: readOnlyArg ?? true, // Default to read-only mode
+    allowDeletes: allowDeletesArg ?? false, // Default deny all DELETEs
   };
 }

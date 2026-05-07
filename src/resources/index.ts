@@ -6,12 +6,15 @@ import {
 } from "../types/toolConfig.js";
 import { RESOURCE_REGISTRY } from "../types/resourceConfig.js";
 import { flatten } from "./dispatch.js";
+import { setActiveToolsetConfig } from "../helpers/activeToolsetConfig.js";
 
 // Side-effect imports populate RESOURCE_REGISTRY.
 import "./release.js";
 import "./runbook.js";
 import "./task.js";
 import "./interruption.js";
+import "./catalog/llmsTxt.js";
+import "./catalog/capabilities.js";
 
 function isToolsetEnabled(toolset: Toolset, config: ToolsetConfig): boolean {
   const enabled: Toolset[] =
@@ -23,6 +26,7 @@ function isToolsetEnabled(toolset: Toolset, config: ToolsetConfig): boolean {
 }
 
 export function registerResources(server: McpServer, config: ToolsetConfig = {}): void {
+  setActiveToolsetConfig(config);
   for (const descriptor of RESOURCE_REGISTRY) {
     if (!isToolsetEnabled(descriptor.toolset, config)) continue;
 

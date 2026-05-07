@@ -41,6 +41,10 @@ program
     "--no-read-only",
     "Disable read-only mode to enable write operations (default: read-only enabled)",
   )
+  .option(
+    "--allow-deletes",
+    "Permit DELETE-method requests through the execute tool. Requires --no-read-only. Default false.",
+  )
   .option("--log-level <level>", "Minimum log level (info, error)", "info")
   .option(
     "--log-file <path>",
@@ -86,8 +90,18 @@ Currently exposed resource families:
 - releases: 'octopus://spaces/{spaceName}/releases/{releaseId}'
 - tasks: 'octopus://spaces/{spaceName}/tasks/{taskId}' (metadata) and '/details' (structured ActivityLogs tree)
 - interruptions: 'octopus://spaces/{spaceName}/interruptions/{interruptionId}' (full Form definition with control types, Markdown instructions, button options like Abort/Proceed, and any submitted Form.Values). The find_interruptions tool returns slim summaries that point at this URI; dereference it to drill into a specific interruption.
+- catalog: 'octopus://api/llms.txt' is the markdown catalog of every Octopus REST endpoint (~300+ KB). 'octopus://api/capabilities' is the runtime introspection blob (server version, enabled toolsets, available tools, feature flags).
 
 There is intentionally NO 'octopus://.../tasks/{id}/log' resource. Activity logs can be multi-megabyte; an addressable resource would tempt you to fetch the entire body when you almost always want only the matching lines. To search a task log, call the 'grep_task_log' tool — its parameters mirror GNU grep (pattern, caseInsensitive, invertMatch, fixedString, beforeContext, afterContext, maxCount) and it returns matching lines with totalMatches count and optional context windows. For step hierarchy / categories / timing, fetch the /details resource instead.
+
+The same pattern applies to the API catalog: do NOT read 'octopus://api/llms.txt' directly because the body is large. Use the 'grep_llms_txt' tool — same GNU-grep parameter shape — to find the endpoints, methods, and request/response shapes you need.
+
+The 'execute' tool reaches Octopus REST endpoints not covered by curated tools. **Method gating is hard-coded server-side**, three tiers:
+- GET                    → read tier:   always allowed (subject to toolset allowlist + sensitive denylist).
+- POST / PUT / PATCH     → write tier:  requires --no-read-only AND user confirmation via elicitation.
+- DELETE                 → delete tier: requires --no-read-only AND --allow-deletes AND a stronger confirmation.
+
+The HTTP method enum IS the read/write/delete classifier — the runtime classifies based on the actual method, never on a flag the agent sets. Use grep_llms_txt to discover the right path + method before calling execute.
 
 More resource families will be added over time.
 `.trim();
@@ -103,7 +117,11 @@ const server = new McpServer(
   },
 );
 
-const toolsetConfig = createToolsetConfig(options.toolsets, options.readOnly);
+const toolsetConfig = createToolsetConfig(
+  options.toolsets,
+  options.readOnly,
+  options.allowDeletes,
+);
 registerTools(server, toolsetConfig);
 registerResources(server, toolsetConfig);
 
