@@ -284,4 +284,8 @@ registerToolDefinition({
   toolName: "deploy_release",
   config: { toolset: "deployments", readOnly: false },
   registerFn: registerDeployReleaseTool,
+  // DeploymentRepository.create / .createTenanted use the Executions API
+  // (~/api/{space}/deployments/create/v1 and /create/tenanted/v1-alpha) which
+  // the api-client refuses to call against servers older than 2022.3.5512.
+  minimumOctopusVersion: "2022.3.5512",
 });

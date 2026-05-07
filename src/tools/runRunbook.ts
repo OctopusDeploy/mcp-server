@@ -223,4 +223,8 @@ registerToolDefinition({
   toolName: "run_runbook",
   config: { toolset: "runbooks", readOnly: false },
   registerFn: registerRunRunbookTool,
+  // The api-client's RunbookRunRepository.create throws at runtime if the
+  // server is older than 2022.3.5512 (the Executions API minimum). Surface
+  // that here so --list-tools-by-version reports it accurately.
+  minimumOctopusVersion: "2022.3.5512",
 });

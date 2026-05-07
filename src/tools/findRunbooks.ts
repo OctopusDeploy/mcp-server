@@ -91,10 +91,30 @@ Each summary includes the publishedRunbookSnapshotId (which run_runbook uses by 
           (p) => p.Name === projectName,
         );
         if (!project) {
-          throw new Error(
-            `Project '${projectName}' not found in space '${spaceName}'. ` +
-              `Use list_projects to find valid project names. Project names are case-sensitive.`,
-          );
+          // Returned directly (not thrown) so the error surfaces to the LLM
+          // with a project-specific message. handleOctopusApiError below would
+          // otherwise rewrite a thrown "Project not found" into a misleading
+          // "Space not found" because it requires entityId for the entity
+          // branch and falls through to the space branch when entityId is
+          // undefined (we haven't reached the runbook lookup yet).
+          return {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify(
+                  {
+                    success: false,
+                    error:
+                      `Project '${projectName}' not found in space '${spaceName}'. ` +
+                      `Use list_projects to find valid project names. Project names are case-sensitive.`,
+                  },
+                  null,
+                  2,
+                ),
+              },
+            ],
+            isError: true,
+          };
         }
 
         const runbookRepository = new RunbookRepository(
