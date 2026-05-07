@@ -116,4 +116,5 @@ export const ENTITY_PREFIXES = {
   account: "Accounts-",
   deployment: "Deployments-",
   deploymentProcess: "DeploymentProcesses-",
+  interruption: "Interruptions-",
 } as const;
