@@ -112,7 +112,7 @@ describe("requireConfirmation", () => {
       });
     });
 
-    it("renders create-style payloads (empty source) as all `+` additions", async () => {
+    it("renders create-style payloads (empty source) as a JSON object of `+` additions", async () => {
       stub.elicitInput.mockResolvedValue({ action: "accept" });
       await requireConfirmation(makeServer(stub), {
         message: "Deploy release 1.2.3 to Production?",
@@ -131,14 +131,16 @@ describe("requireConfirmation", () => {
         [
           "Deploy release 1.2.3 to Production?",
           "",
-          '+ "ProjectName": "MyProject"',
-          '+ "ReleaseVersion": "1.2.3"',
-          '+ "EnvironmentNames": [',
-          '+   "Production"',
-          "+ ]",
-          '+ "SkipStepNames": [',
-          '+   "Notify"',
-          "+ ]",
+          "{",
+          '+  "ProjectName": "MyProject",',
+          '+  "ReleaseVersion": "1.2.3",',
+          '+  "EnvironmentNames": [',
+          '+    "Production"',
+          "+  ],",
+          '+  "SkipStepNames": [',
+          '+    "Notify"',
+          "+  ]",
+          "}",
         ].join("\n"),
       );
       expect(call.requestedSchema).toEqual({
@@ -147,7 +149,7 @@ describe("requireConfirmation", () => {
       });
     });
 
-    it("renders modify-style payloads as a key-level diff, omitting unchanged keys", async () => {
+    it("renders modify-style payloads as a JSON diff, omitting unchanged keys", async () => {
       stub.elicitInput.mockResolvedValue({ action: "accept" });
       await requireConfirmation(makeServer(stub), {
         message: "Update environment Production?",
@@ -169,10 +171,12 @@ describe("requireConfirmation", () => {
         [
           "Update environment Production?",
           "",
-          '- "Description": "Old"',
-          '+ "Description": "New"',
-          '- "AllowDynamicInfrastructure": false',
-          '+ "AllowDynamicInfrastructure": true',
+          "{",
+          '-  "Description": "Old",',
+          '+  "Description": "New",',
+          '-  "AllowDynamicInfrastructure": false,',
+          '+  "AllowDynamicInfrastructure": true',
+          "}",
         ].join("\n"),
       );
       // Unchanged keys are not surfaced.
@@ -190,18 +194,25 @@ describe("requireConfirmation", () => {
       });
       const call = stub.elicitInput.mock.calls[0][0];
       expect(call.message).toBe(
-        ["Update?", "", '- "Removed": "gone"', '+ "Added": "new"'].join("\n"),
+        [
+          "Update?",
+          "",
+          "{",
+          '-  "Removed": "gone",',
+          '+  "Added": "new"',
+          "}",
+        ].join("\n"),
       );
     });
 
-    it("renders '(no changes)' when source and target are equal", async () => {
+    it("renders an empty JSON object when source and target are equal", async () => {
       stub.elicitInput.mockResolvedValue({ action: "accept" });
       await requireConfirmation(makeServer(stub), {
         message: "Update?",
         change: { source: { a: 1 }, target: { a: 1 } },
       });
       const call = stub.elicitInput.mock.calls[0][0];
-      expect(call.message).toBe(["Update?", "", "(no changes)"].join("\n"));
+      expect(call.message).toBe(["Update?", "", "{}"].join("\n"));
     });
 
     it("does not append a diff when change is omitted", async () => {

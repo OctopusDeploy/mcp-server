@@ -39,13 +39,6 @@ export interface RequireConfirmationOptions {
   };
 }
 
-function prefixLines(text: string, prefix: string): string {
-  return text
-    .split("\n")
-    .map((line) => `${prefix}${line}`)
-    .join("\n");
-}
-
 function renderChange(change: {
   source: Record<string, unknown>;
   target: Record<string, unknown>;
@@ -62,7 +55,21 @@ function renderChange(change: {
     if (!seen.has(k)) keys.push(k);
   }
 
-  const lines: string[] = [];
+  // Each diff entry is the lines of one removed (-) or added (+) JSON property,
+  // already indented two spaces to sit inside the wrapping `{ }`. The marker is
+  // prefixed onto each line at render time, mimicking git's unified-diff format
+  // so the result reads as a JSON object with diff annotations.
+  type Entry = { marker: "+" | "-"; lines: string[] };
+  const entries: Entry[] = [];
+  const buildEntry = (marker: "+" | "-", key: string, value: unknown): Entry => {
+    const valueLines = JSON.stringify(value, null, 2).split("\n");
+    const lines: string[] = [`  ${JSON.stringify(key)}: ${valueLines[0]}`];
+    for (let i = 1; i < valueLines.length; i++) {
+      lines.push(`  ${valueLines[i]}`);
+    }
+    return { marker, lines };
+  };
+
   for (const key of keys) {
     const inSource = key in change.source;
     const inTarget = key in change.target;
@@ -73,15 +80,23 @@ function renderChange(change: {
       ? JSON.stringify(change.target[key], null, 2)
       : undefined;
     if (sourceJson === targetJson) continue;
-    if (inSource) {
-      lines.push(prefixLines(`${JSON.stringify(key)}: ${sourceJson}`, "- "));
-    }
-    if (inTarget) {
-      lines.push(prefixLines(`${JSON.stringify(key)}: ${targetJson}`, "+ "));
-    }
+    if (inSource) entries.push(buildEntry("-", key, change.source[key]));
+    if (inTarget) entries.push(buildEntry("+", key, change.target[key]));
   }
 
-  return lines.length === 0 ? "(no changes)" : lines.join("\n");
+  if (entries.length === 0) return "{}";
+
+  const out: string[] = ["{"];
+  entries.forEach((entry, idx) => {
+    const isLastEntry = idx === entries.length - 1;
+    entry.lines.forEach((line, lineIdx) => {
+      const isLastLineOfEntry = lineIdx === entry.lines.length - 1;
+      const suffix = isLastLineOfEntry && !isLastEntry ? "," : "";
+      out.push(`${entry.marker}${line}${suffix}`);
+    });
+  });
+  out.push("}");
+  return out.join("\n");
 }
 
 function buildConfirmationMessage(
