@@ -150,21 +150,6 @@ The tool automatically determines which deployment type to use based on the para
           `Deploy release ${releaseVersion} of ${projectName} to ` +
           `[${environmentNames.join(", ")}]${tenantSummary} in space ${spaceName}?`;
 
-        const confirmation = await requireConfirmation(server, {
-          message: confirmMessage,
-          fallbackConfirm: confirm,
-        });
-        if (!confirmation.confirmed) {
-          return unconfirmedResponse(confirmation, { action: "deployment" });
-        }
-
-        const configuration = getClientConfigurationFromEnvironment();
-        const client = await Client.create(configuration);
-        const deploymentRepository = new DeploymentRepository(
-          client,
-          spaceName,
-        );
-
         // Build common parameters
         const commonParams = {
           spaceName: spaceName,
@@ -199,32 +184,42 @@ The tool automatically determines which deployment type to use based on the para
           }),
         };
 
-        let response;
-        let deploymentType;
+        const tenantedCommand = {
+          ...commonParams,
+          ReleaseVersion: releaseVersion,
+          EnvironmentName: environmentNames[0],
+          Tenants: tenants || [],
+          TenantTags: tenantTags || [],
+        };
+        const untenantedCommand = {
+          ...commonParams,
+          ReleaseVersion: releaseVersion,
+          EnvironmentNames: environmentNames,
+        };
 
-        if (isTenanted) {
-          // Tenanted deployment
-          deploymentType = "tenanted";
-          const command = {
-            ...commonParams,
-            ReleaseVersion: releaseVersion,
-            EnvironmentName: environmentNames[0],
-            Tenants: tenants || [],
-            TenantTags: tenantTags || [],
-          };
-
-          response = await deploymentRepository.createTenanted(command);
-        } else {
-          // Untenanted deployment
-          deploymentType = "untenanted";
-          const command = {
-            ...commonParams,
-            ReleaseVersion: releaseVersion,
-            EnvironmentNames: environmentNames,
-          };
-
-          response = await deploymentRepository.create(command);
+        const confirmation = await requireConfirmation(server, {
+          message: confirmMessage,
+          fallbackConfirm: confirm,
+          change: {
+            source: {},
+            target: isTenanted ? tenantedCommand : untenantedCommand,
+          },
+        });
+        if (!confirmation.confirmed) {
+          return unconfirmedResponse(confirmation, { action: "deployment" });
         }
+
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const deploymentRepository = new DeploymentRepository(
+          client,
+          spaceName,
+        );
+
+        const deploymentType = isTenanted ? "tenanted" : "untenanted";
+        const response = isTenanted
+          ? await deploymentRepository.createTenanted(tenantedCommand)
+          : await deploymentRepository.create(untenantedCommand);
 
         // Format the response
         const tasks = response.DeploymentServerTasks || [];

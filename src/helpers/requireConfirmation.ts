@@ -17,6 +17,93 @@ export interface RequireConfirmationOptions {
    *                  so it asks the user before retrying)
    */
   fallbackConfirm?: boolean;
+  /**
+   * Optional structured before/after view of the operation. Rendered as a
+   * key-level diff (with `+` / `-` markers) and appended to `message`, so the
+   * user sees exactly what's changing — including modifiers like scheduled
+   * run time, skipped steps, machine filters, prompted variables, and
+   * deployment-freeze overrides that don't fit the prose summary.
+   *
+   *   - Create operations: pass `{ source: {}, target: <command body> }`. Every
+   *     target field renders as a `+` line (everything is being added).
+   *   - Modify operations: `source` is the current state; `target` is the
+   *     proposed state. Only keys whose values differ appear in the output.
+   *
+   * Kept inside `message` rather than surfaced as a `requestedSchema` so the
+   * rendering is identical across clients regardless of which elicitation
+   * modes they support.
+   */
+  change?: {
+    source: Record<string, unknown>;
+    target: Record<string, unknown>;
+  };
+}
+
+function renderChange(change: {
+  source: Record<string, unknown>;
+  target: Record<string, unknown>;
+}): string {
+  // Preserve source order first, then append target-only keys, so related
+  // fields stay together rather than getting alphabetised apart.
+  const seen = new Set<string>();
+  const keys: string[] = [];
+  for (const k of Object.keys(change.source)) {
+    keys.push(k);
+    seen.add(k);
+  }
+  for (const k of Object.keys(change.target)) {
+    if (!seen.has(k)) keys.push(k);
+  }
+
+  // Each diff entry is the lines of one removed (-) or added (+) JSON property,
+  // already indented two spaces to sit inside the wrapping `{ }`. The marker is
+  // prefixed onto each line at render time, mimicking git's unified-diff format
+  // so the result reads as a JSON object with diff annotations.
+  type Entry = { marker: "+" | "-"; lines: string[] };
+  const entries: Entry[] = [];
+  const buildEntry = (marker: "+" | "-", key: string, value: unknown): Entry => {
+    const valueLines = JSON.stringify(value, null, 2).split("\n");
+    const lines: string[] = [`  ${JSON.stringify(key)}: ${valueLines[0]}`];
+    for (let i = 1; i < valueLines.length; i++) {
+      lines.push(`  ${valueLines[i]}`);
+    }
+    return { marker, lines };
+  };
+
+  for (const key of keys) {
+    const inSource = key in change.source;
+    const inTarget = key in change.target;
+    const sourceJson = inSource
+      ? JSON.stringify(change.source[key], null, 2)
+      : undefined;
+    const targetJson = inTarget
+      ? JSON.stringify(change.target[key], null, 2)
+      : undefined;
+    if (sourceJson === targetJson) continue;
+    if (inSource) entries.push(buildEntry("-", key, change.source[key]));
+    if (inTarget) entries.push(buildEntry("+", key, change.target[key]));
+  }
+
+  if (entries.length === 0) return "{}";
+
+  const out: string[] = ["{"];
+  entries.forEach((entry, idx) => {
+    const isLastEntry = idx === entries.length - 1;
+    entry.lines.forEach((line, lineIdx) => {
+      const isLastLineOfEntry = lineIdx === entry.lines.length - 1;
+      const suffix = isLastLineOfEntry && !isLastEntry ? "," : "";
+      out.push(`${entry.marker}${line}${suffix}`);
+    });
+  });
+  out.push("}");
+  return out.join("\n");
+}
+
+function buildConfirmationMessage(
+  message: string,
+  change?: RequireConfirmationOptions["change"],
+): string {
+  return change ? `${message}\n\n${renderChange(change)}` : message;
 }
 
 /**
@@ -73,7 +160,7 @@ export async function requireConfirmation(
   if (capabilities?.elicitation) {
     const result = await server.server.elicitInput({
       mode: "form",
-      message: opts.message,
+      message: buildConfirmationMessage(opts.message, opts.change),
       // Empty properties → most clients render as a plain Accept/Decline prompt.
       requestedSchema: { type: "object", properties: {} },
     });
