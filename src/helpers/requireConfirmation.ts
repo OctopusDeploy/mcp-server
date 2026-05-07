@@ -18,16 +18,16 @@ export interface RequireConfirmationOptions {
    */
   fallbackConfirm?: boolean;
   /**
-   * Optional structured before/after view of the operation. Rendered as JSON
-   * and appended to `message` so the user sees the exact command that will be
-   * executed before approving — including modifiers like scheduled run time,
-   * skipped steps, machine filters, prompted variables, deployment-freeze
-   * overrides, etc. that don't fit the prose summary.
+   * Optional structured before/after view of the operation. Rendered as a
+   * key-level diff (with `+` / `-` markers) and appended to `message`, so the
+   * user sees exactly what's changing — including modifiers like scheduled
+   * run time, skipped steps, machine filters, prompted variables, and
+   * deployment-freeze overrides that don't fit the prose summary.
    *
-   *   - Create operations: `{ source: {}, target: <command body> }`.
+   *   - Create operations: pass `{ source: {}, target: <command body> }`. Every
+   *     target field renders as a `+` line (everything is being added).
    *   - Modify operations: `source` is the current state; `target` is the
-   *     proposed state. Callers may pre-filter both sides to only the changed
-   *     fields so the prompt isn't dominated by unchanged values.
+   *     proposed state. Only keys whose values differ appear in the output.
    *
    * Kept inside `message` rather than surfaced as a `requestedSchema` so the
    * rendering is identical across clients regardless of which elicitation
@@ -39,16 +39,49 @@ export interface RequireConfirmationOptions {
   };
 }
 
+function prefixLines(text: string, prefix: string): string {
+  return text
+    .split("\n")
+    .map((line) => `${prefix}${line}`)
+    .join("\n");
+}
+
 function renderChange(change: {
   source: Record<string, unknown>;
   target: Record<string, unknown>;
 }): string {
-  return [
-    "source:",
-    JSON.stringify(change.source, null, 2),
-    "target:",
-    JSON.stringify(change.target, null, 2),
-  ].join("\n");
+  // Preserve source order first, then append target-only keys, so related
+  // fields stay together rather than getting alphabetised apart.
+  const seen = new Set<string>();
+  const keys: string[] = [];
+  for (const k of Object.keys(change.source)) {
+    keys.push(k);
+    seen.add(k);
+  }
+  for (const k of Object.keys(change.target)) {
+    if (!seen.has(k)) keys.push(k);
+  }
+
+  const lines: string[] = [];
+  for (const key of keys) {
+    const inSource = key in change.source;
+    const inTarget = key in change.target;
+    const sourceJson = inSource
+      ? JSON.stringify(change.source[key], null, 2)
+      : undefined;
+    const targetJson = inTarget
+      ? JSON.stringify(change.target[key], null, 2)
+      : undefined;
+    if (sourceJson === targetJson) continue;
+    if (inSource) {
+      lines.push(prefixLines(`${JSON.stringify(key)}: ${sourceJson}`, "- "));
+    }
+    if (inTarget) {
+      lines.push(prefixLines(`${JSON.stringify(key)}: ${targetJson}`, "+ "));
+    }
+  }
+
+  return lines.length === 0 ? "(no changes)" : lines.join("\n");
 }
 
 function buildConfirmationMessage(

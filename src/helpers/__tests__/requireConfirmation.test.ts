@@ -112,7 +112,7 @@ describe("requireConfirmation", () => {
       });
     });
 
-    it("appends rendered source/target JSON to the message when change is provided", async () => {
+    it("renders create-style payloads (empty source) as all `+` additions", async () => {
       stub.elicitInput.mockResolvedValue({ action: "accept" });
       await requireConfirmation(makeServer(stub), {
         message: "Deploy release 1.2.3 to Production?",
@@ -131,19 +131,14 @@ describe("requireConfirmation", () => {
         [
           "Deploy release 1.2.3 to Production?",
           "",
-          "source:",
-          "{}",
-          "target:",
-          JSON.stringify(
-            {
-              ProjectName: "MyProject",
-              ReleaseVersion: "1.2.3",
-              EnvironmentNames: ["Production"],
-              SkipStepNames: ["Notify"],
-            },
-            null,
-            2,
-          ),
+          '+ "ProjectName": "MyProject"',
+          '+ "ReleaseVersion": "1.2.3"',
+          '+ "EnvironmentNames": [',
+          '+   "Production"',
+          "+ ]",
+          '+ "SkipStepNames": [',
+          '+   "Notify"',
+          "+ ]",
         ].join("\n"),
       );
       expect(call.requestedSchema).toEqual({
@@ -152,23 +147,64 @@ describe("requireConfirmation", () => {
       });
     });
 
-    it("renders modify-style payloads with non-empty source", async () => {
+    it("renders modify-style payloads as a key-level diff, omitting unchanged keys", async () => {
       stub.elicitInput.mockResolvedValue({ action: "accept" });
       await requireConfirmation(makeServer(stub), {
         message: "Update environment Production?",
         change: {
-          source: { Description: "Old", AllowDynamicInfrastructure: false },
-          target: { Description: "New", AllowDynamicInfrastructure: true },
+          source: {
+            Name: "Production",
+            Description: "Old",
+            AllowDynamicInfrastructure: false,
+          },
+          target: {
+            Name: "Production",
+            Description: "New",
+            AllowDynamicInfrastructure: true,
+          },
         },
       });
       const call = stub.elicitInput.mock.calls[0][0];
-      expect(call.message).toContain('"Description": "Old"');
-      expect(call.message).toContain('"Description": "New"');
-      expect(call.message).toContain("source:");
-      expect(call.message).toContain("target:");
+      expect(call.message).toBe(
+        [
+          "Update environment Production?",
+          "",
+          '- "Description": "Old"',
+          '+ "Description": "New"',
+          '- "AllowDynamicInfrastructure": false',
+          '+ "AllowDynamicInfrastructure": true',
+        ].join("\n"),
+      );
+      // Unchanged keys are not surfaced.
+      expect(call.message).not.toContain('"Name"');
     });
 
-    it("does not append source/target when change is omitted", async () => {
+    it("renders source-only keys as `-` removals and target-only keys as `+` additions", async () => {
+      stub.elicitInput.mockResolvedValue({ action: "accept" });
+      await requireConfirmation(makeServer(stub), {
+        message: "Update?",
+        change: {
+          source: { Removed: "gone" },
+          target: { Added: "new" },
+        },
+      });
+      const call = stub.elicitInput.mock.calls[0][0];
+      expect(call.message).toBe(
+        ["Update?", "", '- "Removed": "gone"', '+ "Added": "new"'].join("\n"),
+      );
+    });
+
+    it("renders '(no changes)' when source and target are equal", async () => {
+      stub.elicitInput.mockResolvedValue({ action: "accept" });
+      await requireConfirmation(makeServer(stub), {
+        message: "Update?",
+        change: { source: { a: 1 }, target: { a: 1 } },
+      });
+      const call = stub.elicitInput.mock.calls[0][0];
+      expect(call.message).toBe(["Update?", "", "(no changes)"].join("\n"));
+    });
+
+    it("does not append a diff when change is omitted", async () => {
       stub.elicitInput.mockResolvedValue({ action: "accept" });
       await requireConfirmation(makeServer(stub), { message: "Plain prompt?" });
       const call = stub.elicitInput.mock.calls[0][0];
