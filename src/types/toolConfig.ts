@@ -12,7 +12,8 @@ export type Toolset =
   | "machines"
   | "context"
   | "certificates"
-  | "accounts";
+  | "accounts"
+  | "interruptions";
 
 export interface ToolConfig {
   toolset: Toolset;
@@ -49,7 +50,8 @@ export const DEFAULT_TOOLSETS: Toolset[] = [
   "machines",
   "context",
   "certificates",
-  "accounts"
+  "accounts",
+  "interruptions"
 ];
 
 export interface ToolVersionInfo {

@@ -28,6 +28,7 @@ import "./findTenants.js";
 import "./findDeploymentTargets.js";
 import "./findCertificates.js";
 import "./findAccounts.js";
+import "./findInterruptions.js";
 
 // Write operations
 import "./createRelease.js";
