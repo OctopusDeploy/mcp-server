@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { dispatchOctopusUri } from "../resources/dispatch.js";
 
 export function registerReadResourceTool(server: McpServer) {
@@ -26,7 +27,7 @@ Note: there is intentionally no octopus://...tasks/{id}/log resource. Call the g
             "Any 'octopus://...' URI returned by another tool (e.g. in the resourceUri or taskResourceUri field).",
           ),
       },
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async ({ uri }) => {
       const payload = await dispatchOctopusUri(uri);

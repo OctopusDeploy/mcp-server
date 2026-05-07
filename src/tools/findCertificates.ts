@@ -2,36 +2,37 @@ import { Client, resolveSpaceId, type ResourceCollection } from "@octopusdeploy/
 import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { type CertificateResource, mapCertificateResource } from "../types/certificateTypes.js";
 import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES } from "../helpers/errorHandling.js";
 
 export function registerFindCertificatesTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "find_certificates",
-    `Find certificates in a space - can retrieve a single certificate by ID or list all certificates
+    {
+      title: "Find certificates in an Octopus Deploy space",
+      description: `Find certificates in a space - can retrieve a single certificate by ID or list all certificates
 
 This unified tool can either:
 - Get detailed information about a specific certificate when certificateId is provided
 - List all certificates in a space when certificateId is omitted
 
 You can optionally filter by various parameters like name, archived status, tenant, etc. when listing.`,
-    {
-      spaceName: z.string(),
-      certificateId: z.string().optional().describe("The ID of a specific certificate to retrieve. If omitted, lists all certificates."),
-      skip: z.number().optional().describe("Number of certificates to skip for pagination (only used when listing)"),
-      take: z.number().optional().describe("Number of certificates to take for pagination (only used when listing)"),
-      search: z.string().optional().describe("Search term to filter certificates (only used when listing)"),
-      archived: z.boolean().optional().describe("Filter by archived status (only used when listing)"),
-      tenant: z.string().optional().describe("Filter by tenant (only used when listing)"),
-      firstResult: z.number().optional().describe("Index of first result to return (only used when listing)"),
-      orderBy: z.string().optional().describe("Field to order results by (only used when listing)"),
-      ids: z.array(z.string()).optional().describe("Filter by specific certificate IDs (only used when listing)"),
-      partialName: z.string().optional().describe("Filter by partial name match (only used when listing)"),
-    },
-    {
-      title: "Find certificates in an Octopus Deploy space",
-      readOnlyHint: true,
+      inputSchema: {
+        spaceName: z.string(),
+        certificateId: z.string().optional().describe("The ID of a specific certificate to retrieve. If omitted, lists all certificates."),
+        skip: z.number().optional().describe("Number of certificates to skip for pagination (only used when listing)"),
+        take: z.number().optional().describe("Number of certificates to take for pagination (only used when listing)"),
+        search: z.string().optional().describe("Search term to filter certificates (only used when listing)"),
+        archived: z.boolean().optional().describe("Filter by archived status (only used when listing)"),
+        tenant: z.string().optional().describe("Filter by tenant (only used when listing)"),
+        firstResult: z.number().optional().describe("Index of first result to return (only used when listing)"),
+        orderBy: z.string().optional().describe("Field to order results by (only used when listing)"),
+        ids: z.array(z.string()).optional().describe("Filter by specific certificate IDs (only used when listing)"),
+        partialName: z.string().optional().describe("Filter by partial name match (only used when listing)"),
+      },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async ({
       spaceName,

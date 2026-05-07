@@ -3,26 +3,27 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES } from "../helpers/errorHandling.js";
 
 export function registerGetTenantVariablesTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "get_tenant_variables",
-    `Get tenant variables by type
-  
+    {
+      title: "Get tenant variables from Octopus Deploy",
+      description: `Get tenant variables by type
+
   This tool retrieves different types of tenant variables. Use variableType parameter to specify which type:
   - "all": Get all tenant variables
   - "common": Get common variables only
   - "project": Get project-specific variables only`,
-    { 
-      spaceName: z.string().describe("The space name"),
-      tenantId: z.string().describe("The ID of the tenant to retrieve variables for"),
-      variableType: z.enum(["all", "common", "project"]).describe("Type of variables to retrieve"),
-      includeMissingVariables: z.boolean().optional().describe("Include missing variables in the response (for common/project types)")
-    },
-    {
-      title: "Get tenant variables from Octopus Deploy",
-      readOnlyHint: true,
+      inputSchema: {
+        spaceName: z.string().describe("The space name"),
+        tenantId: z.string().describe("The ID of the tenant to retrieve variables for"),
+        variableType: z.enum(["all", "common", "project"]).describe("Type of variables to retrieve"),
+        includeMissingVariables: z.boolean().optional().describe("Include missing variables in the response (for common/project types)")
+      },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async ({ spaceName, tenantId, variableType, includeMissingVariables = false }) => {
       validateEntityId(tenantId, 'tenant', ENTITY_PREFIXES.tenant);

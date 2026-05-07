@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getClientConfigurationFromEnvironment } from '../helpers/getClientConfigurationFromEnvironment.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerToolDefinition } from '../types/toolConfig.js';
+import { READ_ONLY_TOOL_ANNOTATIONS } from '../types/toolAnnotations.js';
 import { parseOctopusUrl, extractDeploymentId } from '../helpers/urlParser.js';
 import { resolveSpaceNameFromId } from '../helpers/spaceResolver.js';
 import { getPublicUrl } from '../helpers/getPublicUrl.js';
@@ -129,9 +130,11 @@ export async function getDeploymentFromUrl(client: Client, params: GetDeployment
 }
 
 export function registerGetDeploymentFromUrlTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     'get_deployment_from_url',
-    `Get deployment details from an Octopus Deploy deployment URL. Returns comprehensive deployment information including the task ID needed to view execution logs.
+    {
+      title: 'Get deployment details from an Octopus Deploy URL',
+      description: `Get deployment details from an Octopus Deploy deployment URL. Returns comprehensive deployment information including the task ID needed to view execution logs.
 
 Accepts deployment URLs like:
 https://your-octopus.com/app#/Spaces-1/projects/my-app/deployments/releases/1.0.0/deployments/Deployments-123
@@ -150,13 +153,11 @@ Recommended workflow for investigating deployment issues:
 3b. Call grep_task_log with the taskId to search the raw log for a specific error / pattern
 
 Handles space ID to space name resolution automatically.`,
-    {
-      url: z.string()
-        .describe("Full Octopus Deploy deployment URL (e.g., https://your-octopus.com/app#/Spaces-1/projects/my-app/deployments/releases/1.0.0/deployments/Deployments-123)")
-    },
-    {
-      title: 'Get deployment details from an Octopus Deploy URL',
-      readOnlyHint: true,
+      inputSchema: {
+        url: z.string()
+          .describe("Full Octopus Deploy deployment URL (e.g., https://your-octopus.com/app#/Spaces-1/projects/my-app/deployments/releases/1.0.0/deployments/Deployments-123)")
+      },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async (args) => {
       const { url } = args as GetDeploymentFromUrlParams;

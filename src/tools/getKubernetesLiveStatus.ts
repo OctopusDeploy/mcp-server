@@ -3,24 +3,25 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES, isErrorWithMessage } from "../helpers/errorHandling.js";
 
 export function registerGetKubernetesLiveStatusTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "get_kubernetes_live_status",
-    `Get Kubernetes live status for a project and environment
-  
-  This tool retrieves the live status of Kubernetes resources for a specific project and environment. Optionally include a tenant ID for multi-tenant deployments.`,
-    { 
-      spaceName: z.string().describe("The space name"),
-      projectId: z.string().describe("The ID of the project"),
-      environmentId: z.string().describe("The ID of the environment"),
-      tenantId: z.string().optional().describe("The ID of the tenant (for multi-tenant deployments)"),
-      summaryOnly: z.boolean().optional().describe("Return summary information only")
-    },
     {
       title: "Get Kubernetes live status from Octopus Deploy",
-      readOnlyHint: true,
+      description: `Get Kubernetes live status for a project and environment
+
+  This tool retrieves the live status of Kubernetes resources for a specific project and environment. Optionally include a tenant ID for multi-tenant deployments.`,
+      inputSchema: {
+        spaceName: z.string().describe("The space name"),
+        projectId: z.string().describe("The ID of the project"),
+        environmentId: z.string().describe("The ID of the environment"),
+        tenantId: z.string().optional().describe("The ID of the tenant (for multi-tenant deployments)"),
+        summaryOnly: z.boolean().optional().describe("Return summary information only")
+      },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async ({ spaceName, projectId, environmentId, tenantId, summaryOnly = false }) => {
       validateEntityId(projectId, 'project', ENTITY_PREFIXES.project);
