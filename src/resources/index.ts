@@ -9,6 +9,7 @@ import { flatten } from "./dispatch.js";
 
 // Side-effect imports populate RESOURCE_REGISTRY.
 import "./release.js";
+import "./runbook.js";
 import "./task.js";
 import "./interruption.js";
 

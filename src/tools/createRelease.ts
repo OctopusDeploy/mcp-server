@@ -187,4 +187,7 @@ registerToolDefinition({
   toolName: "create_release",
   config: { toolset: "releases", readOnly: false },
   registerFn: registerCreateReleaseTool,
+  // ReleaseRepository.create uses the Executions API (~/api/{space}/releases/create/v1)
+  // which the api-client refuses to call against servers older than 2022.3.5512.
+  minimumOctopusVersion: "2022.3.5512",
 });

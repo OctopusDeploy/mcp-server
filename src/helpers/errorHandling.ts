@@ -111,6 +111,7 @@ export const ENTITY_PREFIXES = {
   environment: "Environments-",
   tenant: "Tenants-",
   release: "Releases-",
+  runbook: "Runbooks-",
   machine: "Machines-",
   certificate: "Certificates-",
   account: "Accounts-",

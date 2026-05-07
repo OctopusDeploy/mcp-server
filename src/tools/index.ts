@@ -23,6 +23,7 @@ import "./getDeploymentFromUrl.js";
 
 // Unified Find endpoints (replacing separate list/get pairs)
 import "./findReleases.js";
+import "./findRunbooks.js";
 import "./findTenants.js";
 import "./findDeploymentTargets.js";
 import "./findCertificates.js";
@@ -32,6 +33,7 @@ import "./findInterruptions.js";
 // Write operations
 import "./createRelease.js";
 import "./deployRelease.js";
+import "./runRunbook.js";
 
 // Task log search
 import "./grepTaskLog.js";

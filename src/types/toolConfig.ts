@@ -5,6 +5,7 @@ export type Toolset =
   | "projects"
   | "deployments"
   | "releases"
+  | "runbooks"
   | "tasks"
   | "tenants"
   | "kubernetes"
@@ -42,6 +43,7 @@ export const DEFAULT_TOOLSETS: Toolset[] = [
   "projects",
   "deployments",
   "releases",
+  "runbooks",
   "tasks",
   "tenants",
   "kubernetes",
