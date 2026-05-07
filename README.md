@@ -189,12 +189,15 @@ Available toolsets:
 - **projects** - Project operations
 - **deployments** - Deployment operations
 - **releases** - Release management
+- **runbooks** - Runbook discovery and execution
 - **tasks** - Task operations
 - **tenants** - Multi-tenancy operations
 - **kubernetes** - Kubernetes operations
 - **machines** - Deployment target operations
 - **certificates** - Certificate operations
 - **accounts** - Account operations
+- **interruptions** - Manual intervention and approval operations
+- **context** - Authenticated user and project context (current user, Git branches)
 
 #### Read-Only Mode
 The server runs in read-only mode by default for security. Most tools are read-only operations, but some tools can perform write operations (like creating releases and deployments).
@@ -202,6 +205,9 @@ The server runs in read-only mode by default for security. Most tools are read-o
 **Write-enabled tools:**
 - `create_release` - Create new releases
 - `deploy_release` - Deploy releases to environments and tenants
+- `run_runbook` - Run a runbook against one or more environments (and optional tenants)
+
+Write tools are gated by an MCP elicitation prompt: clients that support elicitation will be asked to confirm before the call proceeds. Clients without elicitation support must pass `confirm: true` in the tool arguments — otherwise the tool aborts with an error. Set `OCTOPUS_SKIP_ELICITATION=true` to bypass the gate entirely (intended for unattended automation).
 
 To use write-enabled tools, you must explicitly disable read-only mode:
 
@@ -290,8 +296,15 @@ See [Working with URLs](docs/working-with-urls.md) for detailed workflows, examp
 
 ### Releases
 - `create_release`: Create a new release for a project
-- `find_releases`: Find releases in a space (can get a specific release by ID or list all releases)
-- `list_releases_for_project`: List all releases for a specific project
+- `find_releases`: Find releases in a space (can get a specific release by ID, or list/filter releases by project)
+
+Release detail is also available as an MCP Resource at `octopus://spaces/{spaceName}/releases/{releaseId}` — fetch via `resources/read` (or the `read_resource` backstop tool) to get the full release body, including release notes and selected packages.
+
+### Runbooks
+- `find_runbooks`: Find runbooks in a project (can get a specific runbook by ID, or list/filter runbooks by partial name). Each summary includes the published snapshot ID, multi-tenancy mode, and environment scope so callers can pick valid targets before running.
+- `run_runbook`: Run a runbook against one or more environments. Supports tenanted runs (by tenant name or tenant tag), prompted variables, guided failure mode, scheduled run windows, and step or machine inclusion/exclusion. Defaults to the runbook's published snapshot if `runbookSnapshotId` is omitted.
+
+The full runbook body (including runtime policy fields) is available as an MCP Resource at `octopus://spaces/{spaceName}/runbooks/{runbookId}`.
 
 ### Tasks
 Task data is primarily exposed as MCP Resources. Use `resources/read` (or the `read_resource` backstop tool) with one of:
@@ -322,8 +335,12 @@ There is intentionally no `/log` resource: activity logs can be multi-megabyte, 
 ### Accounts
 - `find_accounts`: Find accounts in a space (can get a specific account by ID or list/search accounts with filters)
 
+### Interruptions
+- `find_interruptions`: Find pending or historical interruptions (manual interventions, approvals, guided-failure prompts) in a space, optionally filtered by task, project, environment, regarding document, responsibility, or pending state. Returns slim summaries; dereference the `octopus://spaces/{spaceName}/interruptions/{interruptionId}` resource for the full Form definition (control types, Markdown instructions, button options, submitted Form.Values).
+
 ### Additional Tools
 - `get_deployment_process`: Get deployment process by ID for projects or releases
+- `get_variables`: Get all project variables and library variable set variables for a project (supports config-as-code projects via `gitRef`)
 - `get_branches`: Get Git branches for a version-controlled project (minimum supported version: `2021.2`)
 - `get_current_user`: Get information about the current authenticated user
 
