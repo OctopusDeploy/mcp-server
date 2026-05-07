@@ -17,6 +17,45 @@ export interface RequireConfirmationOptions {
    *                  so it asks the user before retrying)
    */
   fallbackConfirm?: boolean;
+  /**
+   * Optional structured before/after view of the operation. Rendered as JSON
+   * and appended to `message` so the user sees the exact command that will be
+   * executed before approving — including modifiers like scheduled run time,
+   * skipped steps, machine filters, prompted variables, deployment-freeze
+   * overrides, etc. that don't fit the prose summary.
+   *
+   *   - Create operations: `{ source: {}, target: <command body> }`.
+   *   - Modify operations: `source` is the current state; `target` is the
+   *     proposed state. Callers may pre-filter both sides to only the changed
+   *     fields so the prompt isn't dominated by unchanged values.
+   *
+   * Kept inside `message` rather than surfaced as a `requestedSchema` so the
+   * rendering is identical across clients regardless of which elicitation
+   * modes they support.
+   */
+  change?: {
+    source: Record<string, unknown>;
+    target: Record<string, unknown>;
+  };
+}
+
+function renderChange(change: {
+  source: Record<string, unknown>;
+  target: Record<string, unknown>;
+}): string {
+  return [
+    "source:",
+    JSON.stringify(change.source, null, 2),
+    "target:",
+    JSON.stringify(change.target, null, 2),
+  ].join("\n");
+}
+
+function buildConfirmationMessage(
+  message: string,
+  change?: RequireConfirmationOptions["change"],
+): string {
+  return change ? `${message}\n\n${renderChange(change)}` : message;
 }
 
 /**
@@ -73,7 +112,7 @@ export async function requireConfirmation(
   if (capabilities?.elicitation) {
     const result = await server.server.elicitInput({
       mode: "form",
-      message: opts.message,
+      message: buildConfirmationMessage(opts.message, opts.change),
       // Empty properties → most clients render as a plain Accept/Decline prompt.
       requestedSchema: { type: "object", properties: {} },
     });

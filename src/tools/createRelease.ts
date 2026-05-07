@@ -100,20 +100,6 @@ This tool creates a new release for a project. The space name and project name a
           .filter(Boolean)
           .join(" ");
 
-        const confirmation = await requireConfirmation(server, {
-          message: `${summary}?`,
-          fallbackConfirm: confirm,
-        });
-        if (!confirmation.confirmed) {
-          return unconfirmedResponse(confirmation, {
-            action: "release creation",
-          });
-        }
-
-        const configuration = getClientConfigurationFromEnvironment();
-        const client = await Client.create(configuration);
-        const releaseRepository = new ReleaseRepository(client, spaceName);
-
         const command = {
           spaceName: spaceName,
           ProjectName: projectName,
@@ -133,6 +119,21 @@ This tool creates a new release for a project. The space name and project name a
           ...(packagePrerelease && { PackagePrerelease: packagePrerelease }),
           ...(customFields && { CustomFields: customFields }),
         };
+
+        const confirmation = await requireConfirmation(server, {
+          message: `${summary}?`,
+          fallbackConfirm: confirm,
+          change: { source: {}, target: command },
+        });
+        if (!confirmation.confirmed) {
+          return unconfirmedResponse(confirmation, {
+            action: "release creation",
+          });
+        }
+
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const releaseRepository = new ReleaseRepository(client, spaceName);
 
         const response = await releaseRepository.create(command);
 

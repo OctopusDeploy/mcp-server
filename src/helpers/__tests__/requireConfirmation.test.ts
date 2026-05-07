@@ -112,6 +112,69 @@ describe("requireConfirmation", () => {
       });
     });
 
+    it("appends rendered source/target JSON to the message when change is provided", async () => {
+      stub.elicitInput.mockResolvedValue({ action: "accept" });
+      await requireConfirmation(makeServer(stub), {
+        message: "Deploy release 1.2.3 to Production?",
+        change: {
+          source: {},
+          target: {
+            ProjectName: "MyProject",
+            ReleaseVersion: "1.2.3",
+            EnvironmentNames: ["Production"],
+            SkipStepNames: ["Notify"],
+          },
+        },
+      });
+      const call = stub.elicitInput.mock.calls[0][0];
+      expect(call.message).toBe(
+        [
+          "Deploy release 1.2.3 to Production?",
+          "",
+          "source:",
+          "{}",
+          "target:",
+          JSON.stringify(
+            {
+              ProjectName: "MyProject",
+              ReleaseVersion: "1.2.3",
+              EnvironmentNames: ["Production"],
+              SkipStepNames: ["Notify"],
+            },
+            null,
+            2,
+          ),
+        ].join("\n"),
+      );
+      expect(call.requestedSchema).toEqual({
+        type: "object",
+        properties: {},
+      });
+    });
+
+    it("renders modify-style payloads with non-empty source", async () => {
+      stub.elicitInput.mockResolvedValue({ action: "accept" });
+      await requireConfirmation(makeServer(stub), {
+        message: "Update environment Production?",
+        change: {
+          source: { Description: "Old", AllowDynamicInfrastructure: false },
+          target: { Description: "New", AllowDynamicInfrastructure: true },
+        },
+      });
+      const call = stub.elicitInput.mock.calls[0][0];
+      expect(call.message).toContain('"Description": "Old"');
+      expect(call.message).toContain('"Description": "New"');
+      expect(call.message).toContain("source:");
+      expect(call.message).toContain("target:");
+    });
+
+    it("does not append source/target when change is omitted", async () => {
+      stub.elicitInput.mockResolvedValue({ action: "accept" });
+      await requireConfirmation(makeServer(stub), { message: "Plain prompt?" });
+      const call = stub.elicitInput.mock.calls[0][0];
+      expect(call.message).toBe("Plain prompt?");
+    });
+
     it("ignores fallbackConfirm when elicitation is used", async () => {
       stub.elicitInput.mockResolvedValue({ action: "decline" });
       const result = await requireConfirmation(makeServer(stub), {
