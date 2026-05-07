@@ -1,12 +1,13 @@
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
-export type Toolset = 
-  | "core" 
-  | "projects" 
-  | "deployments" 
-  | "releases" 
-  | "tasks" 
-  | "tenants" 
+export type Toolset =
+  | "core"
+  | "projects"
+  | "deployments"
+  | "releases"
+  | "runbooks"
+  | "tasks"
+  | "tenants"
   | "kubernetes"
   | "machines"
   | "context"
@@ -41,6 +42,7 @@ export const DEFAULT_TOOLSETS: Toolset[] = [
   "projects",
   "deployments",
   "releases",
+  "runbooks",
   "tasks",
   "tenants",
   "kubernetes",
