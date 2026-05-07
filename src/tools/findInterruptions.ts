@@ -113,8 +113,10 @@ const findInterruptionsSchema = z
       .describe(
         "Limit to interruptions the authenticated user can act on (CanTakeResponsibility or HasResponsibility, " +
           "or where the user is the explicit ResponsibleUserId). When true, /users/me is resolved (cached per session). " +
-          "Items are post-filtered, so totalResults still reflects the unfiltered server-side count. " +
-          "Ignored when interruptionId is set.",
+          "Octopus has no responsibleUserId query parameter, so the tool pages through the server result set and " +
+          "post-filters; pages are scanned up to a safety cap (filteredAs.scanComplete signals whether the entire " +
+          "result set was inspected). totalResults reflects the post-filter count; the unfiltered server total is " +
+          "exposed under filteredAs. Ignored when interruptionId is set.",
       ),
     regarding: z
       .string()
@@ -203,13 +205,64 @@ export async function findInterruptionsHandler(params: FindInterruptionsParams) 
     }
   }
 
-  // List mode.
-  let currentUserId: string | undefined;
+  // assignedToMe: scan multiple server pages and post-filter, since Octopus
+  // has no native "responsibleUserId" query param. Without paging, a first
+  // server page that contains zero matches would cause us to return an empty
+  // result and silently miss actionable interruptions on later pages.
   if (assignedToMe) {
     const user = await getCurrentUserCached(client);
-    currentUserId = user.Id;
+    const currentUserId = user.Id;
+
+    const scan = await scanAssignedInterruptions(client, spaceId, {
+      pendingOnly,
+      regarding,
+      currentUserId,
+    });
+
+    const start = skip ?? 0;
+    const end =
+      take !== undefined
+        ? Math.min(start + take, scan.matched.length)
+        : scan.matched.length;
+    const sliced = scan.matched.slice(start, end);
+
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify({
+            // Post-filter counts: the LLM's "totalResults" is the number of
+            // interruptions actually assigned to the user, not the unfiltered
+            // server total. The latter is surfaced under filteredAs for
+            // transparency.
+            totalResults: scan.matched.length,
+            itemsPerPage: sliced.length,
+            numberOfPages: 1,
+            lastPageNumber: 0,
+            filteredAs: {
+              userId: currentUserId,
+              serverTotalScanned: scan.serverScanned,
+              serverTotalAvailable: scan.serverTotal,
+              scanComplete: scan.scanComplete,
+              ...(scan.scanComplete
+                ? {}
+                : {
+                    scanIncompleteHint:
+                      "Hit the safety cap before exhausting the server result set. " +
+                      "Narrow the query (e.g. set regarding to a specific task, or keep pendingOnly: true) " +
+                      "to ensure complete results.",
+                  }),
+            },
+            items: sliced.map((interruption) =>
+              interruptionSummary(interruption, spaceName, configuration.instanceURL),
+            ),
+          }),
+        },
+      ],
+    };
   }
 
+  // List mode (no per-user filter): pass server pagination through directly.
   const response = await client.get<ResourceCollection<InterruptionResource>>(
     "~/api/{spaceId}/interruptions{?skip,take,pendingOnly,regarding}",
     {
@@ -221,18 +274,6 @@ export async function findInterruptionsHandler(params: FindInterruptionsParams) 
     },
   );
 
-  const items = (response.Items ?? []).filter((interruption) => {
-    if (!assignedToMe) {
-      return true;
-    }
-    return (
-      interruption.CanTakeResponsibility ||
-      interruption.HasResponsibility ||
-      (currentUserId !== undefined &&
-        interruption.ResponsibleUserId === currentUserId)
-    );
-  });
-
   return {
     content: [
       {
@@ -242,16 +283,82 @@ export async function findInterruptionsHandler(params: FindInterruptionsParams) 
           itemsPerPage: response.ItemsPerPage,
           numberOfPages: response.NumberOfPages,
           lastPageNumber: response.LastPageNumber,
-          ...(currentUserId !== undefined
-            ? { filteredAs: { userId: currentUserId } }
-            : {}),
-          items: items.map((interruption) =>
+          items: (response.Items ?? []).map((interruption) =>
             interruptionSummary(interruption, spaceName, configuration.instanceURL),
           ),
         }),
       },
     ],
   };
+}
+
+/**
+ * Page through the unfiltered /interruptions result set, collecting items
+ * the authenticated user can act on. Octopus has no responsibleUserId query
+ * parameter, so post-filtering is the only correctness-preserving option.
+ *
+ * Safety cap: ASSIGNED_SCAN_MAX records inspected. Almost always hit only
+ * with pendingOnly: false on busy spaces with deep history; the assigned
+ * set under pendingOnly: true is virtually always small.
+ */
+export const ASSIGNED_SCAN_PAGE_SIZE = 100;
+export const ASSIGNED_SCAN_MAX = 500;
+
+interface AssignedScanResult {
+  matched: InterruptionResource[];
+  serverTotal: number;
+  serverScanned: number;
+  scanComplete: boolean;
+}
+
+async function scanAssignedInterruptions(
+  client: Client,
+  spaceId: string,
+  params: { pendingOnly: boolean; regarding?: string; currentUserId: string },
+): Promise<AssignedScanResult> {
+  const matched: InterruptionResource[] = [];
+  let serverScanned = 0;
+  let serverTotal = 0;
+  let scanComplete = false;
+
+  while (serverScanned < ASSIGNED_SCAN_MAX) {
+    const remaining = ASSIGNED_SCAN_MAX - serverScanned;
+    const pageTake = Math.min(ASSIGNED_SCAN_PAGE_SIZE, remaining);
+
+    const page = await client.get<ResourceCollection<InterruptionResource>>(
+      "~/api/{spaceId}/interruptions{?skip,take,pendingOnly,regarding}",
+      {
+        spaceId,
+        skip: serverScanned,
+        take: pageTake,
+        pendingOnly: params.pendingOnly,
+        regarding: params.regarding,
+      },
+    );
+
+    serverTotal = page.TotalResults;
+    const items = page.Items ?? [];
+
+    for (const interruption of items) {
+      if (
+        interruption.CanTakeResponsibility ||
+        interruption.HasResponsibility ||
+        interruption.ResponsibleUserId === params.currentUserId
+      ) {
+        matched.push(interruption);
+      }
+    }
+
+    serverScanned += items.length;
+
+    // Empty page (or short page) means the server has no more.
+    if (items.length === 0 || items.length < pageTake || serverScanned >= serverTotal) {
+      scanComplete = true;
+      break;
+    }
+  }
+
+  return { matched, serverTotal, serverScanned, scanComplete };
 }
 
 export function registerFindInterruptionsTool(server: McpServer) {

@@ -31,7 +31,13 @@ interface PaginatedInterruptions {
   itemsPerPage: number;
   numberOfPages: number;
   lastPageNumber: number;
-  filteredAs?: { userId: string };
+  filteredAs?: {
+    userId: string;
+    serverTotalScanned?: number;
+    serverTotalAvailable?: number;
+    scanComplete?: boolean;
+    scanIncompleteHint?: string;
+  };
   items: InterruptionSummary[];
 }
 
@@ -128,7 +134,7 @@ describe("findInterruptions Integration Tests", () => {
     );
 
     it(
-      "assignedToMe surfaces filteredAs.userId in the wrapper and caches /users/me",
+      "assignedToMe surfaces filteredAs.userId, exposes scan metadata, and caches /users/me",
       async () => {
         clearUserCache();
 
@@ -142,6 +148,20 @@ describe("findInterruptions Integration Tests", () => {
         expect(first.filteredAs).toBeDefined();
         expect(typeof first.filteredAs?.userId).toBe("string");
         expect(first.filteredAs?.userId).toMatch(/^Users-/);
+
+        // Paging metadata: should describe what we actually scanned.
+        expect(typeof first.filteredAs?.serverTotalAvailable).toBe("number");
+        expect(typeof first.filteredAs?.serverTotalScanned).toBe("number");
+        expect(typeof first.filteredAs?.scanComplete).toBe("boolean");
+
+        // Test instance is small — scan should always complete.
+        expect(first.filteredAs?.scanComplete).toBe(true);
+
+        // totalResults is the matched count; the unfiltered total is on
+        // filteredAs and must be at least as large.
+        expect(first.filteredAs?.serverTotalAvailable).toBeGreaterThanOrEqual(
+          first.totalResults,
+        );
 
         const second = parseToolResponse<PaginatedInterruptions>(
           await findInterruptionsHandler({
