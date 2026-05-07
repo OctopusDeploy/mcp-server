@@ -74,7 +74,7 @@ const configuredServerUrl =
 const SERVER_INSTRUCTIONS = `
 The official Octopus Deploy MCP server, currently connected to: ${configuredServerUrl}
 
-Tools are grouped into toolsets (core, releases, deployments, tasks, tenants, kubernetes, machines, certificates) and you can filter them via --toolsets. Writes are gated behind --no-read-only.
+Tools are grouped into toolsets (core, releases, deployments, tasks, tenants, kubernetes, machines, certificates, accounts, interruptions) and you can filter them via --toolsets. Writes are gated behind --no-read-only.
 
 Resource URIs and how to dereference them:
 - Many tools return slim summaries plus an 'octopus://...' URI in fields like 'resourceUri' or 'taskResourceUri' instead of inlining heavy payloads (release notes, packaged versions, structured task activity trees, etc.). To fetch the full body, dereference the URI.
@@ -85,6 +85,7 @@ Resource URIs and how to dereference them:
 Currently exposed resource families:
 - releases: 'octopus://spaces/{spaceName}/releases/{releaseId}'
 - tasks: 'octopus://spaces/{spaceName}/tasks/{taskId}' (metadata) and '/details' (structured ActivityLogs tree)
+- interruptions: 'octopus://spaces/{spaceName}/interruptions/{interruptionId}' (full Form definition with control types, Markdown instructions, button options like Abort/Proceed, and any submitted Form.Values). The find_interruptions tool returns slim summaries that point at this URI; dereference it to drill into a specific interruption.
 
 There is intentionally NO 'octopus://.../tasks/{id}/log' resource. Activity logs can be multi-megabyte; an addressable resource would tempt you to fetch the entire body when you almost always want only the matching lines. To search a task log, call the 'grep_task_log' tool — its parameters mirror GNU grep (pattern, caseInsensitive, invertMatch, fixedString, beforeContext, afterContext, maxCount) and it returns matching lines with totalMatches count and optional context windows. For step hierarchy / categories / timing, fetch the /details resource instead.
 
