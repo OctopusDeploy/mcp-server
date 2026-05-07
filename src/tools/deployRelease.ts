@@ -4,6 +4,10 @@ import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { handleOctopusApiError } from "../helpers/errorHandling.js";
+import {
+  requireConfirmation,
+  unconfirmedResponse,
+} from "../helpers/requireConfirmation.js";
 
 export function registerDeployReleaseTool(server: McpServer) {
   server.tool(
@@ -86,6 +90,12 @@ The tool automatically determines which deployment type to use based on the para
         .array(z.string())
         .optional()
         .describe("Names of deployment freezes to override"),
+      confirm: z
+        .boolean()
+        .optional()
+        .describe(
+          "Required only when the MCP client does not support elicitation. Set to true to confirm deployment; otherwise the tool aborts.",
+        ),
     },
     {
       title: "Deploy a release to environments in Octopus Deploy",
@@ -110,6 +120,7 @@ The tool automatically determines which deployment type to use based on the para
       variables,
       deploymentFreezeOverrideReason,
       deploymentFreezeNames,
+      confirm,
     }) => {
       try {
         // Validate environment names
@@ -130,12 +141,14 @@ The tool automatically determines which deployment type to use based on the para
           );
         }
 
-        const configuration = getClientConfigurationFromEnvironment();
-        const client = await Client.create(configuration);
-        const deploymentRepository = new DeploymentRepository(
-          client,
-          spaceName,
-        );
+        const tenantSummary = isTenanted
+          ? ` for tenants [${(tenants ?? []).join(", ")}${
+              tenantTags?.length ? `; tags: ${tenantTags.join(", ")}` : ""
+            }]`
+          : "";
+        const confirmMessage =
+          `Deploy release ${releaseVersion} of ${projectName} to ` +
+          `[${environmentNames.join(", ")}]${tenantSummary} in space ${spaceName}?`;
 
         // Build common parameters
         const commonParams = {
@@ -171,32 +184,42 @@ The tool automatically determines which deployment type to use based on the para
           }),
         };
 
-        let response;
-        let deploymentType;
+        const tenantedCommand = {
+          ...commonParams,
+          ReleaseVersion: releaseVersion,
+          EnvironmentName: environmentNames[0],
+          Tenants: tenants || [],
+          TenantTags: tenantTags || [],
+        };
+        const untenantedCommand = {
+          ...commonParams,
+          ReleaseVersion: releaseVersion,
+          EnvironmentNames: environmentNames,
+        };
 
-        if (isTenanted) {
-          // Tenanted deployment
-          deploymentType = "tenanted";
-          const command = {
-            ...commonParams,
-            ReleaseVersion: releaseVersion,
-            EnvironmentName: environmentNames[0],
-            Tenants: tenants || [],
-            TenantTags: tenantTags || [],
-          };
-
-          response = await deploymentRepository.createTenanted(command);
-        } else {
-          // Untenanted deployment
-          deploymentType = "untenanted";
-          const command = {
-            ...commonParams,
-            ReleaseVersion: releaseVersion,
-            EnvironmentNames: environmentNames,
-          };
-
-          response = await deploymentRepository.create(command);
+        const confirmation = await requireConfirmation(server, {
+          message: confirmMessage,
+          fallbackConfirm: confirm,
+          change: {
+            source: {},
+            target: isTenanted ? tenantedCommand : untenantedCommand,
+          },
+        });
+        if (!confirmation.confirmed) {
+          return unconfirmedResponse(confirmation, { action: "deployment" });
         }
+
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const deploymentRepository = new DeploymentRepository(
+          client,
+          spaceName,
+        );
+
+        const deploymentType = isTenanted ? "tenanted" : "untenanted";
+        const response = isTenanted
+          ? await deploymentRepository.createTenanted(tenantedCommand)
+          : await deploymentRepository.create(untenantedCommand);
 
         // Format the response
         const tasks = response.DeploymentServerTasks || [];

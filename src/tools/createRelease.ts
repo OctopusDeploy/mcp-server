@@ -4,6 +4,10 @@ import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { handleOctopusApiError } from "../helpers/errorHandling.js";
+import {
+  requireConfirmation,
+  unconfirmedResponse,
+} from "../helpers/requireConfirmation.js";
 
 export function registerCreateReleaseTool(server: McpServer) {
   server.tool(
@@ -58,6 +62,12 @@ This tool creates a new release for a project. The space name and project name a
         .record(z.string())
         .optional()
         .describe("Custom field values as key-value pairs"),
+      confirm: z
+        .boolean()
+        .optional()
+        .describe(
+          "Required only when the MCP client does not support elicitation. Set to true to confirm release creation; otherwise the tool aborts.",
+        ),
     },
     {
       title: "Create a new release in Octopus Deploy",
@@ -77,11 +87,18 @@ This tool creates a new release for a project. The space name and project name a
       ignoreChannelRules,
       packagePrerelease,
       customFields,
+      confirm,
     }) => {
       try {
-        const configuration = getClientConfigurationFromEnvironment();
-        const client = await Client.create(configuration);
-        const releaseRepository = new ReleaseRepository(client, spaceName);
+        const summary = [
+          `Create release for project ${projectName}`,
+          releaseVersion ? `version ${releaseVersion}` : null,
+          channelName ? `on channel ${channelName}` : null,
+          gitRef ? `from ${gitRef}` : null,
+          `in space ${spaceName}`,
+        ]
+          .filter(Boolean)
+          .join(" ");
 
         const command = {
           spaceName: spaceName,
@@ -102,6 +119,21 @@ This tool creates a new release for a project. The space name and project name a
           ...(packagePrerelease && { PackagePrerelease: packagePrerelease }),
           ...(customFields && { CustomFields: customFields }),
         };
+
+        const confirmation = await requireConfirmation(server, {
+          message: `${summary}?`,
+          fallbackConfirm: confirm,
+          change: { source: {}, target: command },
+        });
+        if (!confirmation.confirmed) {
+          return unconfirmedResponse(confirmation, {
+            action: "release creation",
+          });
+        }
+
+        const configuration = getClientConfigurationFromEnvironment();
+        const client = await Client.create(configuration);
+        const releaseRepository = new ReleaseRepository(client, spaceName);
 
         const response = await releaseRepository.create(command);
 
