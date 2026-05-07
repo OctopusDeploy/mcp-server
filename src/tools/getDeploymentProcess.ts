@@ -6,47 +6,48 @@ import {
 import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { type DeploymentProcessResource } from "../types/deploymentProcessTypes.js";
 import { getProjectBranches } from "../helpers/vcsProjectHelpers.js";
 
 export function registerGetDeploymentProcessTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "get_deployment_process",
-    `Get deployment process by ID
-
-This tool retrieves a deployment process by its ID. Each project has a deployment process attached, and releases/deployments can also have frozen processes attached.`,
-    {
-      spaceName: z.string(),
-      projectId: z
-        .string()
-        .optional()
-        .describe(
-          "The ID of the project to retrieve the deployment process for. If processId is not provided, this parameter is required.",
-        ),
-      processId: z
-        .string()
-        .optional()
-        .describe(
-          "The ID of the deployment process to retrieve. If not provided, the deployment process for the project will be retrieved.",
-        ),
-      branchName: z
-        .string()
-        .optional()
-        .describe(
-          "Optional branch name to get the deployment process for a specific branch (if using version controlled projects). Try `main` or `master` if unsure.",
-        ),
-      includeDetails: z
-        .boolean()
-        .optional()
-        .default(false)
-        .describe(
-          "Include detailed properties for steps and actions. Defaults to false.",
-        ),
-    },
     {
       title: "Get deployment process details from Octopus Deploy",
-      readOnlyHint: true,
+      description: `Get deployment process by ID
+
+This tool retrieves a deployment process by its ID. Each project has a deployment process attached, and releases/deployments can also have frozen processes attached.`,
+      inputSchema: {
+        spaceName: z.string(),
+        projectId: z
+          .string()
+          .optional()
+          .describe(
+            "The ID of the project to retrieve the deployment process for. If processId is not provided, this parameter is required.",
+          ),
+        processId: z
+          .string()
+          .optional()
+          .describe(
+            "The ID of the deployment process to retrieve. If not provided, the deployment process for the project will be retrieved.",
+          ),
+        branchName: z
+          .string()
+          .optional()
+          .describe(
+            "Optional branch name to get the deployment process for a specific branch (if using version controlled projects). Try `main` or `master` if unsure.",
+          ),
+        includeDetails: z
+          .boolean()
+          .optional()
+          .default(false)
+          .describe(
+            "Include detailed properties for steps and actions. Defaults to false.",
+          ),
+      },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async ({
       spaceName,

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getClientConfigurationFromEnvironment } from '../helpers/getClientConfigurationFromEnvironment.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { registerToolDefinition } from '../types/toolConfig.js';
+import { READ_ONLY_TOOL_ANNOTATIONS } from '../types/toolAnnotations.js';
 import { tasksDescription } from '../types/taskTypes.js';
 import { parseOctopusUrl, extractTaskId } from '../helpers/urlParser.js';
 import { resolveSpaceNameFromId } from '../helpers/spaceResolver.js';
@@ -57,9 +58,11 @@ export async function getTaskFromUrl(client: Client, params: GetTaskFromUrlParam
 }
 
 export function registerGetTaskFromUrlTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     'get_task_from_url',
-    `Get task details from an Octopus Deploy task URL. Returns full task details including execution logs and state.
+    {
+      title: 'Get task details from an Octopus Deploy URL',
+      description: `Get task details from an Octopus Deploy task URL. Returns full task details including execution logs and state.
 
 Accepts task URLs like:
 https://your-octopus.com/app#/Spaces-1/tasks/ServerTasks-456
@@ -75,13 +78,11 @@ If you have a deployment URL, use this workflow:
 2. Use the returned taskResourceUri (structured tree) or call grep_task_log with the returned taskId to search the raw log
 
 ${tasksDescription}`,
-    {
-      url: z.string()
-        .describe("Full Octopus Deploy task URL containing a task ID (e.g., https://your-octopus.com/app#/Spaces-1/tasks/ServerTasks-456)")
-    },
-    {
-      title: 'Get task details from an Octopus Deploy URL',
-      readOnlyHint: true,
+      inputSchema: {
+        url: z.string()
+          .describe("Full Octopus Deploy task URL containing a task ID (e.g., https://your-octopus.com/app#/Spaces-1/tasks/ServerTasks-456)")
+      },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async (args) => {
       const { url } = args as GetTaskFromUrlParams;

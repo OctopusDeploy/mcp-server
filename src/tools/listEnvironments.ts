@@ -7,23 +7,24 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { handleOctopusApiError } from "../helpers/errorHandling.js";
 
 export function registerListEnvironmentsTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "list_environments",
-    `List environments in a space
-
-  This tool lists all environments in a given space. The space name is required. Use this tool as early as possible to understand which environments are configured. Optionally filter by partial name match using partialName parameter.`,
-    {
-      spaceName: z.string(),
-      partialName: z.string().optional(),
-      skip: z.number().optional(),
-      take: z.number().optional(),
-    },
     {
       title: "List all environments in an Octopus Deploy space",
-      readOnlyHint: true,
+      description: `List environments in a space
+
+  This tool lists all environments in a given space. The space name is required. Use this tool as early as possible to understand which environments are configured. Optionally filter by partial name match using partialName parameter.`,
+      inputSchema: {
+        spaceName: z.string(),
+        partialName: z.string().optional(),
+        skip: z.number().optional(),
+        take: z.number().optional(),
+      },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async ({ spaceName, partialName, skip, take }) => {
       try {

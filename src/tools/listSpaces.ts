@@ -3,21 +3,22 @@ import { z } from "zod";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { spacesDescription } from "../types/spaceTypes.js";
 import { handleOctopusApiError } from "../helpers/errorHandling.js";
 
 export function registerListSpacesTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "list_spaces",
-    `List all spaces in the Octopus Deploy instance. ${spacesDescription} Always use this tool first to check that the requested space exists.`,
-    {
-      partialName: z.string().optional(),
-      skip: z.number().optional(),
-      take: z.number().optional(),
-    },
     {
       title: "List all spaces in an Octopus Deploy instance",
-      readOnlyHint: true,
+      description: `List all spaces in the Octopus Deploy instance. ${spacesDescription} Always use this tool first to check that the requested space exists.`,
+      inputSchema: {
+        partialName: z.string().optional(),
+        skip: z.number().optional(),
+        take: z.number().optional(),
+      },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async ({ partialName, skip, take }) => {
       try {

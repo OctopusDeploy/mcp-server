@@ -53,13 +53,15 @@ Each tool file exports a registration that includes:
 New tools must use `server.registerTool(name, config, handler)`:
 
 ```typescript
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
+
 server.registerTool(
   "find_releases",
   {
     title: "Find releases",
     description: "...",
     inputSchema: refinedZodSchema, // accepts ZodRawShapeCompat OR a full zod schema with refinements
-    annotations: { readOnlyHint: true },
+    annotations: READ_ONLY_TOOL_ANNOTATIONS,
   },
   async (args) => { /* ... */ },
 );
@@ -68,6 +70,16 @@ server.registerTool(
 Use `superRefine` (or a discriminated union) to encode cross-field invariants — mutually exclusive arguments, required-when-other-present rules, etc. — so the SDK rejects bad combinations during input validation and the LLM gets a structured error rather than a silent override at runtime. Constraints expressed only in description prose are not enforced.
 
 When migrating existing tools from `tool()` to `registerTool()`: the description and annotations move into the config object as named fields (`description`, `annotations`); the input schema becomes `inputSchema`. The handler signature is unchanged.
+
+##### Annotation constants
+
+All four MCP `ToolAnnotations` hints (`readOnlyHint`, `destructiveHint`, `idempotentHint`, `openWorldHint`) should be set explicitly so well-behaved clients can derive correct UI affordances (auto-approve, confirm-before-run, etc.) instead of falling back to worst-case defaults. To keep these consistent across tools, use the constants in [`src/types/toolAnnotations.ts`](src/types/toolAnnotations.ts):
+
+- `READ_ONLY_TOOL_ANNOTATIONS` — every read/list/find/get tool, plus `read_resource` and `grep_task_log`.
+- `ADDITIVE_WRITE_TOOL_ANNOTATIONS` — write tools whose effect is purely additive (create a new record, no overwrite). Example: `create_release`.
+- `DESTRUCTIVE_WRITE_TOOL_ANNOTATIONS` — write tools that may overwrite or otherwise mutate live state. Example: `deploy_release`.
+
+All three set `openWorldHint: false` because the server is bound to a single configured Octopus instance with a fixed entity schema — that's a closed world, not an open one (the SDK contrasts "web search" / open with "memory tool" / closed). Don't hand-roll an inline annotations object; reach for one of the constants and add a new profile to `toolAnnotations.ts` if a genuinely new shape appears.
 
 #### Write gating: use `requireConfirmation`
 

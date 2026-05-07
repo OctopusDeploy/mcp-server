@@ -3,24 +3,25 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { validateEntityId, handleOctopusApiError, ENTITY_PREFIXES } from "../helpers/errorHandling.js";
 
 export function registerGetMissingTenantVariablesTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "get_missing_tenant_variables",
-    `Get missing tenant variables
-  
-  This tool retrieves tenant variables that are missing values. Optionally filter by tenant, project, or environment.`,
-    { 
-      spaceName: z.string().describe("The space name"),
-      tenantId: z.string().optional().describe("Filter by specific tenant ID"),
-      projectId: z.string().optional().describe("Filter by specific project ID"),
-      environmentId: z.string().optional().describe("Filter by specific environment ID"),
-      includeDetails: z.boolean().optional().describe("Include detailed information about missing variables")
-    },
     {
       title: "Get missing tenant variables from Octopus Deploy",
-      readOnlyHint: true,
+      description: `Get missing tenant variables
+
+  This tool retrieves tenant variables that are missing values. Optionally filter by tenant, project, or environment.`,
+      inputSchema: {
+        spaceName: z.string().describe("The space name"),
+        tenantId: z.string().optional().describe("Filter by specific tenant ID"),
+        projectId: z.string().optional().describe("Filter by specific project ID"),
+        environmentId: z.string().optional().describe("Filter by specific environment ID"),
+        includeDetails: z.boolean().optional().describe("Include detailed information about missing variables")
+      },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async ({ spaceName, tenantId, projectId, environmentId, includeDetails = false }) => {
       if (tenantId) {

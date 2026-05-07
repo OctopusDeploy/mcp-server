@@ -6,23 +6,24 @@ import {
 import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { projectsDescription } from "../types/projectTypes.js";
 import { handleOctopusApiError } from "../helpers/errorHandling.js";
 
 export function registerListProjectsTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "list_projects",
-    `This tool lists all projects in a given space. ${projectsDescription} The space name is required, if you can't find the space name, ask the user directly for the name of the space. Optionally filter by partial name match using partialName parameter.`,
-    {
-      spaceName: z.string(),
-      partialName: z.string().optional(),
-      skip: z.number().optional(),
-      take: z.number().optional(),
-    },
     {
       title: "List all projects in an Octopus Deploy space",
-      readOnlyHint: true,
+      description: `This tool lists all projects in a given space. ${projectsDescription} The space name is required, if you can't find the space name, ask the user directly for the name of the space. Optionally filter by partial name match using partialName parameter.`,
+      inputSchema: {
+        spaceName: z.string(),
+        partialName: z.string().optional(),
+        skip: z.number().optional(),
+        take: z.number().optional(),
+      },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async ({ spaceName, partialName, skip, take }) => {
       try {

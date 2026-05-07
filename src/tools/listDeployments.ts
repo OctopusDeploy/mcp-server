@@ -3,27 +3,28 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { getPublicUrl } from "../helpers/getPublicUrl.js";
 
 export function registerListDeploymentsTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "list_deployments",
-    `List deployments in a space
-  
-  This tool lists deployments in a given space. The space name is required. When requesting latest deployment consider which deployment state the user is interested in (successful or all). Optional filters include: projects (array of project IDs), environments (array of environment IDs), tenants (array of tenant IDs), channels (array of channel IDs), taskState (one of: Canceled, Cancelling, Executing, Failed, Queued, Success, TimedOut), and take (number of results to return).`,
-    {
-      spaceName: z.string(),
-      projects: z.array(z.string()).optional(),
-      environments: z.array(z.string()).optional(),
-      tenants: z.array(z.string()).optional(),
-      channels: z.array(z.string()).optional(),
-      taskState: z.enum(["Canceled", "Cancelling", "Executing", "Failed", "Queued", "Success", "TimedOut"]).optional(),
-      skip: z.number().optional(),
-      take: z.number().optional()
-    },
     {
       title: "List deployments in an Octopus Deploy space",
-      readOnlyHint: true,
+      description: `List deployments in a space
+
+  This tool lists deployments in a given space. The space name is required. When requesting latest deployment consider which deployment state the user is interested in (successful or all). Optional filters include: projects (array of project IDs), environments (array of environment IDs), tenants (array of tenant IDs), channels (array of channel IDs), taskState (one of: Canceled, Cancelling, Executing, Failed, Queued, Success, TimedOut), and take (number of results to return).`,
+      inputSchema: {
+        spaceName: z.string(),
+        projects: z.array(z.string()).optional(),
+        environments: z.array(z.string()).optional(),
+        tenants: z.array(z.string()).optional(),
+        channels: z.array(z.string()).optional(),
+        taskState: z.enum(["Canceled", "Cancelling", "Executing", "Failed", "Queued", "Success", "TimedOut"]).optional(),
+        skip: z.number().optional(),
+        take: z.number().optional()
+      },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async ({ spaceName, projects, environments, tenants, channels, taskState, skip, take }) => {
       const configuration = getClientConfigurationFromEnvironment();

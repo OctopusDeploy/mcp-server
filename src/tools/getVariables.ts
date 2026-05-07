@@ -8,24 +8,25 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import type {ResourceCollection} from "@octopusdeploy/api-client/dist/resourceCollection.js";
 
 export function registerGetVariablesTool(server: McpServer) {
-    server.tool(
+    server.registerTool(
         "get_variables",
-        `This tool gets all project and library variable set variables for a given project. 
-        Projects can contain variables (specific to a project), library variable sets (shared collections of variables associated with many projects), 
+        {
+            title: "Get variables for a Project from Octopus Deploy",
+            description: `This tool gets all project and library variable set variables for a given project.
+        Projects can contain variables (specific to a project), library variable sets (shared collections of variables associated with many projects),
         and tenant variables (variables related to a tenants connected to the project)
         If you want to retrieve tenant variables for a tenant connected to the project, use the get_tenant_variables tool.
         `,
-        {
-            spaceName: z.string().describe("The space name"),
-            projectId: z.string().describe("The ID of the project to retrieve the variables for"),
-            gitRef: z.string().describe("The gitRef to retrieve the variables from, if the project is a config-as-code project").optional(),
-        },
-        {
-            title: "Get variables for a Project from Octopus Deploy",
-            readOnlyHint: true,
+            inputSchema: {
+                spaceName: z.string().describe("The space name"),
+                projectId: z.string().describe("The ID of the project to retrieve the variables for"),
+                gitRef: z.string().describe("The gitRef to retrieve the variables from, if the project is a config-as-code project").optional(),
+            },
+            annotations: READ_ONLY_TOOL_ANNOTATIONS,
         },
         async ({ spaceName, projectId, gitRef }) => {
 

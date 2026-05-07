@@ -7,6 +7,7 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { getPublicUrl } from "../helpers/getPublicUrl.js";
 import type { TenantResource } from "../types/tenantsTypes.js";
 import { tenantsDescription } from "../types/tenantsTypes.js";
@@ -126,9 +127,11 @@ export async function findTenantsHandler(params: FindTenantsParams) {
 }
 
 export function registerFindTenantsTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "find_tenants",
-    `Find tenants in a space - can retrieve a single tenant by ID or list all tenants
+    {
+      title: "Find tenants in an Octopus Deploy space",
+      description: `Find tenants in a space - can retrieve a single tenant by ID or list all tenants
 
   This unified tool can either:
   - Get details for a specific tenant when tenantId is provided, including the projects and environments the tenant is associated with
@@ -137,31 +140,29 @@ export function registerFindTenantsTool(server: McpServer) {
   ${tenantsDescription}
 
   Optionally provide filtering and pagination parameters when listing.`,
-    {
-      spaceName: z.string().describe("The space name"),
-      tenantId: z.string().optional().describe("The ID of a specific tenant to retrieve. If omitted, lists all tenants."),
-      skip: z.number().optional().describe("Number of tenants to skip for pagination (only used when listing)"),
-      take: z.number().optional().describe("Number of tenants to take for pagination (only used when listing)"),
-      projectId: z
-        .string()
-        .optional()
-        .describe("Filter by specific project ID (only used when listing)"),
-      tags: z
-        .string()
-        .optional()
-        .describe("Filter by tenant tags (comma-separated list, only used when listing)"),
-      ids: z
-        .array(z.string())
-        .optional()
-        .describe("Filter by specific tenant IDs (only used when listing)"),
-      partialName: z
-        .string()
-        .optional()
-        .describe("Filter by partial tenant name match (only used when listing)"),
-    },
-    {
-      title: "Find tenants in an Octopus Deploy space",
-      readOnlyHint: true,
+      inputSchema: {
+        spaceName: z.string().describe("The space name"),
+        tenantId: z.string().optional().describe("The ID of a specific tenant to retrieve. If omitted, lists all tenants."),
+        skip: z.number().optional().describe("Number of tenants to skip for pagination (only used when listing)"),
+        take: z.number().optional().describe("Number of tenants to take for pagination (only used when listing)"),
+        projectId: z
+          .string()
+          .optional()
+          .describe("Filter by specific project ID (only used when listing)"),
+        tags: z
+          .string()
+          .optional()
+          .describe("Filter by tenant tags (comma-separated list, only used when listing)"),
+        ids: z
+          .array(z.string())
+          .optional()
+          .describe("Filter by specific tenant IDs (only used when listing)"),
+        partialName: z
+          .string()
+          .optional()
+          .describe("Filter by partial tenant name match (only used when listing)"),
+      },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     findTenantsHandler,
   );

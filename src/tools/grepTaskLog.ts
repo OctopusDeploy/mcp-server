@@ -2,6 +2,7 @@ import { Client, SpaceServerTaskRepository } from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import {
   validateEntityId,
@@ -208,7 +209,7 @@ Parameter conventions mirror GNU grep so the schema is self-explanatory:
 
 Response includes totalMatches (true count across the whole log), totalLines, the matched lines with 1-indexed lineNumber, optional before/after context arrays, and a taskDetailsResourceUri for the structured fall-through.`,
       inputSchema,
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async (args) => {
       const params = args as GrepTaskLogParams;

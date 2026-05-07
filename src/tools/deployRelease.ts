@@ -3,6 +3,7 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { DESTRUCTIVE_WRITE_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { handleOctopusApiError } from "../helpers/errorHandling.js";
 import {
   requireConfirmation,
@@ -10,96 +11,96 @@ import {
 } from "../helpers/requireConfirmation.js";
 
 export function registerDeployReleaseTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "deploy_release",
-    `Deploy a release to one or more environments in Octopus Deploy
+    {
+      title: "Deploy a release to environments in Octopus Deploy",
+      description: `Deploy a release to one or more environments in Octopus Deploy
 
 This tool supports both tenanted and untenanted deployments:
 - **Untenanted**: Don't provide tenants or tenantTags. Can deploy to multiple environments at once.
 - **Tenanted**: Provide tenants or tenantTags. Can only deploy to ONE environment, but can target multiple tenants.
 
 The tool automatically determines which deployment type to use based on the parameters provided.`,
-    {
-      spaceName: z.string().describe("The space name"),
-      projectName: z.string().describe("The project name"),
-      releaseVersion: z
-        .string()
-        .describe("The release version to deploy (e.g., '1.0.0')"),
-      environmentNames: z
-        .array(z.string())
-        .describe(
-          "Array of environment names. For tenanted deployments, must contain exactly one environment.",
-        ),
-      tenants: z
-        .array(z.string())
-        .optional()
-        .describe("Array of tenant names for tenanted deployment (optional)"),
-      tenantTags: z
-        .array(z.string())
-        .optional()
-        .describe(
-          "Array of tenant tags for tenanted deployment (e.g., ['Region/US-West', 'Tier/Production'])",
-        ),
-      forcePackageRedeployment: z
-        .boolean()
-        .optional()
-        .describe("Force redeployment of packages"),
-      updateVariableSnapshot: z
-        .boolean()
-        .optional()
-        .describe("Update the variable snapshot"),
-      forcePackageDownload: z
-        .boolean()
-        .optional()
-        .describe("Force package download"),
-      specificMachineNames: z
-        .array(z.string())
-        .optional()
-        .describe("Deploy to specific machines only"),
-      excludedMachineNames: z
-        .array(z.string())
-        .optional()
-        .describe("Exclude specific machines from deployment"),
-      skipStepNames: z
-        .array(z.string())
-        .optional()
-        .describe("Skip specific deployment steps"),
-      useGuidedFailure: z
-        .boolean()
-        .optional()
-        .describe("Use guided failure mode"),
-      runAt: z
-        .string()
-        .optional()
-        .describe("Schedule deployment for later (ISO 8601 date string)"),
-      noRunAfter: z
-        .string()
-        .optional()
-        .describe(
-          "Don't run deployment after this time (ISO 8601 date string)",
-        ),
-      variables: z
-        .record(z.string())
-        .optional()
-        .describe("Prompted variable values as key-value pairs"),
-      deploymentFreezeOverrideReason: z
-        .string()
-        .optional()
-        .describe("Reason for overriding deployment freeze"),
-      deploymentFreezeNames: z
-        .array(z.string())
-        .optional()
-        .describe("Names of deployment freezes to override"),
-      confirm: z
-        .boolean()
-        .optional()
-        .describe(
-          "Required only when the MCP client does not support elicitation. Set to true to confirm deployment; otherwise the tool aborts.",
-        ),
-    },
-    {
-      title: "Deploy a release to environments in Octopus Deploy",
-      readOnlyHint: false,
+      inputSchema: {
+        spaceName: z.string().describe("The space name"),
+        projectName: z.string().describe("The project name"),
+        releaseVersion: z
+          .string()
+          .describe("The release version to deploy (e.g., '1.0.0')"),
+        environmentNames: z
+          .array(z.string())
+          .describe(
+            "Array of environment names. For tenanted deployments, must contain exactly one environment.",
+          ),
+        tenants: z
+          .array(z.string())
+          .optional()
+          .describe("Array of tenant names for tenanted deployment (optional)"),
+        tenantTags: z
+          .array(z.string())
+          .optional()
+          .describe(
+            "Array of tenant tags for tenanted deployment (e.g., ['Region/US-West', 'Tier/Production'])",
+          ),
+        forcePackageRedeployment: z
+          .boolean()
+          .optional()
+          .describe("Force redeployment of packages"),
+        updateVariableSnapshot: z
+          .boolean()
+          .optional()
+          .describe("Update the variable snapshot"),
+        forcePackageDownload: z
+          .boolean()
+          .optional()
+          .describe("Force package download"),
+        specificMachineNames: z
+          .array(z.string())
+          .optional()
+          .describe("Deploy to specific machines only"),
+        excludedMachineNames: z
+          .array(z.string())
+          .optional()
+          .describe("Exclude specific machines from deployment"),
+        skipStepNames: z
+          .array(z.string())
+          .optional()
+          .describe("Skip specific deployment steps"),
+        useGuidedFailure: z
+          .boolean()
+          .optional()
+          .describe("Use guided failure mode"),
+        runAt: z
+          .string()
+          .optional()
+          .describe("Schedule deployment for later (ISO 8601 date string)"),
+        noRunAfter: z
+          .string()
+          .optional()
+          .describe(
+            "Don't run deployment after this time (ISO 8601 date string)",
+          ),
+        variables: z
+          .record(z.string())
+          .optional()
+          .describe("Prompted variable values as key-value pairs"),
+        deploymentFreezeOverrideReason: z
+          .string()
+          .optional()
+          .describe("Reason for overriding deployment freeze"),
+        deploymentFreezeNames: z
+          .array(z.string())
+          .optional()
+          .describe("Names of deployment freezes to override"),
+        confirm: z
+          .boolean()
+          .optional()
+          .describe(
+            "Required only when the MCP client does not support elicitation. Set to true to confirm deployment; otherwise the tool aborts.",
+          ),
+      },
+      annotations: DESTRUCTIVE_WRITE_TOOL_ANNOTATIONS,
     },
     async ({
       spaceName,

@@ -1,6 +1,7 @@
 import { Client } from "@octopusdeploy/api-client";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { handleOctopusApiError } from "../helpers/errorHandling.js";
 
@@ -16,15 +17,15 @@ interface CurrentUser {
 }
 
 export function registerGetCurrentUserTool(server: McpServer) {
-  server.tool(
+  server.registerTool(
     "get_current_user",
-    `Get information about the current authenticated user
-
-This tool retrieves information about the currently authenticated user from the Octopus Deploy API.`,
-    {},
     {
       title: "Get current user information",
-      readOnlyHint: true,
+      description: `Get information about the current authenticated user
+
+This tool retrieves information about the currently authenticated user from the Octopus Deploy API.`,
+      inputSchema: {},
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async () => {
       try {

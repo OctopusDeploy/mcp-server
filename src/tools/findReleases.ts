@@ -3,6 +3,7 @@ import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
+import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import {
   validateEntityId,
   handleOctopusApiError,
@@ -96,7 +97,7 @@ export function registerFindReleasesTool(server: McpServer) {
   Each summary includes a resourceUri for fetching the full release body
   (release notes, packages, build information, custom fields).`,
       inputSchema: findReleasesSchema,
-      annotations: { readOnlyHint: true },
+      annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async ({ spaceName, releaseId, projectId, searchByVersion, skip, take }) => {
       const client = await Client.create(getClientConfigurationFromEnvironment());
