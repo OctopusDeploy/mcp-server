@@ -197,6 +197,7 @@ Available toolsets:
 - **certificates** - Certificate operations
 - **accounts** - Account operations
 - **interruptions** - Manual intervention and approval operations
+- **featureToggles** - Inspect and lightly adjust customer feature toggles
 - **context** - Authenticated user and project context (current user, Git branches)
 
 #### Read-Only Mode
@@ -206,6 +207,7 @@ The server runs in read-only mode by default for security. Most tools are read-o
 - `create_release` - Create new releases
 - `deploy_release` - Deploy releases to environments and tenants
 - `run_runbook` - Run a runbook against one or more environments (and optional tenants)
+- `update_feature_toggle` - Adjust per-environment state and rollout percentages on an existing feature toggle
 
 **Conditionally-writing tool:** `execute` is a structured REST backstop whose tier (read / write / delete) is determined by the HTTP method passed to it. See the [API Catalog & Backstop](#api-catalog--backstop) section for details.
 
@@ -366,6 +368,14 @@ There is intentionally no `/log` resource: activity logs can be multi-megabyte, 
 ### Interruptions
 - `find_interruptions`: Find pending or historical interruptions (manual interventions, approvals, guided-failure prompts) in a space, optionally filtered by task, project, environment, regarding document, responsibility, or pending state. Returns slim summaries; dereference the `octopus://spaces/{spaceName}/interruptions/{interruptionId}` resource for the full Form definition (control types, Markdown instructions, button options, submitted Form.Values).
 
+### Feature Toggles
+- `find_feature_toggles`: List customer feature toggles in a project. Each summary includes per-environment state (`isEnabled`, `rolloutPercentage`, `clientRolloutPercentage`) plus a `resourceUri` so "where is X turned on" is answerable from the list response.
+- `update_feature_toggle`: Adjust an existing toggle. Narrow surface — flip an environment on/off, change rollout percentages, or update the toggle-level description / default state. Internally fetches the current toggle, applies your patches in memory, and PUTs the merged body, so unmentioned environments and unmentioned fields are preserved. Patches that reference an environment not already configured on the toggle are rejected.
+
+The full toggle body (description, tenants, segments, minimum versions) is available as an MCP Resource at `octopus://spaces/{spaceName}/projects/{projectId}/featuretoggles/{slug}`. Rollout group bodies are addressable at `octopus://spaces/{spaceName}/projects/{projectId}/rolloutgroups/{rolloutGroupId}` for read-only inspection.
+
+**Out of scope (use the Octopus UI):** creating new feature toggles, deleting toggles, renaming or retagging, attaching/detaching rollout groups, tenant targeting, segments, minimum-version filters, and rollout-group / SDK client-identifier management.
+
 ### Additional Tools
 - `get_deployment_process`: Get deployment process by ID for projects or releases
 - `get_variables`: Get all project variables and library variable set variables for a project (supports config-as-code projects via `gitRef`)
@@ -386,6 +396,7 @@ When read-only mode is disabled (`--no-read-only`), the following write operatio
 - **Creating releases**: Can create new releases for projects
 - **Deploying releases**: Can trigger deployments to environments (including production)
 - **Running runbooks**: Can execute runbooks against environments and tenants
+- **Updating feature toggles**: Can flip per-environment state and change rollout percentages on existing toggles
 - **Arbitrary POST/PUT/PATCH via the `execute` backstop**: Subject to the per-toolset path allowlist and a sensitive denylist that's always-on.
 
 DELETE requests through `execute` require an additional `--allow-deletes` flag — a deliberate two-flag opt-in for irreversible operations.

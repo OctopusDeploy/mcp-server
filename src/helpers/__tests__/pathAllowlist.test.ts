@@ -108,4 +108,56 @@ describe("findOwningToolset", () => {
   it("returns undefined for paths no toolset claims", () => {
     expect(findOwningToolset("/api/something/never/registered")).toBeUndefined();
   });
+
+  it("picks the most-specific (most literal segments) toolset when multiple claim a path", () => {
+    // Both `projects` (/api/*/projects/**) and `featureToggles`
+    // (/api/*/projects/*/featuretoggles) match this path. The latter wins
+    // because its pattern has more literal segments.
+    expect(
+      findOwningToolset(
+        "/api/Spaces-1/projects/Projects-123/featuretoggles",
+      ),
+    ).toBe("featureToggles");
+    expect(
+      findOwningToolset(
+        "/api/Spaces-1/projects/Projects-123/featuretoggles/checkout-redesign",
+      ),
+    ).toBe("featureToggles");
+  });
+});
+
+describe("matchPath — kill-switch behaviour for nested toolsets", () => {
+  it("denies a feature toggle path when only the broader `projects` toolset is enabled", () => {
+    // Without most-specific-match-wins, `projects` would shadow
+    // `featureToggles` and the path would slip through. With it, disabling
+    // `featureToggles` is a real kill switch — the curated tools AND the
+    // execute backstop both lose access.
+    expect(
+      matchPath(
+        "/api/Spaces-1/projects/Projects-123/featuretoggles",
+        ["projects"],
+      ),
+    ).toMatchObject({ matched: false, toolset: "featureToggles" });
+  });
+
+  it("allows a feature toggle path when `featureToggles` is enabled", () => {
+    expect(
+      matchPath(
+        "/api/Spaces-1/projects/Projects-123/featuretoggles",
+        ["featureToggles"],
+      ),
+    ).toMatchObject({ matched: true, toolset: "featureToggles" });
+  });
+
+  it("still allows non-feature-toggle project sub-paths through `projects`", () => {
+    // Regression check: tightening the algorithm must not break paths
+    // owned solely by `projects` (e.g. deployment processes nested under
+    // projects).
+    expect(
+      matchPath(
+        "/api/Spaces-1/projects/Projects-1/deploymentprocesses/snapshot",
+        ["projects"],
+      ),
+    ).toMatchObject({ matched: true, toolset: "projects" });
+  });
 });

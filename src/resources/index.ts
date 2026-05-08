@@ -13,6 +13,8 @@ import "./release.js";
 import "./runbook.js";
 import "./task.js";
 import "./interruption.js";
+import "./featureToggle.js";
+import "./rolloutGroup.js";
 import "./catalog/llmsTxt.js";
 import "./catalog/capabilities.js";
 

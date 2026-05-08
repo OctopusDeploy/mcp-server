@@ -108,7 +108,34 @@ const TOOLSET_PATH_PATTERNS: Record<Toolset, readonly string[]> = {
   interruptions: [
     ...spaceScoped("interruptions"),
   ],
+  featureToggles: [
+    // Customer feature toggles are project-scoped, so the paths nest under
+    // /projects/*/featuretoggles rather than directly under the space. The
+    // `projects` toolset's `/api/*/projects/**` wildcard ALSO matches these,
+    // but the most-specific-match-wins logic in matchPath/findOwningToolset
+    // (below) attributes them to `featureToggles` because these patterns
+    // have more literal segments. So disabling `featureToggles` is a real
+    // kill switch — the path becomes unreachable through `execute` even
+    // when `projects` is still enabled.
+    "/api/*/projects/*/featuretoggles",
+    "/api/*/projects/*/featuretoggles/**",
+    "/api/spaces/*/projects/*/featuretoggles",
+    "/api/spaces/*/projects/*/featuretoggles/**",
+  ],
 };
+
+// Specificity = count of literal (non-wildcard) segments in the pattern.
+// "/api/<wildcard>/projects/<doublewildcard>" has 2 literal segments
+// (api, projects). "/api/<wildcard>/projects/<wildcard>/featuretoggles"
+// has 3 (api, projects, featuretoggles). The more-literal pattern wins
+// ownership when multiple toolsets claim the same path. This makes nested
+// concerns (feature toggles under projects, kubernetes live-status under
+// machines) into real kill switches rather than honour-system overlays.
+function patternSpecificity(pattern: string): number {
+  return pattern
+    .split("/")
+    .filter((seg) => seg.length > 0 && seg !== "*" && seg !== "**").length;
+}
 
 export interface AllowlistMatch {
   matched: boolean;
@@ -116,40 +143,47 @@ export interface AllowlistMatch {
 }
 
 /**
- * Check whether `path` falls under the allowlist for any currently-enabled
- * toolset. The `core` toolset is implicitly always enabled; callers do not
- * need to include it in `enabledToolsets`.
+ * Find which toolset owns `path`. Most-specific-match-wins: if multiple
+ * toolsets have patterns matching the path, the toolset whose pattern has
+ * more literal segments wins ownership. Returns undefined if no toolset
+ * claims the path at all.
+ *
+ * This is the basis for both `matchPath` (allowlist enforcement) and the
+ * "which toolset do I need to enable?" error message in `execute`.
+ */
+export function findOwningToolset(path: string): Toolset | undefined {
+  let best: { toolset: Toolset; specificity: number } | null = null;
+  for (const toolset of Object.keys(TOOLSET_PATH_PATTERNS) as Toolset[]) {
+    for (const pattern of TOOLSET_PATH_PATTERNS[toolset]) {
+      if (!pathMatchesGlob(path, pattern)) continue;
+      const specificity = patternSpecificity(pattern);
+      if (!best || specificity > best.specificity) {
+        best = { toolset, specificity };
+      }
+    }
+  }
+  return best?.toolset;
+}
+
+/**
+ * Check whether `path` falls under the allowlist given which toolsets are
+ * currently enabled. The `core` toolset is implicitly always enabled.
+ *
+ * The owning toolset (most-specific match) must be the one enabled — a
+ * less-specific toolset whose wildcard happens to also match cannot shadow
+ * a disabled, more-specific owner. So `featureToggles` paths require the
+ * `featureToggles` toolset, even when `projects` (whose `/projects/**`
+ * wildcard also matches) is enabled.
  */
 export function matchPath(
   path: string,
   enabledToolsets: readonly Toolset[],
 ): AllowlistMatch {
-  const candidates: Toolset[] = [
-    "core",
-    ...enabledToolsets.filter((t) => t !== "core"),
-  ];
-  for (const toolset of candidates) {
-    for (const pattern of TOOLSET_PATH_PATTERNS[toolset]) {
-      if (pathMatchesGlob(path, pattern)) {
-        return { matched: true, toolset };
-      }
-    }
-  }
-  return { matched: false };
-}
+  const owner = findOwningToolset(path);
+  if (!owner) return { matched: false };
 
-/**
- * Find which toolset would have allowed `path` if it were enabled. Used to
- * produce a helpful error response that names the toolset the user needs to
- * turn on.
- */
-export function findOwningToolset(path: string): Toolset | undefined {
-  for (const toolset of Object.keys(TOOLSET_PATH_PATTERNS) as Toolset[]) {
-    for (const pattern of TOOLSET_PATH_PATTERNS[toolset]) {
-      if (pathMatchesGlob(path, pattern)) {
-        return toolset;
-      }
-    }
-  }
-  return undefined;
+  const isEnabled = owner === "core" || enabledToolsets.includes(owner);
+  return isEnabled
+    ? { matched: true, toolset: owner }
+    : { matched: false, toolset: owner };
 }
