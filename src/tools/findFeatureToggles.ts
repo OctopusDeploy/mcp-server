@@ -73,8 +73,19 @@ const findFeatureTogglesSchema = z.object({
     .describe(
       "Filter by environment IDs (e.g. Environments-7). A toggle matches if it has configuration for any of these environments.",
     ),
-  skip: z.number().optional().describe("Pagination offset (≥ 0)."),
-  take: z.number().optional().describe("Pagination page size (≤ 100)."),
+  skip: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe("Pagination offset (≥ 0)."),
+  take: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .describe("Pagination page size (1–100, server-side cap)."),
 });
 
 export type FindFeatureTogglesParams = z.infer<typeof findFeatureTogglesSchema>;

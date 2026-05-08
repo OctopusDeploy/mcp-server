@@ -1,10 +1,11 @@
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { dispatchOctopusUri } from "../dispatch.js";
 import {
   RESOURCE_REGISTRY,
   registerResourceDescriptor,
   type ResourceDescriptor,
 } from "../../types/resourceConfig.js";
+import { setActiveToolsetConfig } from "../../helpers/activeToolsetConfig.js";
 
 /**
  * Tests target the dispatch + registry contract in isolation:
@@ -129,5 +130,67 @@ describe("dispatchOctopusUri", () => {
     expect(await dispatchOctopusUri("https://example.com/foo")).toBeNull();
     expect(await dispatchOctopusUri("not-a-uri")).toBeNull();
     expect(descriptor.read).not.toHaveBeenCalled();
+  });
+
+  describe("toolset filtering", () => {
+    afterEach(() => {
+      // Reset to "all enabled" so other test files aren't affected by leaked state.
+      setActiveToolsetConfig({});
+    });
+
+    it("skips a descriptor whose toolset is not enabled, so read_resource cannot bypass --toolsets filtering by URI guess", async () => {
+      const featureToggleDescriptor = makeDescriptor({
+        name: "featureToggle",
+        toolset: "featureToggles",
+        uriTemplate:
+          "octopus://spaces/{spaceName}/projects/{projectId}/featuretoggles/{slug}",
+      });
+      registerResourceDescriptor(featureToggleDescriptor);
+
+      // Session enabled `projects` but NOT `featureToggles`.
+      setActiveToolsetConfig({ enabledToolsets: ["projects"] });
+
+      const payload = await dispatchOctopusUri(
+        "octopus://spaces/Default/projects/Projects-123/featuretoggles/checkout",
+      );
+
+      expect(payload).toBeNull();
+      expect(featureToggleDescriptor.read).not.toHaveBeenCalled();
+    });
+
+    it("invokes a descriptor when its toolset IS enabled", async () => {
+      const featureToggleDescriptor = makeDescriptor({
+        name: "featureToggle",
+        toolset: "featureToggles",
+        uriTemplate:
+          "octopus://spaces/{spaceName}/projects/{projectId}/featuretoggles/{slug}",
+      });
+      registerResourceDescriptor(featureToggleDescriptor);
+
+      setActiveToolsetConfig({ enabledToolsets: ["featureToggles"] });
+
+      const payload = await dispatchOctopusUri(
+        "octopus://spaces/Default/projects/Projects-123/featuretoggles/checkout",
+      );
+
+      expect(payload).not.toBeNull();
+      expect(featureToggleDescriptor.read).toHaveBeenCalledTimes(1);
+    });
+
+    it("always allows core descriptors regardless of enabledToolsets", async () => {
+      const coreDescriptor = makeDescriptor({
+        name: "catalog",
+        toolset: "core",
+        uriTemplate: "octopus://api/llms.txt",
+      });
+      registerResourceDescriptor(coreDescriptor);
+
+      // No toolsets enabled; core should still resolve.
+      setActiveToolsetConfig({ enabledToolsets: [] });
+
+      const payload = await dispatchOctopusUri("octopus://api/llms.txt");
+      expect(payload).not.toBeNull();
+      expect(coreDescriptor.read).toHaveBeenCalledTimes(1);
+    });
   });
 });

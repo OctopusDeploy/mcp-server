@@ -22,7 +22,10 @@ vi.mock("@octopusdeploy/api-client", async (importOriginal) => {
 });
 
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { updateFeatureToggleHandler } from "../updateFeatureToggle.js";
+import {
+  updateFeatureToggleHandler,
+  updateFeatureToggleSchema,
+} from "../updateFeatureToggle.js";
 import { assertToolResponse } from "./testSetup.js";
 import { type FeatureToggleResource } from "../../types/featureToggleTypes.js";
 
@@ -146,6 +149,27 @@ describe("updateFeatureToggleHandler", () => {
     const body = JSON.parse(response.content[0].text);
     expect(body.reason).toBe("environment_not_configured");
     expect(doUpdate).not.toHaveBeenCalled();
+  });
+
+  it("rejects duplicate deploymentEnvironmentId entries at the schema layer", () => {
+    // If the schema permitted duplicates, the merge would apply the first
+    // patch while the confirmation diff overwrote earlier entries with later
+    // ones — the user could approve one change and a different one would go
+    // through. Catch it before it reaches the handler.
+    const result = updateFeatureToggleSchema.safeParse({
+      spaceName: "Default",
+      projectId: "Projects-123",
+      slug: "checkout-redesign",
+      environments: [
+        { deploymentEnvironmentId: "Environments-7", isEnabled: true },
+        { deploymentEnvironmentId: "Environments-7", rolloutPercentage: 50 },
+      ],
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((i) => i.message).join("\n");
+      expect(messages).toMatch(/Duplicate environment entry/);
+    }
   });
 
   it("does not issue the PUT when the user declines the elicitation prompt", async () => {
