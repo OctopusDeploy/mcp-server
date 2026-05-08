@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { grepLines } from "../grepTaskLog.js";
+import { grepLines } from "../grepLines.js";
 
 const SAMPLE_LOG = [
   "2026-05-05T12:00:00 Info  | Step 1 starting",
@@ -13,9 +13,11 @@ const SAMPLE_LOG = [
   "",
 ].join("\n");
 
+// Pure-function tests — `grepLines` does not consume spaceName/taskId, but
+// the test body originated in a tool-level test file where those were the
+// outer parameters. Kept as `baseParams` rather than removing them so the
+// per-test diffs stay minimal during the migration.
 const baseParams = {
-  spaceName: "Default",
-  taskId: "ServerTasks-1",
   pattern: "",
 };
 
