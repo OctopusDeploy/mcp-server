@@ -377,4 +377,5 @@ registerToolDefinition({
   toolName: "update_feature_toggle",
   config: { toolset: "featureToggles", readOnly: false },
   registerFn: registerUpdateFeatureToggleTool,
+  minimumOctopusVersion: "2026.1.10655",
 });

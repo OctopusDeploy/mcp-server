@@ -164,4 +164,5 @@ registerToolDefinition({
   toolName: "find_feature_toggles",
   config: { toolset: "featureToggles", readOnly: true },
   registerFn: registerFindFeatureTogglesTool,
+  minimumOctopusVersion: "2026.1.10655",
 });
