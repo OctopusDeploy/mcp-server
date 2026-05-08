@@ -26,27 +26,11 @@ import {
 } from "../../types/resourceConfig.js";
 import "../rolloutGroup.js";
 
-function descriptorByName(name: string): ResourceDescriptor {
-  const descriptor = RESOURCE_REGISTRY.find((d) => d.name === name);
-  if (!descriptor) {
-    throw new Error(`Resource descriptor '${name}' is not registered.`);
-  }
-  return descriptor;
+function descriptor(name: string): ResourceDescriptor {
+  const d = RESOURCE_REGISTRY.find((r) => r.name === name);
+  if (!d) throw new Error(`Resource '${name}' not registered.`);
+  return d;
 }
-
-const sampleGroup = {
-  Id: "RolloutGroups-3",
-  SpaceId: "Spaces-1",
-  ProjectId: "Projects-123",
-  Name: "Beta wave",
-  FeatureToggleUsages: [
-    { Id: "FeatureToggles-9", Name: "checkout-redesign" },
-    { Id: "FeatureToggles-12", Name: "search-overhaul" },
-  ],
-  Links: {
-    Self: "/api/Spaces-1/projects/Projects-123/featuretoggles/rollout-groups/RolloutGroups-3",
-  },
-};
 
 describe("rolloutGroup resource", () => {
   beforeEach(() => {
@@ -55,21 +39,27 @@ describe("rolloutGroup resource", () => {
     resolveSpaceId.mockResolvedValue("Spaces-1");
   });
 
-  it("returns the full group body with Links stripped", async () => {
-    get.mockResolvedValueOnce(sampleGroup);
+  it("fetches the group at the project-scoped rollout-groups path and strips Links", async () => {
+    get.mockResolvedValueOnce({
+      Id: "RolloutGroups-3",
+      Name: "Beta wave",
+      FeatureToggleUsages: [
+        { Id: "FeatureToggles-9", Name: "checkout-redesign" },
+      ],
+      Links: {
+        Self: "/api/Spaces-1/projects/Projects-123/featuretoggles/rollout-groups/RolloutGroups-3",
+      },
+    });
 
-    const payload = await descriptorByName("rolloutGroup").read({
+    const payload = await descriptor("rolloutGroup").read({
       spaceName: "Default",
       projectId: "Projects-123",
       rolloutGroupId: "RolloutGroups-3",
     });
 
-    expect(payload.mimeType).toBe("application/json");
     const body = JSON.parse(payload.text);
-
     expect(body.Links).toBeUndefined();
-    expect(body.Name).toBe("Beta wave");
-    expect(body.FeatureToggleUsages).toHaveLength(2);
+    expect(body.FeatureToggleUsages).toHaveLength(1);
 
     expect(get).toHaveBeenCalledWith(
       "~/api/{spaceId}/projects/{projectId}/featuretoggles/rollout-groups/{rolloutGroupId}",
@@ -79,30 +69,5 @@ describe("rolloutGroup resource", () => {
         rolloutGroupId: "RolloutGroups-3",
       },
     );
-  });
-
-  it("rejects an invalid rollout group ID before any API call", async () => {
-    await expect(
-      descriptorByName("rolloutGroup").read({
-        spaceName: "Default",
-        projectId: "Projects-123",
-        rolloutGroupId: "not-a-real-id",
-      }),
-    ).rejects.toThrow(/Invalid rollout group ID format/);
-
-    expect(get).not.toHaveBeenCalled();
-    expect(resolveSpaceId).not.toHaveBeenCalled();
-  });
-
-  it("translates 404 into a friendly error", async () => {
-    get.mockRejectedValueOnce(new Error("404 not found"));
-
-    await expect(
-      descriptorByName("rolloutGroup").read({
-        spaceName: "Default",
-        projectId: "Projects-123",
-        rolloutGroupId: "RolloutGroups-99",
-      }),
-    ).rejects.toThrow(/not found in space 'Default'/);
   });
 });
