@@ -302,7 +302,7 @@ See [Working with URLs](docs/working-with-urls.md) for detailed workflows, examp
 
 These tools and resources let the agent reach Octopus REST endpoints that don't have a dedicated curated tool, with hard server-side gating between read, write, and delete operations.
 
-- `grep_llms_txt`: Search the Octopus API catalog (`octopus://api/llms.txt`) with grep-style semantics. The catalog body is large (typically 300+ KB) — call this rather than reading the resource body directly. Parameters mirror GNU grep (`pattern`, `caseInsensitive`, `invertMatch`, `fixedString`, `beforeContext`, `afterContext`, `maxCount`). Useful for discovering endpoints (`POST /releases`), enumerating delete endpoints (`DELETE `), or finding the body type for a write operation (`Body: Create.*Command`).
+- `grep_llms_txt`: Search the Octopus API catalog (`octopus://api/llms.txt`) with grep-style semantics (minimum supported Octopus version: `2026.2.3916`). The catalog body is large (typically 300+ KB) — call this rather than reading the resource body directly. Parameters mirror GNU grep (`pattern`, `caseInsensitive`, `invertMatch`, `fixedString`, `beforeContext`, `afterContext`, `maxCount`). Useful for discovering endpoints (`POST /releases`), enumerating delete endpoints (`DELETE `), or finding the body type for a write operation (`Body: Create.*Command`).
 - `execute`: Structured REST backstop. Reaches any Octopus endpoint covered by the per-toolset path allowlist. The HTTP method is the authoritative read/write/delete classifier — never an `isWrite` flag the LLM can set. Method gating is hard-coded server-side:
    - `GET` is always allowed (subject to the path allowlist + sensitive denylist).
    - `POST`/`PUT`/`PATCH` require `--no-read-only` plus user confirmation via elicitation.
@@ -312,7 +312,7 @@ These tools and resources let the agent reach Octopus REST endpoints that don't 
 
 Catalog data is also exposed as MCP Resources:
 
-- `octopus://api/llms.txt` — markdown catalog of every Octopus REST endpoint (HTTP method, path, query params, request/response types). 5-minute in-memory cache keyed on the configured server URL. **Prefer `grep_llms_txt` to reading the body directly.**
+- `octopus://api/llms.txt` — markdown catalog of every Octopus REST endpoint (HTTP method, path, query params, request/response types). Requires Octopus Server `2026.2.3916` or later. 5-minute in-memory cache keyed on the configured server URL. **Prefer `grep_llms_txt` to reading the body directly.**
 - `octopus://api/capabilities` — JSON describing the running session: server version, enabled toolsets, available tools (with their `minimumOctopusVersion`), and whether read-only / `--allow-deletes` mode is on. Useful for the agent to discover what's reachable in this session.
 
 ### Projects

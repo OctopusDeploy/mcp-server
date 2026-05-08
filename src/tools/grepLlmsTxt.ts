@@ -137,4 +137,6 @@ registerToolDefinition({
   toolName: "grep_llms_txt",
   config: { toolset: "core", readOnly: true },
   registerFn: registerGrepLlmsTxtTool,
+  // The /api/experimental/llms.txt endpoint shipped in Octopus 2026.2.3916.
+  minimumOctopusVersion: "2026.2.3916",
 });

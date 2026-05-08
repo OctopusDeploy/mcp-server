@@ -47,7 +47,7 @@ registerResourceDescriptor({
   toolset: "core",
   title: "Octopus API catalog (llms.txt)",
   description:
-    "Markdown catalog of every Octopus REST endpoint, including HTTP method, path, query params, and request/response types. Large (~300+ KB) — prefer the grep_llms_txt tool to search it instead of reading the whole body.",
+    "Markdown catalog of every Octopus REST endpoint, including HTTP method, path, query params, and request/response types. Large (~300+ KB) — prefer the grep_llms_txt tool to search it instead of reading the whole body. Requires Octopus Server 2026.2.3916 or later (the /api/experimental/llms.txt endpoint shipped in that release).",
   mimeType: "text/markdown",
   read: async () => ({
     mimeType: "text/markdown",
