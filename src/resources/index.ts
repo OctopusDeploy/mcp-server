@@ -12,6 +12,8 @@ import "./release.js";
 import "./runbook.js";
 import "./task.js";
 import "./interruption.js";
+import "./featureToggle.js";
+import "./rolloutGroup.js";
 
 function isToolsetEnabled(toolset: Toolset, config: ToolsetConfig): boolean {
   const enabled: Toolset[] =

@@ -30,6 +30,10 @@ import "./findCertificates.js";
 import "./findAccounts.js";
 import "./findInterruptions.js";
 
+// Feature toggles
+import "./findFeatureToggles.js";
+import "./updateFeatureToggle.js";
+
 // Write operations
 import "./createRelease.js";
 import "./deployRelease.js";
