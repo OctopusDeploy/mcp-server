@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.0.0](https://github.com/OctopusDeploy/mcp-server/compare/v1.1.0...v2.0.0) (2026-05-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* Replace get_task_* tools with task resources + grep_task_log ([#74](https://github.com/OctopusDeploy/mcp-server/issues/74))
+* Add release resources with read_resource tool backstop ([#73](https://github.com/OctopusDeploy/mcp-server/issues/73))
+
+### Features
+
+* Add find_feature_toggles and update_feature_toggle tools ([#81](https://github.com/OctopusDeploy/mcp-server/issues/81)) ([0a435ca](https://github.com/OctopusDeploy/mcp-server/commit/0a435ca49955f05f3025f05dd24e405f1ab9bd17))
+* Add find_interruptions tool and interruption resource ([#76](https://github.com/OctopusDeploy/mcp-server/issues/76)) ([5051105](https://github.com/OctopusDeploy/mcp-server/commit/505110576b83da6077d7ae71d2b828cc0b26b087))
+* Add llms.txt catalog and execute backstop with hard read/write/delete gating ([#80](https://github.com/OctopusDeploy/mcp-server/issues/80)) ([868e4cf](https://github.com/OctopusDeploy/mcp-server/commit/868e4cfd54a380d6e44c7750a39ef1ced389953e))
+* Add release resources with read_resource tool backstop ([#73](https://github.com/OctopusDeploy/mcp-server/issues/73)) ([eb7dcef](https://github.com/OctopusDeploy/mcp-server/commit/eb7dcefd0d34a1280355be5796739e6ab6b5a93b))
+* Add requireConfirmation elicitation helper for write gating ([#75](https://github.com/OctopusDeploy/mcp-server/issues/75)) ([daf3701](https://github.com/OctopusDeploy/mcp-server/commit/daf3701191bf707092302e41a1fbb432e4e9c88a))
+* Add run_runbook tool, find_runbooks, and runbook resource ([#79](https://github.com/OctopusDeploy/mcp-server/issues/79)) ([ba330d8](https://github.com/OctopusDeploy/mcp-server/commit/ba330d84e7044fc39f6da25161a4c6ea52c308c1))
+* Add support for Bearer token (access token) authentication ([#68](https://github.com/OctopusDeploy/mcp-server/issues/68)) ([e21a3be](https://github.com/OctopusDeploy/mcp-server/commit/e21a3be36321679233bf069604d165707a568cec))
+* Replace get_task_* tools with task resources + grep_task_log ([#74](https://github.com/OctopusDeploy/mcp-server/issues/74)) ([a45380d](https://github.com/OctopusDeploy/mcp-server/commit/a45380d7daf8fe7c8376dfe952e4044b291bf71e))
+
+
+### Bug Fixes
+
+* Add version control reference to release and deployment data ([#71](https://github.com/OctopusDeploy/mcp-server/issues/71)) ([09e0b2c](https://github.com/OctopusDeploy/mcp-server/commit/09e0b2c5ceb1ec10374ff243bcfc984423236d52))
+
 ## [1.1.0](https://github.com/OctopusDeploy/mcp-server/compare/v1.0.1...v1.1.0) (2026-01-22)
 
 
