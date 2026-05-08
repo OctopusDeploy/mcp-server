@@ -24,6 +24,12 @@ export interface ToolConfig {
 export interface ToolsetConfig {
   enabledToolsets?: Toolset[] | "all";
   readOnlyMode?: boolean;
+  /**
+   * Permit DELETE-method requests through the `execute` backstop tool.
+   * Requires `readOnlyMode: false` to take effect — the read-only gate runs
+   * first. Default false (no DELETE allowed even with --no-read-only).
+   */
+  allowDeletes?: boolean;
 }
 
 export interface ToolRegistration {
