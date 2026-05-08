@@ -367,6 +367,48 @@ describe("execute tool — path allowlist by toolset", () => {
   });
 });
 
+describe("execute tool — path validation (Gate 0)", () => {
+  beforeEach(() => {
+    dispatchRequest.mockReset();
+    elicitInput.mockReset();
+    setActiveToolsetConfig({
+      enabledToolsets: "all",
+      readOnlyMode: false,
+      allowDeletes: true,
+    });
+  });
+
+  it("rejects '..' traversal even when later gates would have allowed the canonical path", async () => {
+    // Codex-flagged bypass: this path passes the legacy /api/spaces/** core
+    // pattern but resolves to /api/users/me/apikeys server-side. Gate 0 must
+    // reject before sensitive denylist or allowlist run.
+    const handler = getHandler();
+    const response = await handler({
+      method: "GET",
+      path: "/api/spaces/Spaces-1/../../users/me/apikeys",
+    });
+    expect(response.isError).toBe(true);
+    expect(parseResponse(response).reason).toBe("invalidPath");
+    expect(dispatchRequest).not.toHaveBeenCalled();
+  });
+
+  it("rejects backslashes, query strings, fragments, and percent-encoded slashes", async () => {
+    const handler = getHandler();
+
+    for (const path of [
+      "/api/spaces\\..\\users",
+      "/api/spaces?take=10",
+      "/api/spaces#frag",
+      "/api/users%2Fme%2Fapikeys",
+    ]) {
+      const response = await handler({ method: "GET", path });
+      expect(response.isError).toBe(true);
+      expect(parseResponse(response).reason).toBe("invalidPath");
+    }
+    expect(dispatchRequest).not.toHaveBeenCalled();
+  });
+});
+
 describe("execute tool — registration metadata", () => {
   it("registers as DESTRUCTIVE_WRITE so well-behaved clients confirm before run", () => {
     const { server, registered } = makeServerStub();

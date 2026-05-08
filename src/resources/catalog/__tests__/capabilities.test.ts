@@ -183,4 +183,49 @@ describe("octopus://api/capabilities", () => {
 
     expect(cap.session.allowDeletes).toBe(true);
   });
+
+  it("flags execute as methodGated and reports its effective tiers per session", async () => {
+    getServerInformation.mockResolvedValue({
+      version: "2026.2.9373",
+      installationId: "abc-123",
+    });
+    get.mockResolvedValue({});
+
+    TOOL_REGISTRY.set(
+      "execute",
+      fakeRegistration("execute", "core", true),
+    );
+    TOOL_REGISTRY.set(
+      "list_spaces",
+      fakeRegistration("list_spaces", "core", true),
+    );
+
+    // Read-only mode: only the read tier is reachable.
+    setActiveToolsetConfig({ enabledToolsets: "all", readOnlyMode: true });
+    let cap = await buildCapabilities();
+    let executeEntry = cap.tools.find((t) => t.name === "execute")!;
+    expect(executeEntry.methodGated).toBe(true);
+    expect(executeEntry.tiersAvailable).toEqual(["read"]);
+
+    // Static read-only tools must NOT carry methodGated/tiersAvailable.
+    const listEntry = cap.tools.find((t) => t.name === "list_spaces")!;
+    expect(listEntry.methodGated).toBeUndefined();
+    expect(listEntry.tiersAvailable).toBeUndefined();
+
+    // --no-read-only without --allow-deletes: read + write reachable.
+    setActiveToolsetConfig({ enabledToolsets: "all", readOnlyMode: false });
+    cap = await buildCapabilities();
+    executeEntry = cap.tools.find((t) => t.name === "execute")!;
+    expect(executeEntry.tiersAvailable).toEqual(["read", "write"]);
+
+    // Both flags: all three tiers reachable.
+    setActiveToolsetConfig({
+      enabledToolsets: "all",
+      readOnlyMode: false,
+      allowDeletes: true,
+    });
+    cap = await buildCapabilities();
+    executeEntry = cap.tools.find((t) => t.name === "execute")!;
+    expect(executeEntry.tiersAvailable).toEqual(["read", "write", "delete"]);
+  });
 });

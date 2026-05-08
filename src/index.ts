@@ -122,6 +122,19 @@ const toolsetConfig = createToolsetConfig(
   options.readOnly,
   options.allowDeletes,
 );
+
+// `--allow-deletes` only takes effect when write mode is also enabled.
+// Surface this on stderr at startup so an operator who turned the flag on
+// without remembering --no-read-only doesn't silently end up with DELETE
+// requests still blocked by the read-only gate.
+if (toolsetConfig.allowDeletes && toolsetConfig.readOnlyMode) {
+  process.stderr.write(
+    "WARNING: --allow-deletes was provided, but read-only mode is still " +
+      "enabled. DELETE requests through the execute tool remain blocked " +
+      "until --no-read-only is also set.\n",
+  );
+}
+
 registerTools(server, toolsetConfig);
 registerResources(server, toolsetConfig);
 

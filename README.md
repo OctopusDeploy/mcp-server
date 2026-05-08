@@ -228,7 +228,7 @@ npx -y @octopusdeploy/mcp-server --no-read-only
 npx -y @octopusdeploy/mcp-server --no-read-only --allow-deletes
 ```
 
-**Security Note:** When disabling read-only mode, ensure you use an API key with appropriate, least-privilege permissions. Write operations can create releases and trigger deployments in your Octopus instance. `--allow-deletes` is off by default; only enable it when the agent must issue DELETE requests through `execute`.
+**Security Note:** When disabling read-only mode, ensure you use an API key with appropriate, least-privilege permissions. Write operations can create releases and trigger deployments in your Octopus instance. `--allow-deletes` is off by default; only enable it when the agent must issue DELETE requests through `execute`. If you pass `--allow-deletes` without `--no-read-only`, the server prints a startup warning to stderr — DELETE requests still go through the read-only gate first and remain blocked.
 
 #### Complete Examples
 
@@ -308,7 +308,7 @@ These tools and resources let the agent reach Octopus REST endpoints that don't 
    - `POST`/`PUT`/`PATCH` require `--no-read-only` plus user confirmation via elicitation.
    - `DELETE` requires `--no-read-only` AND `--allow-deletes` plus a stronger "IRREVERSIBLE" elicitation message.
    - The sensitive denylist (API-key endpoints, `DELETE /api/spaces/{id}`, `DELETE /api/users/{id}`) is enforced even with both flags on.
-   - The path allowlist is scoped per toolset — disabling a toolset (e.g. `audit`) makes its paths unreachable through `execute`.
+   - The path allowlist is scoped per toolset — disabling a toolset (e.g. `certificates`) makes its paths unreachable through `execute`, even on GET.
 
 Catalog data is also exposed as MCP Resources:
 

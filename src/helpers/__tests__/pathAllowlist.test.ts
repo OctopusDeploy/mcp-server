@@ -36,16 +36,16 @@ describe("matchPath", () => {
     ).toMatchObject({ matched: true, toolset: "releases" });
   });
 
-  it("supports both space-prefix forms via the * single-segment wildcard", () => {
+  it("supports both space-prefix forms — bare spaceId AND /spaces/{slug-or-id}", () => {
     expect(
       matchPath("/api/Spaces-1/projects/Projects-1", ["projects"]),
-    ).toMatchObject({ matched: true });
+    ).toMatchObject({ matched: true, toolset: "projects" });
     expect(
       matchPath("/api/spaces/Spaces-1/projects/Projects-1", ["projects"]),
-    ).toMatchObject({ matched: true });
+    ).toMatchObject({ matched: true, toolset: "projects" });
     expect(
       matchPath("/api/spaces/default/projects/Projects-1", ["projects"]),
-    ).toMatchObject({ matched: true });
+    ).toMatchObject({ matched: true, toolset: "projects" });
   });
 
   it("`**` matches across multiple segments", () => {
@@ -61,6 +61,39 @@ describe("matchPath", () => {
     expect(matchPath("/api/Spaces-1/certificates", ["projects"])).toMatchObject(
       { matched: false },
     );
+  });
+
+  it("core does NOT pass through space sub-paths — toolset filtering is the kill switch", () => {
+    // Codex regression: previously `core: /api/spaces/**` swallowed every
+    // space-scoped path and short-circuited per-toolset gating. With core
+    // narrowed, the /spaces/{id}/... form must require the owning toolset.
+    expect(
+      matchPath("/api/spaces/Spaces-1/certificates", ["projects"]),
+    ).toMatchObject({ matched: false });
+    expect(
+      matchPath("/api/spaces/Spaces-1/certificates", ["certificates"]),
+    ).toMatchObject({ matched: true, toolset: "certificates" });
+    expect(
+      matchPath("/api/spaces/Spaces-1/runbookruns/RunbookRuns-1", []),
+    ).toMatchObject({ matched: false });
+    expect(
+      matchPath("/api/spaces/Spaces-1/runbookruns/RunbookRuns-1", ["runbooks"]),
+    ).toMatchObject({ matched: true, toolset: "runbooks" });
+  });
+
+  it("core still allows top-level Space metadata so the space resolver works", () => {
+    expect(matchPath("/api/spaces", [])).toMatchObject({
+      matched: true,
+      toolset: "core",
+    });
+    expect(matchPath("/api/spaces/Spaces-1", [])).toMatchObject({
+      matched: true,
+      toolset: "core",
+    });
+    expect(matchPath("/api/spaces/default", [])).toMatchObject({
+      matched: true,
+      toolset: "core",
+    });
   });
 });
 

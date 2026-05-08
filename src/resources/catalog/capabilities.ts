@@ -7,12 +7,25 @@ import {
   type Toolset,
 } from "../../types/toolConfig.js";
 import { getActiveToolsetConfig } from "../../helpers/activeToolsetConfig.js";
+import { type MethodTier } from "../../helpers/methodTier.js";
 
 interface CapabilityToolEntry {
   name: string;
   toolset: Toolset;
   readOnly: boolean;
   minimumOctopusVersion?: string;
+  /**
+   * True for tools whose actual read/write/delete behaviour depends on
+   * arguments rather than a static tool-level flag. Currently set only on
+   * `execute`, where the HTTP method is the runtime classifier.
+   */
+  methodGated?: boolean;
+  /**
+   * Effective method tiers reachable through this tool in the *current*
+   * session. For `execute` this reflects --no-read-only and --allow-deletes;
+   * for static tools it is undefined (the `readOnly` flag is sufficient).
+   */
+  tiersAvailable?: MethodTier[];
 }
 
 interface Capabilities {
@@ -54,12 +67,24 @@ export async function buildCapabilities(): Promise<Capabilities> {
   for (const [name, registration] of TOOL_REGISTRY) {
     if (!enabledSet.has(registration.config.toolset)) continue;
     if (readOnlyMode && !registration.config.readOnly) continue;
-    tools.push({
+    const entry: CapabilityToolEntry = {
       name,
       toolset: registration.config.toolset,
       readOnly: registration.config.readOnly,
       minimumOctopusVersion: registration.minimumOctopusVersion,
-    });
+    };
+    // The execute tool registers as readOnly:true (so it survives the
+    // registration filter in read-only mode for its GET branch) but its
+    // actual behaviour is method-gated. Surface that explicitly so callers
+    // don't conclude execute is fully read-only.
+    if (name === "execute") {
+      entry.methodGated = true;
+      const tiers: MethodTier[] = ["read"];
+      if (!readOnlyMode) tiers.push("write");
+      if (!readOnlyMode && allowDeletes) tiers.push("delete");
+      entry.tiersAvailable = tiers;
+    }
+    tools.push(entry);
   }
   tools.sort((a, b) => a.name.localeCompare(b.name));
 

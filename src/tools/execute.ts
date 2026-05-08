@@ -12,6 +12,7 @@ import {
 } from "../helpers/methodTier.js";
 import { isSensitive } from "../helpers/sensitivePathDenylist.js";
 import { matchPath, findOwningToolset } from "../helpers/pathAllowlist.js";
+import { validateExecutePath } from "../helpers/validateExecutePath.js";
 import {
   requireConfirmation,
   unconfirmedResponse,
@@ -34,6 +35,7 @@ interface ExecuteParams {
 interface ExecuteErrorResponse {
   success: false;
   reason:
+    | "invalidPath"
     | "readOnlyMode"
     | "deletesNotAllowed"
     | "sensitivePath"
@@ -181,7 +183,7 @@ The HTTP method enum is the gate. The tool will not honour any 'isRead' flag the
 
 **Other gates** (in order):
   1. Sensitive denylist: API key endpoints and catastrophic deletes (DELETE /api/users/{id}, DELETE /api/spaces/{id}) are always blocked.
-  2. Path allowlist by enabled toolset: paths only resolve if their owning toolset is enabled. Disabling 'audit' makes /api/events* unreachable even on GET.
+  2. Path allowlist by enabled toolset: paths only resolve if their owning toolset is enabled. Disabling a toolset (e.g. 'certificates') makes its endpoints unreachable even on GET.
   3. Elicitation on every non-GET, with a stronger message for DELETE.
 
 Discover endpoints with grep_llms_txt. Use octopus://api/capabilities to see which toolsets are enabled and whether write/delete modes are on.`,
@@ -190,12 +192,27 @@ Discover endpoints with grep_llms_txt. Use octopus://api/capabilities to see whi
     },
     async (args) => {
       const params = args as ExecuteParams;
-      const { method, path, query, body, asCsv } = params;
+      const { method, path: rawPath, query, body, asCsv } = params;
       const tier = classifyMethod(method);
-      const audit = startAudit({ method, tier, path });
+      const audit = startAudit({ method, tier, path: rawPath });
       const config = getActiveToolsetConfig();
       const readOnlyMode = config.readOnlyMode ?? true;
       const allowDeletes = config.allowDeletes ?? false;
+
+      // Gate 0: path canonicalization. Reject paths that can mean different
+      // things to the allowlist matcher and the HTTP client (`..` traversal,
+      // encoded slashes, query strings, fragments, backslashes). Runs FIRST
+      // so a traversal attempt cannot pass any later gate.
+      const validation = validateExecutePath(rawPath);
+      if (!validation.ok) {
+        audit("blocked", "invalidPath");
+        return errorResponse({
+          success: false,
+          reason: "invalidPath",
+          message: `Invalid path: ${validation.reason}`,
+        });
+      }
+      const path = validation.path;
 
       // Gate 1: sensitive denylist (always-on, applies regardless of mode).
       const sensitive = isSensitive(method, path);
