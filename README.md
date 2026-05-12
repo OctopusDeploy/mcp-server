@@ -223,11 +223,11 @@ The server uses a three-tier read/write/delete classification, enforced server-s
 # Default - write tools enabled (POST/PUT/PATCH)
 npx -y @octopusdeploy/mcp-server
 
-# Read-only mode - write/delete tools disabled
-npx -y @octopusdeploy/mcp-server --read-only
-
 # Additionally permit DELETE requests through the execute tool
 npx -y @octopusdeploy/mcp-server --allow-deletes
+
+# Read-only mode - write/delete tools disabled
+npx -y @octopusdeploy/mcp-server --read-only
 ```
 
 **Security Note:** Use an API key with appropriate, least-privilege permissions — write operations can create releases and trigger deployments in your Octopus instance. For production, consider passing `--read-only` unless you have a specific, controlled use case for writes. `--allow-deletes` is off by default; only enable it when the agent must issue DELETE requests through `execute`. If you pass `--allow-deletes` together with `--read-only`, the server prints a startup warning to stderr — DELETE requests remain blocked by the read-only gate.
@@ -250,7 +250,7 @@ npx -y @octopusdeploy/mcp-server --server-url https://your-octopus.com
 #### Other command line arguments
 
 * `--read-only` - Enable read-only mode: disable all curated write tools and block POST/PUT/PATCH/DELETE through `execute`. Writes are enabled by default; this flag turns them off. See [Read-Only Mode](#read-only-mode).
-* `--allow-deletes` - Permit DELETE requests through the `execute` tool. Has no effect when `--read-only` is set. Default `false`.
+* `--allow-deletes` - Permit DELETE requests through the `execute` tool. Ignored (with a startup warning) when `--read-only` is set. Default `false`.
 * `--log-level <level>` - Minimum log level (info, error)
 * `--log-file <path>` - Log file path or filename. If not specified, logs are written to console only
 * `-q, --quiet` - Disable file logging, only log errors to console
