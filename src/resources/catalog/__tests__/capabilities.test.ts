@@ -212,7 +212,7 @@ describe("octopus://api/capabilities", () => {
     expect(listEntry.methodGated).toBeUndefined();
     expect(listEntry.tiersAvailable).toBeUndefined();
 
-    // --no-read-only without --allow-deletes: read + write reachable.
+    // writes enabled (no --read-only) without --allow-deletes: read + write reachable.
     setActiveToolsetConfig({ enabledToolsets: "all", readOnlyMode: false });
     cap = await buildCapabilities();
     executeEntry = cap.tools.find((t) => t.name === "execute")!;

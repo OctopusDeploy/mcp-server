@@ -210,7 +210,7 @@ describe("execute tool — delete tier (DELETE)", () => {
     expect(body.message).toContain("--allow-deletes");
   });
 
-  it("blocks DELETE when --no-read-only is set but --allow-deletes is not", async () => {
+  it("blocks DELETE when --allow-deletes is not set", async () => {
     setActiveToolsetConfig({
       enabledToolsets: "all",
       readOnlyMode: false,

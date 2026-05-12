@@ -27,7 +27,7 @@ export interface ToolsetConfig {
   /**
    * Permit DELETE-method requests through the `execute` backstop tool.
    * Requires `readOnlyMode: false` to take effect — the read-only gate runs
-   * first. Default false (no DELETE allowed even with --no-read-only).
+   * first. Default false (no DELETE allowed unless explicitly opted in).
    */
   allowDeletes?: boolean;
 }

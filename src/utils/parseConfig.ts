@@ -25,7 +25,7 @@ export function createToolsetConfig(
 ): ToolsetConfig {
   return {
     enabledToolsets: parseToolsets(toolsetsArg),
-    readOnlyMode: readOnlyArg ?? true, // Default to read-only mode
+    readOnlyMode: readOnlyArg ?? false, // Default: writes enabled. Pass --read-only to gate them.
     allowDeletes: allowDeletesArg ?? false, // Default deny all DELETEs
   };
 }
