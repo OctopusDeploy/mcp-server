@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.0](https://github.com/OctopusDeploy/mcp-server/compare/v2.0.0...v2.1.0) (2026-05-12)
+
+
+### Features
+
+* invert read-only flag — writes enabled by default, --read-only opts out ([#83](https://github.com/OctopusDeploy/mcp-server/issues/83)) ([b73bf39](https://github.com/OctopusDeploy/mcp-server/commit/b73bf3941f2ee7855506a75ea50461503a833428))
+
 ## [2.0.0](https://github.com/OctopusDeploy/mcp-server/compare/v1.1.0...v2.0.0) (2026-05-08)
 
 
