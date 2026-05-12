@@ -43,7 +43,7 @@ program
   )
   .option(
     "--allow-deletes",
-    "Permit DELETE-method requests through the execute tool. Has no effect when --read-only is set. Default false.",
+    "Permit DELETE-method requests through the execute tool. Ignored (with a startup warning) when --read-only is set. Default false.",
   )
   .option("--log-level <level>", "Minimum log level (info, error)", "info")
   .option(
@@ -78,7 +78,7 @@ const configuredServerUrl =
 const SERVER_INSTRUCTIONS = `
 The official Octopus Deploy MCP server, currently connected to: ${configuredServerUrl}
 
-Tools are grouped into toolsets (core, releases, deployments, tasks, tenants, kubernetes, machines, certificates, accounts, interruptions, featureToggles) and you can filter them via --toolsets. Writes are on by default; pass --read-only to gate them off.
+Tools are grouped into toolsets (${DEFAULT_TOOLSETS.join(", ")}) and you can filter them via --toolsets. Writes are on by default; pass --read-only to gate them off.
 
 Resource URIs and how to dereference them:
 - Many tools return slim summaries plus an 'octopus://...' URI in fields like 'resourceUri' or 'taskResourceUri' instead of inlining heavy payloads (release notes, packaged versions, structured task activity trees, etc.). To fetch the full body, dereference the URI.
