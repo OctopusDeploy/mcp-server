@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.2](https://github.com/OctopusDeploy/mcp-server/compare/v2.1.1...v2.1.2) (2026-05-12)
+
+
+### Bug Fixes
+
+* bypass execute path allowlist when all toolsets are enabled ([#88](https://github.com/OctopusDeploy/mcp-server/issues/88)) ([9706576](https://github.com/OctopusDeploy/mcp-server/commit/9706576596c3a4211fdee58bf82f6dc32a1e5714))
+
 ## [2.1.1](https://github.com/OctopusDeploy/mcp-server/compare/v2.1.0...v2.1.1) (2026-05-12)
 
 
