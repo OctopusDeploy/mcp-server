@@ -1,7 +1,7 @@
 /**
  * Hard denylist for `execute` paths that must never be reachable, regardless
  * of toolsets or mode flags. These are entries the user cannot opt into via
- * --no-read-only or --allow-deletes.
+ * --allow-deletes, and remain blocked even when --read-only is not set.
  *
  * Two categories live here:
  *   1. API-key management — creating or modifying API keys via the MCP server

@@ -136,7 +136,7 @@ const inputSchema = {
   method: z
     .enum(HTTP_METHODS as unknown as [HttpMethod, ...HttpMethod[]])
     .describe(
-      "HTTP method. The method itself is the read/write/delete classifier — GET is read-only, POST/PUT/PATCH require --no-read-only, DELETE additionally requires --allow-deletes. The agent cannot bypass this by lying about intent.",
+      "HTTP method. The method itself is the read/write/delete classifier — GET is read-only, POST/PUT/PATCH are blocked when --read-only is set, DELETE additionally requires --allow-deletes. The agent cannot bypass this by lying about intent.",
     ),
   path: z
     .string()
@@ -176,8 +176,8 @@ export function registerExecuteTool(server: McpServer) {
 **Method gating is hard-coded server-side, three tiers:**
 
   - GET    → read tier: always allowed (subject to toolset allowlist + sensitive denylist).
-  - POST/PUT/PATCH → write tier: requires --no-read-only AND user confirmation via elicitation.
-  - DELETE → delete tier: requires --no-read-only AND --allow-deletes AND a stronger user confirmation.
+  - POST/PUT/PATCH → write tier: blocked when --read-only is set; requires user confirmation via elicitation otherwise.
+  - DELETE → delete tier: requires --allow-deletes (and is blocked when --read-only is set) AND a stronger user confirmation.
 
 The HTTP method enum is the gate. The tool will not honour any 'isRead' flag the agent invents — the runtime classifies based on the actual method.
 
@@ -196,7 +196,7 @@ Discover endpoints with grep_llms_txt. Use octopus://api/capabilities to see whi
       const tier = classifyMethod(method);
       const audit = startAudit({ method, tier, path: rawPath });
       const config = getActiveToolsetConfig();
-      const readOnlyMode = config.readOnlyMode ?? true;
+      const readOnlyMode = config.readOnlyMode ?? false;
       const allowDeletes = config.allowDeletes ?? false;
 
       // Gate 0: path canonicalization. Reject paths that can mean different
@@ -232,7 +232,7 @@ Discover endpoints with grep_llms_txt. Use octopus://api/capabilities to see whi
           success: false,
           reason: "readOnlyMode",
           message:
-            "This server is in read-only mode. Restart with --no-read-only to enable write requests through the execute tool.",
+            "This server is in read-only mode. Restart without --read-only to enable write requests through the execute tool.",
         });
       }
       if (tier === "delete") {
@@ -242,7 +242,7 @@ Discover endpoints with grep_llms_txt. Use octopus://api/capabilities to see whi
             success: false,
             reason: "readOnlyMode",
             message:
-              "This server is in read-only mode. Restart with --no-read-only AND --allow-deletes to permit DELETE requests through the execute tool.",
+              "This server is in read-only mode. Restart without --read-only AND with --allow-deletes to permit DELETE requests through the execute tool.",
           });
         }
         if (!allowDeletes) {
@@ -251,7 +251,7 @@ Discover endpoints with grep_llms_txt. Use octopus://api/capabilities to see whi
             success: false,
             reason: "deletesNotAllowed",
             message:
-              "DELETE requests are not permitted. Restart with --allow-deletes (in addition to --no-read-only) to enable them. This is a deliberate two-flag opt-in for irreversible operations.",
+              "DELETE requests are not permitted. Restart with --allow-deletes to enable them. This is a deliberate opt-in for irreversible operations.",
           });
         }
       }

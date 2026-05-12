@@ -5,8 +5,8 @@
  *
  * Tiers:
  *   - read   → GET                       (always allowed, subject to allow/denylists)
- *   - write  → POST, PUT, PATCH          (requires --no-read-only)
- *   - delete → DELETE                    (requires --no-read-only AND --allow-deletes)
+ *   - write  → POST, PUT, PATCH          (blocked when --read-only is set)
+ *   - delete → DELETE                    (blocked when --read-only is set; also requires --allow-deletes)
  */
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";

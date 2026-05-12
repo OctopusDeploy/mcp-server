@@ -22,7 +22,7 @@ interface CapabilityToolEntry {
   methodGated?: boolean;
   /**
    * Effective method tiers reachable through this tool in the *current*
-   * session. For `execute` this reflects --no-read-only and --allow-deletes;
+   * session. For `execute` this reflects --read-only and --allow-deletes;
    * for static tools it is undefined (the `readOnly` flag is sufficient).
    */
   tiersAvailable?: MethodTier[];
@@ -57,7 +57,7 @@ export async function buildCapabilities(): Promise<Capabilities> {
 
   const activeConfig = getActiveToolsetConfig();
   const enabledToolsets = resolveEnabledToolsets();
-  const readOnlyMode = activeConfig.readOnlyMode ?? true;
+  const readOnlyMode = activeConfig.readOnlyMode ?? false;
   const allowDeletes = activeConfig.allowDeletes ?? false;
 
   const enabledSet = new Set<Toolset>(enabledToolsets);

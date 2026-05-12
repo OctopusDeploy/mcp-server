@@ -71,7 +71,7 @@ We are planning to release a native ARM build shortly so that those arguments wi
 
 Full example configuration (for Claude Desktop, Claude Code, and Cursor):
 
-**Read-only mode (default, recommended for production):**
+**Write tools enabled (default):**
 ```json
 {
   "mcpServers": {
@@ -88,14 +88,14 @@ Full example configuration (for Claude Desktop, Claude Code, and Cursor):
 }
 ```
 
-**Write mode enabled (for development/testing):**
+**Read-only mode (recommended for production):**
 ```json
 {
   "mcpServers": {
     "octopusdeploy": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@octopusdeploy/mcp-server", "--no-read-only"],
+      "args": ["-y", "@octopusdeploy/mcp-server", "--read-only"],
       "env": {
         "OCTOPUS_SERVER_URL": "https://your-octopus.com",
         "OCTOPUS_API_KEY": "YOUR_API_KEY"
@@ -201,7 +201,7 @@ Available toolsets:
 - **context** - Authenticated user and project context (current user, Git branches)
 
 #### Read-Only Mode
-The server runs in read-only mode by default for security. Most tools are read-only operations, but some tools can perform write operations (like creating releases and deployments).
+The server runs with write tools enabled by default. Pass `--read-only` to disable all write tools and block POST/PUT/PATCH/DELETE through the `execute` backstop. Most curated tools are already read-only; only a small set perform writes.
 
 **Write-enabled tools (always-write):**
 - `create_release` - Create new releases
@@ -216,21 +216,21 @@ Write tools are gated by an MCP elicitation prompt: clients that support elicita
 The server uses a three-tier read/write/delete classification, enforced server-side based on the HTTP method (the agent cannot bypass this by lying about intent):
 
 - **read** — always allowed. GET requests through `execute`, plus all `find_*` / `get_*` / `list_*` tools.
-- **write** — POST/PUT/PATCH through `execute` and the always-write tools above. Requires `--no-read-only`.
-- **delete** — DELETE through `execute`. Requires `--no-read-only` AND `--allow-deletes` (a deliberate two-flag opt-in for irreversible operations). A small set of catastrophic-delete paths (e.g. `DELETE /api/spaces/{id}`, `DELETE /api/users/{id}`) and API-key endpoints are on a hard sensitive denylist that ignores both flags.
+- **write** — POST/PUT/PATCH through `execute` and the always-write tools above. Blocked when `--read-only` is set.
+- **delete** — DELETE through `execute`. Requires `--allow-deletes` and is blocked when `--read-only` is set. A small set of catastrophic-delete paths (e.g. `DELETE /api/spaces/{id}`, `DELETE /api/users/{id}`) and API-key endpoints are on a hard sensitive denylist that ignores both flags.
 
 ```bash
-# Run in read-only mode (default) - write/delete tools are disabled
+# Default - write tools enabled (POST/PUT/PATCH)
 npx -y @octopusdeploy/mcp-server
 
-# Disable read-only mode to enable write operations (POST/PUT/PATCH)
-npx -y @octopusdeploy/mcp-server --no-read-only
+# Read-only mode - write/delete tools disabled
+npx -y @octopusdeploy/mcp-server --read-only
 
 # Additionally permit DELETE requests through the execute tool
-npx -y @octopusdeploy/mcp-server --no-read-only --allow-deletes
+npx -y @octopusdeploy/mcp-server --allow-deletes
 ```
 
-**Security Note:** When disabling read-only mode, ensure you use an API key with appropriate, least-privilege permissions. Write operations can create releases and trigger deployments in your Octopus instance. `--allow-deletes` is off by default; only enable it when the agent must issue DELETE requests through `execute`. If you pass `--allow-deletes` without `--no-read-only`, the server prints a startup warning to stderr — DELETE requests still go through the read-only gate first and remain blocked.
+**Security Note:** Use an API key with appropriate, least-privilege permissions — write operations can create releases and trigger deployments in your Octopus instance. For production, consider passing `--read-only` unless you have a specific, controlled use case for writes. `--allow-deletes` is off by default; only enable it when the agent must issue DELETE requests through `execute`. If you pass `--allow-deletes` together with `--read-only`, the server prints a startup warning to stderr — DELETE requests remain blocked by the read-only gate.
 
 #### Complete Examples
 
@@ -240,17 +240,17 @@ All examples below assume `OCTOPUS_API_KEY` is set in the environment. The `--se
 # Development setup with only core and project tools
 npx -y @octopusdeploy/mcp-server --toolsets core,projects --server-url https://your-octopus.com
 
-# Full production setup with all tools (read-only by default)
-npx -y @octopusdeploy/mcp-server --toolsets all --server-url https://your-octopus.com
+# Production setup with all tools and read-only enforcement
+npx -y @octopusdeploy/mcp-server --toolsets all --read-only --server-url https://your-octopus.com
 
-# Development setup with write operations enabled
-npx -y @octopusdeploy/mcp-server --no-read-only --server-url https://your-octopus.com
+# Default invocation - all tools and writes enabled
+npx -y @octopusdeploy/mcp-server --server-url https://your-octopus.com
 ```
 
 #### Other command line arguments
 
-* `--no-read-only` - Disable read-only mode, enabling POST/PUT/PATCH through the curated write tools and through `execute`. See [Read-Only Mode](#read-only-mode).
-* `--allow-deletes` - Additionally permit DELETE requests through the `execute` tool. Requires `--no-read-only`. Default `false`.
+* `--read-only` - Enable read-only mode: disable all curated write tools and block POST/PUT/PATCH/DELETE through `execute`. Writes are enabled by default; this flag turns them off. See [Read-Only Mode](#read-only-mode).
+* `--allow-deletes` - Permit DELETE requests through the `execute` tool. Has no effect when `--read-only` is set. Default `false`.
 * `--log-level <level>` - Minimum log level (info, error)
 * `--log-file <path>` - Log file path or filename. If not specified, logs are written to console only
 * `-q, --quiet` - Disable file logging, only log errors to console
@@ -307,15 +307,15 @@ These tools and resources let the agent reach Octopus REST endpoints that don't 
 - `grep_llms_txt`: Search the Octopus API catalog (`octopus://api/llms.txt`) with grep-style semantics (minimum supported Octopus version: `2026.2.3916`). The catalog body is large (typically 300+ KB) — call this rather than reading the resource body directly. Parameters mirror GNU grep (`pattern`, `caseInsensitive`, `invertMatch`, `fixedString`, `beforeContext`, `afterContext`, `maxCount`). Useful for discovering endpoints (`POST /releases`), enumerating delete endpoints (`DELETE `), or finding the body type for a write operation (`Body: Create.*Command`).
 - `execute`: Structured REST backstop. Reaches any Octopus endpoint covered by the per-toolset path allowlist. The HTTP method is the authoritative read/write/delete classifier — never an `isWrite` flag the LLM can set. Method gating is hard-coded server-side:
    - `GET` is always allowed (subject to the path allowlist + sensitive denylist).
-   - `POST`/`PUT`/`PATCH` require `--no-read-only` plus user confirmation via elicitation.
-   - `DELETE` requires `--no-read-only` AND `--allow-deletes` plus a stronger "IRREVERSIBLE" elicitation message.
+   - `POST`/`PUT`/`PATCH` are blocked when `--read-only` is set; otherwise they require user confirmation via elicitation.
+   - `DELETE` requires `--allow-deletes` (and is blocked when `--read-only` is set) plus a stronger "IRREVERSIBLE" elicitation message.
    - The sensitive denylist (API-key endpoints, `DELETE /api/spaces/{id}`, `DELETE /api/users/{id}`) is enforced even with both flags on.
    - The path allowlist is scoped per toolset — disabling a toolset (e.g. `certificates`) makes its paths unreachable through `execute`, even on GET.
 
 Catalog data is also exposed as MCP Resources:
 
 - `octopus://api/llms.txt` — markdown catalog of every Octopus REST endpoint (HTTP method, path, query params, request/response types). Requires Octopus Server `2026.2.3916` or later. 5-minute in-memory cache keyed on the configured server URL. **Prefer `grep_llms_txt` to reading the body directly.**
-- `octopus://api/capabilities` — JSON describing the running session: server version, enabled toolsets, available tools (with their `minimumOctopusVersion`), and whether read-only / `--allow-deletes` mode is on. Useful for the agent to discover what's reachable in this session.
+- `octopus://api/capabilities` — JSON describing the running session: server version, enabled toolsets, available tools (with their `minimumOctopusVersion`), and whether `--read-only` / `--allow-deletes` is on. Useful for the agent to discover what's reachable in this session.
 
 ### Projects
 - `list_projects`: List all projects in a given space
@@ -392,23 +392,23 @@ The Octopus MCP Server includes both read and write operations. Important securi
 - Exercise caution when connecting to tools and models you do not fully trust
 
 ### Write Operations
-When read-only mode is disabled (`--no-read-only`), the following write operations become available:
+By default, the following write operations are available:
 - **Creating releases**: Can create new releases for projects
 - **Deploying releases**: Can trigger deployments to environments (including production)
 - **Running runbooks**: Can execute runbooks against environments and tenants
 - **Updating feature toggles**: Can flip per-environment state and change rollout percentages on existing toggles
 - **Arbitrary POST/PUT/PATCH via the `execute` backstop**: Subject to the per-toolset path allowlist and a sensitive denylist that's always-on.
 
-DELETE requests through `execute` require an additional `--allow-deletes` flag — a deliberate two-flag opt-in for irreversible operations.
+Pass `--read-only` to disable all of the above. DELETE requests through `execute` require an additional `--allow-deletes` flag — a deliberate opt-in for irreversible operations — and remain blocked when `--read-only` is set.
 
 **Critical Security Measures:**
 1. **Least Privilege**: Use API keys with the minimum permissions needed for your use case
-2. **Read-Only by Default**: The server defaults to read-only mode — you must explicitly opt-in to write operations, and again to DELETE.
+2. **Opt In to Read-Only Mode**: Writes are enabled by default. For production, pass `--read-only` unless you have a specific, controlled use case for write operations. DELETE always requires the additional `--allow-deletes` opt-in.
 3. **Method gating is server-side and hard-coded**: The HTTP method passed to `execute` is the authoritative classifier. The agent cannot bypass the gate by misrepresenting what the call does — POST/PUT/PATCH/DELETE requests get tier-specific gating regardless of the prose in the request body.
 4. **Toolset filtering doubles as a kill switch**: Disabling a toolset removes both its curated tools and its paths from the `execute` allowlist.
 5. **Prompt Injection Risk**: Running agents in fully automated fashion could make you vulnerable to prompt-injection attacks
 
-**Recommendation**: For production environments, use read-only mode unless you have a specific, controlled use case for write operations. Leave `--allow-deletes` off unless you specifically need DELETE semantics through `execute`.
+**Recommendation**: For production environments, pass `--read-only` unless you have a specific, controlled use case for write operations. Leave `--allow-deletes` off unless you specifically need DELETE semantics through `execute`.
 
 ## ⚠️ Limitations
 

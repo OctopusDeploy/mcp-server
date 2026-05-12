@@ -38,12 +38,12 @@ program
     `Comma-separated list of toolsets to enable, or "all" (default: all). Available toolsets: ${DEFAULT_TOOLSETS.join(", ")}`,
   )
   .option(
-    "--no-read-only",
-    "Disable read-only mode to enable write operations (default: read-only enabled)",
+    "--read-only",
+    "Enable read-only mode: disable all write tools and block POST/PUT/PATCH/DELETE through the execute tool (default: write tools enabled)",
   )
   .option(
     "--allow-deletes",
-    "Permit DELETE-method requests through the execute tool. Requires --no-read-only. Default false.",
+    "Permit DELETE-method requests through the execute tool. Has no effect when --read-only is set. Default false.",
   )
   .option("--log-level <level>", "Minimum log level (info, error)", "info")
   .option(
@@ -78,7 +78,7 @@ const configuredServerUrl =
 const SERVER_INSTRUCTIONS = `
 The official Octopus Deploy MCP server, currently connected to: ${configuredServerUrl}
 
-Tools are grouped into toolsets (core, releases, deployments, tasks, tenants, kubernetes, machines, certificates, accounts, interruptions, featureToggles) and you can filter them via --toolsets. Writes are gated behind --no-read-only.
+Tools are grouped into toolsets (core, releases, deployments, tasks, tenants, kubernetes, machines, certificates, accounts, interruptions, featureToggles) and you can filter them via --toolsets. Writes are on by default; pass --read-only to gate them off.
 
 Resource URIs and how to dereference them:
 - Many tools return slim summaries plus an 'octopus://...' URI in fields like 'resourceUri' or 'taskResourceUri' instead of inlining heavy payloads (release notes, packaged versions, structured task activity trees, etc.). To fetch the full body, dereference the URI.
@@ -100,8 +100,8 @@ The same pattern applies to the API catalog: do NOT read 'octopus://api/llms.txt
 
 The 'execute' tool reaches Octopus REST endpoints not covered by curated tools. **Method gating is hard-coded server-side**, three tiers:
 - GET                    → read tier:   always allowed (subject to toolset allowlist + sensitive denylist).
-- POST / PUT / PATCH     → write tier:  requires --no-read-only AND user confirmation via elicitation.
-- DELETE                 → delete tier: requires --no-read-only AND --allow-deletes AND a stronger confirmation.
+- POST / PUT / PATCH     → write tier:  blocked when --read-only is set; requires user confirmation via elicitation otherwise.
+- DELETE                 → delete tier: requires --allow-deletes (and is blocked when --read-only is set) AND a stronger confirmation.
 
 The HTTP method enum IS the read/write/delete classifier — the runtime classifies based on the actual method, never on a flag the agent sets. Use grep_llms_txt to discover the right path + method before calling execute.
 
@@ -125,15 +125,14 @@ const toolsetConfig = createToolsetConfig(
   options.allowDeletes,
 );
 
-// `--allow-deletes` only takes effect when write mode is also enabled.
-// Surface this on stderr at startup so an operator who turned the flag on
-// without remembering --no-read-only doesn't silently end up with DELETE
-// requests still blocked by the read-only gate.
+// `--allow-deletes` only takes effect when writes are enabled. Surface this
+// on stderr at startup so an operator who set both --read-only and
+// --allow-deletes doesn't silently end up with DELETE requests blocked.
 if (toolsetConfig.allowDeletes && toolsetConfig.readOnlyMode) {
   process.stderr.write(
-    "WARNING: --allow-deletes was provided, but read-only mode is still " +
-      "enabled. DELETE requests through the execute tool remain blocked " +
-      "until --no-read-only is also set.\n",
+    "WARNING: --allow-deletes was provided, but --read-only is also set. " +
+      "DELETE requests through the execute tool remain blocked. Remove " +
+      "--read-only to enable DELETE.\n",
   );
 }
 
