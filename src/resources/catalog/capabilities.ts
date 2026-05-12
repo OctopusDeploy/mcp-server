@@ -8,6 +8,7 @@ import {
 } from "../../types/toolConfig.js";
 import { getActiveToolsetConfig } from "../../helpers/activeToolsetConfig.js";
 import { type MethodTier } from "../../helpers/methodTier.js";
+import { isToolEnabled } from "../../tools/index.js";
 
 interface CapabilityToolEntry {
   name: string;
@@ -65,15 +66,11 @@ export async function buildCapabilities(): Promise<Capabilities> {
 
   const tools: CapabilityToolEntry[] = [];
   for (const [name, registration] of TOOL_REGISTRY) {
-    if (!enabledSet.has(registration.config.toolset)) continue;
-    // Method-gated tools (e.g. `execute`) stay listed in read-only mode —
-    // they decide their own tier at runtime. Static write tools drop out.
-    if (
-      readOnlyMode &&
-      !registration.config.readOnly &&
-      !registration.config.methodGated
-    )
-      continue;
+    // Single source of truth: the catalog lists exactly the tools that
+    // `registerTools` would register for this session. Any future filter
+    // rule (new tier flag, dynamic toolset gate, etc.) reaches the catalog
+    // automatically — which is the class of bug this file just fixed.
+    if (!isToolEnabled(registration, activeConfig)) continue;
     const entry: CapabilityToolEntry = {
       name,
       toolset: registration.config.toolset,
