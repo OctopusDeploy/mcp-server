@@ -142,7 +142,7 @@ const inputSchema = {
     .string()
     .min(1)
     .describe(
-      "Path under the configured Octopus server, e.g. '/api/spaces/Spaces-1/feeds' or '/api/Spaces-1/projects'. Discover paths via grep_llms_txt.",
+      "Server-relative path under the Octopus REST API. MUST be exactly '/api' or start with '/api/' — e.g. '/api/spaces/Spaces-1/feeds' or '/api/Spaces-1/projects'. Do NOT pass an absolute URL ('https://octopus.example/api/...'), an SDK-relative path ('~/api/...'), or a host-relative path outside /api ('/octopus/portal/...'); they are all rejected. Query parameters go in `query`, not in this string. Discover valid paths via grep_llms_txt.",
     ),
   query: z
     .record(z.string())
@@ -182,6 +182,7 @@ export function registerExecuteTool(server: McpServer) {
 The HTTP method enum is the gate. The tool will not honour any 'isRead' flag the agent invents — the runtime classifies based on the actual method.
 
 **Other gates** (in order):
+  0. Path shape: must be '/api' or start with '/api/'. Absolute URLs, '~/api/...', '/octopus/portal/...', query strings, fragments, '..' segments, and percent-encoded slashes are all rejected up front.
   1. Sensitive denylist: API key endpoints and catastrophic deletes (DELETE /api/users/{id}, DELETE /api/spaces/{id}) are always blocked.
   2. Path allowlist — only applied when --toolsets has narrowed the active set. With every toolset enabled (the default, or explicit --toolsets all) any path under /api is reachable subject to the other gates; when toolsets are narrowed, paths only resolve if their owning toolset is enabled so disabling a toolset (e.g. 'certificates') makes its endpoints unreachable even on GET.
   3. Elicitation on every non-GET, with a stronger message for DELETE.

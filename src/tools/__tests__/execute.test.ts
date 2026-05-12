@@ -393,6 +393,26 @@ describe("execute tool — path allowlist by toolset", () => {
     );
   });
 
+  it("blocks non-/api paths even when all toolsets are enabled (scope boundary)", async () => {
+    // Counterpart to the bypass test above: bypassing the allowlist must not
+    // turn execute into a general server-relative request tool. The /api
+    // prefix check in validateExecutePath is the boundary.
+    setActiveToolsetConfig({
+      enabledToolsets: "all",
+      readOnlyMode: false,
+    });
+    const handler = getHandler();
+
+    const response = await handler({
+      method: "GET",
+      path: "/octopus/portal",
+    });
+
+    expect(response.isError).toBe(true);
+    expect(parseResponse(response).reason).toBe("invalidPath");
+    expect(dispatchRequest).not.toHaveBeenCalled();
+  });
+
   it("still blocks paths with no owning toolset when toolsets are narrowed", async () => {
     // Counterpart to the bypass test above: when the user has explicitly
     // narrowed toolsets, the allowlist applies and unknown paths stay blocked.
