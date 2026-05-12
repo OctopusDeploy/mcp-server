@@ -19,20 +19,21 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/checkout@v4
         if: ${{ steps.release.outputs.release_created }}
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           cache: 'npm'
-          node-version: 20
+          node-version: 24
           registry-url: 'https://registry.npmjs.org'
         if: ${{ steps.release.outputs.release_created }}
       - run: npm ci
         if: ${{ steps.release.outputs.release_created }}
       - run: npm run build
         if: ${{ steps.release.outputs.release_created }}
-      - run: npm publish --access=public
+      # --provenance attaches a signed attestation linking the published tarball
+      # back to this workflow run and commit, so consumers can verify the package
+      # was built from this repo rather than uploaded from a developer machine.
+      - run: npm publish --access=public --provenance
         if: ${{ steps.release.outputs.release_created }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       # - name: Generate SBOM with Trivy
       #   if: ${{ steps.release.outputs.release_created }}
       #   uses: aquasecurity/trivy-action@0.32.0
