@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.0](https://github.com/OctopusDeploy/mcp-server/compare/v2.1.2...v2.2.0) (2026-05-12)
+
+
+### Features
+
+* improve tool response ergonomics ([#90](https://github.com/OctopusDeploy/mcp-server/issues/90)) ([b1d7bc6](https://github.com/OctopusDeploy/mcp-server/commit/b1d7bc67ec478a2ebe302162b0ebeb1496c4d295))
+
 ## [2.1.2](https://github.com/OctopusDeploy/mcp-server/compare/v2.1.1...v2.1.2) (2026-05-12)
 
 
