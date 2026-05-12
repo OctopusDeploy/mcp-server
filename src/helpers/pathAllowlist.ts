@@ -5,6 +5,15 @@
 // disappear — turning off `releases` makes the release endpoints unreachable
 // regardless of HTTP method or read-only mode. This is the kill-switch model.
 //
+// **The allowlist is only consulted when toolsets have been narrowed.** When
+// every toolset is enabled (the default, or explicit `--toolsets all`), the
+// `execute` tool skips this gate entirely — there is no scope to enforce, and
+// applying the allowlist would otherwise act as a stale hand-rolled
+// enumeration that blocks legitimate Octopus endpoints (`/feeds`,
+// `/scopedusersroles`, etc.) that `grep_llms_txt` would have surfaced. So
+// **do not** treat the patterns below as the canonical "set of endpoints the
+// MCP server supports" — they are only the kill-switch policy.
+//
 // **`core` is intentionally narrow.** It only covers space discovery,
 // server-level metadata, and the API catalog. It does NOT contain a wildcard
 // over space sub-paths — every per-resource path under a space must be

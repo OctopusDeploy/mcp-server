@@ -183,7 +183,7 @@ The HTTP method enum is the gate. The tool will not honour any 'isRead' flag the
 
 **Other gates** (in order):
   1. Sensitive denylist: API key endpoints and catastrophic deletes (DELETE /api/users/{id}, DELETE /api/spaces/{id}) are always blocked.
-  2. Path allowlist by enabled toolset: paths only resolve if their owning toolset is enabled. Disabling a toolset (e.g. 'certificates') makes its endpoints unreachable even on GET.
+  2. Path allowlist — only applied when --toolsets has narrowed the active set. With every toolset enabled (the default, or explicit --toolsets all) any path under /api is reachable subject to the other gates; when toolsets are narrowed, paths only resolve if their owning toolset is enabled so disabling a toolset (e.g. 'certificates') makes its endpoints unreachable even on GET.
   3. Elicitation on every non-GET, with a stronger message for DELETE.
 
 Discover endpoints with grep_llms_txt. Use octopus://api/capabilities to see which toolsets are enabled and whether write/delete modes are on.`,
@@ -257,18 +257,31 @@ Discover endpoints with grep_llms_txt. Use octopus://api/capabilities to see whi
       }
 
       // Gate 3: path allowlist by enabled toolset.
-      const enabledToolsets = resolveEnabledToolsets();
-      const allowed = matchPath(path, enabledToolsets);
-      if (!allowed.matched) {
-        const owner = findOwningToolset(path);
-        audit("blocked", "pathNotAllowed");
-        return errorResponse({
-          success: false,
-          reason: "pathNotAllowed",
-          message: owner
-            ? `Path '${path}' belongs to the '${owner}' toolset which is not enabled in this session. Enable it via --toolsets to reach this endpoint.`
-            : `Path '${path}' is not on the execute allowlist for any toolset. If this is a legitimate Octopus endpoint not yet covered, file an issue against the MCP server.`,
-        });
+      //
+      // The allowlist exists only as the kill-switch for narrowed toolsets:
+      // when the operator says `--toolsets releases`, paths under projects /
+      // certificates / etc. must be unreachable through execute as well as
+      // through the curated tools. When *all* toolsets are enabled (the
+      // default, and the explicit `--toolsets all`), there is no scope to
+      // enforce — applying the allowlist there would turn it into a stale
+      // hand-rolled enumeration that blocks legitimate endpoints (e.g.
+      // /feeds, /scopedusersroles) that grep_llms_txt would have surfaced.
+      // So we skip it. The other gates (canonicalization, sensitive denylist,
+      // method tier, confirmation) still apply.
+      if (config.enabledToolsets !== "all" && config.enabledToolsets != null) {
+        const enabledToolsets = resolveEnabledToolsets();
+        const allowed = matchPath(path, enabledToolsets);
+        if (!allowed.matched) {
+          const owner = findOwningToolset(path);
+          audit("blocked", "pathNotAllowed");
+          return errorResponse({
+            success: false,
+            reason: "pathNotAllowed",
+            message: owner
+              ? `Path '${path}' belongs to the '${owner}' toolset which is not enabled in this session. Enable it via --toolsets to reach this endpoint.`
+              : `Path '${path}' is not on the execute allowlist for any toolset. If this is a legitimate Octopus endpoint not yet covered, file an issue against the MCP server.`,
+          });
+        }
       }
 
       // Gate 4: elicitation on every non-GET.

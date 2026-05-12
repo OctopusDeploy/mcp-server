@@ -365,6 +365,53 @@ describe("execute tool — path allowlist by toolset", () => {
 
     expect(parseResponse(response).success).toBe(true);
   });
+
+  it("bypasses the allowlist when all toolsets are enabled, even for paths with no owning toolset", async () => {
+    // The allowlist's only job is the kill-switch when toolsets are narrowed.
+    // When everything is enabled there is no scope to enforce, so paths that
+    // happen to be missing from TOOLSET_PATH_PATTERNS (e.g. /feeds) must still
+    // be reachable — otherwise the allowlist degenerates into a stale
+    // hand-rolled enumeration that contradicts grep_llms_txt-driven discovery.
+    setActiveToolsetConfig({
+      enabledToolsets: "all",
+      readOnlyMode: false,
+    });
+    dispatchRequest.mockResolvedValue({ Id: "Feeds-99" });
+    const handler = getHandler();
+
+    const response = await handler({
+      method: "POST",
+      path: "/api/Spaces-1/feeds",
+      body: { Name: "MyFeed", FeedType: "Nuget" },
+    });
+
+    expect(parseResponse(response).success).toBe(true);
+    expect(dispatchRequest).toHaveBeenCalledWith(
+      "POST",
+      "https://octopus.example/api/Spaces-1/feeds",
+      { Name: "MyFeed", FeedType: "Nuget" },
+    );
+  });
+
+  it("still blocks paths with no owning toolset when toolsets are narrowed", async () => {
+    // Counterpart to the bypass test above: when the user has explicitly
+    // narrowed toolsets, the allowlist applies and unknown paths stay blocked.
+    setActiveToolsetConfig({
+      enabledToolsets: ["projects"],
+      readOnlyMode: false,
+    });
+    const handler = getHandler();
+
+    const response = await handler({
+      method: "POST",
+      path: "/api/Spaces-1/feeds",
+      body: { Name: "MyFeed" },
+    });
+
+    expect(response.isError).toBe(true);
+    expect(parseResponse(response).reason).toBe("pathNotAllowed");
+    expect(dispatchRequest).not.toHaveBeenCalled();
+  });
 });
 
 describe("execute tool — path validation (Gate 0)", () => {
