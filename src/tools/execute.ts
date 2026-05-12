@@ -349,9 +349,10 @@ Discover endpoints with grep_llms_txt. Use octopus://api/capabilities to see whi
 
 registerToolDefinition({
   toolName: "execute",
-  // readOnly: true so the tool is registered even in --read-only mode (where
-  // only its GET branch is reachable). Method-tier gating inside the handler
-  // enforces the actual write/delete policy at runtime.
-  config: { toolset: "core", readOnly: true },
+  // execute is not statically read-only — its tier depends on the HTTP method
+  // passed in. methodGated: true keeps it registered even in --read-only mode
+  // (where only its GET branch is reachable), and the catalog surfaces the
+  // honest `readOnly: false` so clients don't auto-classify it as a reader.
+  config: { toolset: "core", readOnly: false, methodGated: true },
   registerFn: registerExecuteTool,
 });

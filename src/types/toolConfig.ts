@@ -19,6 +19,14 @@ export type Toolset =
 export interface ToolConfig {
   toolset: Toolset;
   readOnly: boolean;
+  /**
+   * Tools whose actual read/write/delete tier is determined at runtime by
+   * tool arguments (typically the HTTP method passed in) rather than the
+   * static `readOnly` flag. Setting this to `true` bypasses the read-only
+   * registration filter — the tool must do its own tier gating in the
+   * handler. Currently set only on `execute`.
+   */
+  methodGated?: boolean;
 }
 
 export interface ToolsetConfig {

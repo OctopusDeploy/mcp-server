@@ -50,7 +50,7 @@ import "./execute.js";
 
 // Resource backstop for clients without native MCP resource support
 import "./readResource.js";
-function isToolEnabled(
+export function isToolEnabled(
   toolRegistration: ToolRegistration,
   config: ToolsetConfig,
 ): boolean {
@@ -71,8 +71,14 @@ function isToolEnabled(
     return false;
   }
 
-  // Check read-only mode
-  if (config.readOnlyMode && !toolRegistration.config.readOnly) {
+  // Check read-only mode. Method-gated tools (e.g. `execute`) bypass this
+  // filter because they classify themselves at runtime — they stay registered
+  // even in read-only mode, where the handler will refuse non-read calls.
+  if (
+    config.readOnlyMode &&
+    !toolRegistration.config.readOnly &&
+    !toolRegistration.config.methodGated
+  ) {
     return false;
   }
 
