@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/OctopusDeploy/mcp-server/compare/v2.1.0...v2.1.1) (2026-05-12)
+
+
+### Bug Fixes
+
+* make execute tool honestly report readOnly:false in capabilities ([#86](https://github.com/OctopusDeploy/mcp-server/issues/86)) ([7222172](https://github.com/OctopusDeploy/mcp-server/commit/722217253ba585746900f35189c0b08cdfe918d7))
+
 ## [2.1.0](https://github.com/OctopusDeploy/mcp-server/compare/v2.0.0...v2.1.0) (2026-05-12)
 
 
