@@ -26,6 +26,7 @@ export interface GrepTaskLogParams {
   beforeContext?: number;
   afterContext?: number;
   maxCount?: number;
+  stripPrefixes?: boolean;
 }
 
 export interface GrepTaskLogResult {
@@ -90,6 +91,12 @@ const inputSchema = {
     .max(MAX_COUNT_HARD_CAP)
     .default(100)
     .describe(`Equivalent to grep -m: stop returning matches after this many. totalMatches in the response still reflects the true count across the whole log. Hard cap ${MAX_COUNT_HARD_CAP}.`),
+  stripPrefixes: z
+    .boolean()
+    .default(false)
+    .describe(
+      "Strip the timestamp/level prefix (e.g. `04:36:40   Fatal    | `) from each line before pattern matching AND in the returned line/context text. Default false. Turn this on when greping for words that collide with level names (Fatal, Error, Warn) or when you want clean message-only output. Note: when on, your pattern will not match against the prefix — searching for `Fatal` won't find Fatal-level lines.",
+    ),
 };
 
 export function registerGrepTaskLogTool(server: McpServer) {

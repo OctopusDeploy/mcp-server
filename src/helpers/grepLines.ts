@@ -17,6 +17,7 @@ export interface GrepLinesParams {
   beforeContext?: number;
   afterContext?: number;
   maxCount?: number;
+  stripPrefixes?: boolean;
 }
 
 export interface ContextLine {
@@ -39,6 +40,14 @@ export interface GrepLinesResult {
 
 export const MAX_CONTEXT = 50;
 export const MAX_COUNT_HARD_CAP = 500;
+
+// Octopus task-log line prefix: an optional ISO date, a HH:MM:SS time, one or
+// more spaces, a level token (Info/Warn/Error/Fatal/Verbose/etc.), one or more
+// spaces, a pipe, and an optional space. Examples:
+//   "04:36:40   Fatal    | message"          (real server output)
+//   "2026-05-05T12:00:00 Info  | message"    (test fixtures)
+// Lines that don't match the shape are left untouched.
+const LOG_PREFIX_REGEX = /^(?:\d{4}-\d{2}-\d{2}T)?\d{2}:\d{2}:\d{2}\s+\S+\s+\|\s?/;
 
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -73,11 +82,20 @@ export function grepLines(
     beforeContext = 0,
     afterContext = 0,
     maxCount = 100,
+    stripPrefixes = false,
   } = params;
 
-  const lines = rawText.split("\n");
+  const rawLines = rawText.split("\n");
   // Drop the trailing empty element produced by a final newline.
-  if (lines.length > 0 && lines[lines.length - 1] === "") lines.pop();
+  if (rawLines.length > 0 && rawLines[rawLines.length - 1] === "") rawLines.pop();
+
+  // When stripPrefixes is on, the timestamp/level prefix is removed before
+  // pattern matching AND before output, so the caller's regex doesn't see the
+  // prefix (no false matches against level names) and the returned line/context
+  // text is clean for downstream consumption.
+  const lines = stripPrefixes
+    ? rawLines.map((line) => line.replace(LOG_PREFIX_REGEX, ""))
+    : rawLines;
 
   const regex = compilePattern(pattern, caseInsensitive, fixedString);
 

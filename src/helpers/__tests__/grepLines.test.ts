@@ -166,4 +166,97 @@ describe("grepLines", () => {
     expect(result.totalMatches).toBe(0);
     expect(result.matches).toEqual([]);
   });
+
+  describe("stripPrefixes", () => {
+    it("strips ISO timestamp + level prefix from returned lines", () => {
+      const result = grepLines(SAMPLE_LOG, {
+        ...baseParams,
+        pattern: "Connection timeout",
+        stripPrefixes: true,
+      });
+
+      expect(result.totalMatches).toBe(1);
+      expect(result.matches[0].line).toBe("Connection timeout to database");
+    });
+
+    it("strips HH:MM:SS-only prefix (real Octopus output shape)", () => {
+      const log = [
+        "04:36:40   Fatal    | The deployment failed",
+        "04:36:41   Info     | Cleaning up",
+        "",
+      ].join("\n");
+
+      const result = grepLines(log, {
+        ...baseParams,
+        pattern: "failed",
+        stripPrefixes: true,
+      });
+
+      expect(result.totalMatches).toBe(1);
+      expect(result.matches[0].line).toBe("The deployment failed");
+    });
+
+    it("strips prefix before pattern matching so level names don't produce false matches", () => {
+      // Without stripping, `Info` matches every Info-level line (5).
+      const withoutStrip = grepLines(SAMPLE_LOG, {
+        ...baseParams,
+        pattern: "Info",
+      });
+      expect(withoutStrip.totalMatches).toBe(5);
+
+      // With stripping, `Info` no longer appears in the prefix, so it only
+      // matches lines whose message body literally contains "Info" (none here).
+      const withStrip = grepLines(SAMPLE_LOG, {
+        ...baseParams,
+        pattern: "Info",
+        stripPrefixes: true,
+      });
+      expect(withStrip.totalMatches).toBe(0);
+    });
+
+    it("leaves lines without a recognizable prefix untouched", () => {
+      const log = [
+        "2026-05-05T12:00:00 Info  | Step starting",
+        "        continuation line with leading whitespace",
+        "bare line with no prefix at all",
+        "",
+      ].join("\n");
+
+      const result = grepLines(log, {
+        ...baseParams,
+        pattern: ".",
+        stripPrefixes: true,
+      });
+
+      expect(result.matches.map((m) => m.line)).toEqual([
+        "Step starting",
+        "        continuation line with leading whitespace",
+        "bare line with no prefix at all",
+      ]);
+    });
+
+    it("strips prefixes from context lines too", () => {
+      const result = grepLines(SAMPLE_LOG, {
+        ...baseParams,
+        pattern: "Connection timeout",
+        beforeContext: 1,
+        afterContext: 1,
+        stripPrefixes: true,
+      });
+
+      expect(result.matches[0].before?.[0].line).toBe("Step 2 starting");
+      expect(result.matches[0].after?.[0].line).toBe("Step 2 failed: see above");
+    });
+
+    it("defaults to false (existing behavior is preserved)", () => {
+      const result = grepLines(SAMPLE_LOG, {
+        ...baseParams,
+        pattern: "Connection timeout",
+      });
+
+      expect(result.matches[0].line).toBe(
+        "2026-05-05T12:00:05 Error | Connection timeout to database",
+      );
+    });
+  });
 });

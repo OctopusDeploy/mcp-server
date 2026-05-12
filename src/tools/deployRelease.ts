@@ -224,6 +224,7 @@ The tool automatically determines which deployment type to use based on the para
 
         // Format the response
         const tasks = response.DeploymentServerTasks || [];
+        const encodedSpace = encodeURIComponent(spaceName);
 
         return {
           content: [
@@ -237,9 +238,10 @@ The tool automatically determines which deployment type to use based on the para
                   deploymentTasks: tasks.map((task) => ({
                     taskId: task.ServerTaskId,
                     deploymentId: task.DeploymentId,
+                    taskResourceUri: `octopus://spaces/${encodedSpace}/tasks/${encodeURIComponent(task.ServerTaskId)}/details`,
                   })),
                   message: `Successfully created ${tasks.length} deployment(s) for release ${releaseVersion}`,
-                  helpText: `Fetch octopus://spaces/{spaceName}/tasks/{taskId} (or /details for the structured activity tree) via resources/read or read_resource to monitor deployment progress. To search the raw log for a specific error or step, call grep_task_log with the taskId. Use list_deployments for high-level deployment listings.`,
+                  helpText: `Feed each deploymentTasks[].taskResourceUri into read_resource (or resources/read) to monitor deployment progress via the structured ActivityLogs tree. For the lighter metadata-only view, swap /details off the URI. To search the raw log for a specific error or step, call grep_task_log with the taskId. Use list_deployments for high-level deployment listings.`,
                 },
                 null,
                 2,
