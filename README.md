@@ -305,12 +305,13 @@ See [Working with URLs](docs/working-with-urls.md) for detailed workflows, examp
 These tools and resources let the agent reach Octopus REST endpoints that don't have a dedicated curated tool, with hard server-side gating between read, write, and delete operations.
 
 - `grep_llms_txt`: Search the Octopus API catalog (`octopus://api/llms.txt`) with grep-style semantics (minimum supported Octopus version: `2026.2.3916`). The catalog body is large (typically 300+ KB) — call this rather than reading the resource body directly. Parameters mirror GNU grep (`pattern`, `caseInsensitive`, `invertMatch`, `fixedString`, `beforeContext`, `afterContext`, `maxCount`). Useful for discovering endpoints (`POST /releases`), enumerating delete endpoints (`DELETE `), or finding the body type for a write operation (`Body: Create.*Command`).
-- `execute`: Structured REST backstop. Reaches any Octopus endpoint covered by the per-toolset path allowlist. The HTTP method is the authoritative read/write/delete classifier — never an `isWrite` flag the LLM can set. Method gating is hard-coded server-side:
-   - `GET` is always allowed (subject to the path allowlist + sensitive denylist).
+- `execute`: Structured REST backstop. Reaches any Octopus REST endpoint under `/api`. The HTTP method is the authoritative read/write/delete classifier — never an `isWrite` flag the LLM can set. Method gating is hard-coded server-side:
+   - `GET` is always allowed (subject to the path shape check + sensitive denylist).
    - `POST`/`PUT`/`PATCH` are blocked when `--read-only` is set; otherwise they require user confirmation via elicitation.
    - `DELETE` requires `--allow-deletes` (and is blocked when `--read-only` is set) plus a stronger "IRREVERSIBLE" elicitation message.
    - The sensitive denylist (API-key endpoints, `DELETE /api/spaces/{id}`, `DELETE /api/users/{id}`) is enforced even with both flags on.
-   - The path allowlist is scoped per toolset — disabling a toolset (e.g. `certificates`) makes its paths unreachable through `execute`, even on GET.
+   - The path is required to be `/api` or start with `/api/` — absolute URLs, SDK-relative `~/api/...` paths, and host-relative paths outside `/api` (e.g. `/octopus/portal/...`) are rejected up front, so `execute` stays bounded to the Octopus REST API surface.
+   - **Per-toolset path allowlist applies only when `--toolsets` has been narrowed.** With every toolset enabled (the default, or explicit `--toolsets all`) the allowlist is bypassed and any path under `/api` is reachable subject to the gates above. When `--toolsets` is narrowed the allowlist becomes the kill-switch: paths only resolve if their owning toolset is enabled, so disabling a toolset (e.g. `certificates`) makes its paths unreachable through `execute` even on `GET`.
 
 Catalog data is also exposed as MCP Resources:
 
@@ -397,7 +398,7 @@ By default, the following write operations are available:
 - **Deploying releases**: Can trigger deployments to environments (including production)
 - **Running runbooks**: Can execute runbooks against environments and tenants
 - **Updating feature toggles**: Can flip per-environment state and change rollout percentages on existing toggles
-- **Arbitrary POST/PUT/PATCH via the `execute` backstop**: Subject to the per-toolset path allowlist and a sensitive denylist that's always-on.
+- **Arbitrary POST/PUT/PATCH via the `execute` backstop**: Bounded to paths under `/api`, with an always-on sensitive denylist. The per-toolset path allowlist applies only when `--toolsets` has been narrowed; with all toolsets enabled (the default) the only path gates are the `/api` boundary and the sensitive denylist.
 
 Pass `--read-only` to disable all of the above. DELETE requests through `execute` require an additional `--allow-deletes` flag — a deliberate opt-in for irreversible operations — and remain blocked when `--read-only` is set.
 
@@ -405,7 +406,7 @@ Pass `--read-only` to disable all of the above. DELETE requests through `execute
 1. **Least Privilege**: Use API keys with the minimum permissions needed for your use case
 2. **Opt In to Read-Only Mode**: Writes are enabled by default. For production, pass `--read-only` unless you have a specific, controlled use case for write operations. DELETE always requires the additional `--allow-deletes` opt-in.
 3. **Method gating is server-side and hard-coded**: The HTTP method passed to `execute` is the authoritative classifier. The agent cannot bypass the gate by misrepresenting what the call does — POST/PUT/PATCH/DELETE requests get tier-specific gating regardless of the prose in the request body.
-4. **Toolset filtering doubles as a kill switch**: Disabling a toolset removes both its curated tools and its paths from the `execute` allowlist.
+4. **Toolset filtering doubles as a kill switch**: Narrowing `--toolsets` removes both the disabled toolsets' curated tools and their paths from the `execute` allowlist. (The allowlist is only consulted when toolsets are narrowed; with all toolsets enabled `execute` is bounded by the `/api` shape check and the sensitive denylist instead.)
 5. **Prompt Injection Risk**: Running agents in fully automated fashion could make you vulnerable to prompt-injection attacks
 
 **Recommendation**: For production environments, pass `--read-only` unless you have a specific, controlled use case for write operations. Leave `--allow-deletes` off unless you specifically need DELETE semantics through `execute`.

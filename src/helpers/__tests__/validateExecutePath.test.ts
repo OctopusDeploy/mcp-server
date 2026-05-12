@@ -76,4 +76,41 @@ describe("validateExecutePath", () => {
       validateExecutePath("/api/spaces/default%20space"),
     ).toMatchObject({ ok: true });
   });
+
+  it("rejects paths outside the /api surface so execute stays bounded", () => {
+    // execute is a backstop for the Octopus REST API, not a general
+    // server-relative request tool. With the allowlist now bypassed when all
+    // toolsets are enabled, /api/ enforcement here is what keeps execute
+    // from reaching arbitrary server-side resources (portal HTML, auth
+    // endpoints, etc.) just because the agent prefixed a slash.
+    expect(validateExecutePath("/some-other-path")).toMatchObject({
+      ok: false,
+      reason: expect.stringContaining("/api"),
+    });
+    expect(validateExecutePath("/")).toMatchObject({ ok: false });
+    expect(validateExecutePath("/octopus/portal")).toMatchObject({
+      ok: false,
+    });
+  });
+
+  it("rejects /apiXXX where XXX is any continuation other than '/' — only `/api` or `/api/...` is valid", () => {
+    expect(validateExecutePath("/api2")).toMatchObject({ ok: false });
+    expect(validateExecutePath("/apifoo")).toMatchObject({ ok: false });
+  });
+
+  it("accepts exactly `/api` (the API root endpoint)", () => {
+    // The Octopus API root returns metadata about the API itself; some
+    // discovery flows GET it directly.
+    expect(validateExecutePath("/api")).toEqual({ ok: true, path: "/api" });
+  });
+
+  it("rejects absolute URLs and SDK-relative paths — execute takes server-relative paths only", () => {
+    // Models sometimes hallucinate the full origin or the api-client's `~`
+    // prefix. Reject explicitly so the failure is informative rather than
+    // resolving to a confusing URL.
+    expect(validateExecutePath("https://octopus.example/api/spaces")).toMatchObject({
+      ok: false,
+    });
+    expect(validateExecutePath("~/api/spaces")).toMatchObject({ ok: false });
+  });
 });
