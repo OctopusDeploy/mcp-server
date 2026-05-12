@@ -31,10 +31,11 @@ function fakeRegistration(
   toolset: ToolRegistration["config"]["toolset"],
   readOnly: boolean,
   minimumOctopusVersion?: string,
+  methodGated?: boolean,
 ): ToolRegistration {
   return {
     toolName,
-    config: { toolset, readOnly },
+    config: { toolset, readOnly, methodGated },
     registerFn: () => {},
     minimumOctopusVersion,
   };
@@ -193,18 +194,21 @@ describe("octopus://api/capabilities", () => {
 
     TOOL_REGISTRY.set(
       "execute",
-      fakeRegistration("execute", "core", true),
+      fakeRegistration("execute", "core", false, undefined, true),
     );
     TOOL_REGISTRY.set(
       "list_spaces",
       fakeRegistration("list_spaces", "core", true),
     );
 
-    // Read-only mode: only the read tier is reachable.
+    // Read-only mode: execute is still listed (methodGated bypass) but only
+    // the read tier is reachable, and it honestly reports readOnly:false so
+    // clients don't auto-classify it as a reader.
     setActiveToolsetConfig({ enabledToolsets: "all", readOnlyMode: true });
     let cap = await buildCapabilities();
     let executeEntry = cap.tools.find((t) => t.name === "execute")!;
     expect(executeEntry.methodGated).toBe(true);
+    expect(executeEntry.readOnly).toBe(false);
     expect(executeEntry.tiersAvailable).toEqual(["read"]);
 
     // Static read-only tools must NOT carry methodGated/tiersAvailable.
