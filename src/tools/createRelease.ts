@@ -1,4 +1,8 @@
-import { Client, ReleaseRepository } from "@octopusdeploy/api-client";
+import {
+  Client,
+  ReleaseRepository,
+  type SelectedPackage,
+} from "@octopusdeploy/api-client";
 import { z } from "zod";
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
@@ -138,12 +142,23 @@ This tool creates a new release for a project. The space name and project name a
 
         const response = await releaseRepository.create(command);
 
-        let versionControlReference: { GitRef?: string; GitCommit?: string } | undefined;
+        // Fetch the persisted Release so we can echo VersionControlReference and
+        // the resolved SelectedPackages. The create response only carries the
+        // ReleaseId/ReleaseVersion; SelectedPackages comes from the resolved
+        // release body and is the single most useful field for the caller to
+        // confirm version-template / channel-rule resolution without a second
+        // round trip.
+        let versionControlReference:
+          | { GitRef?: string; GitCommit?: string }
+          | undefined;
+        let selectedPackages: SelectedPackage[] | undefined;
         try {
           const release = await releaseRepository.get(response.ReleaseId);
           versionControlReference = release.VersionControlReference;
+          selectedPackages = release.SelectedPackages;
         } catch {
           versionControlReference = undefined;
+          selectedPackages = undefined;
         }
 
         const encodedSpace = encodeURIComponent(spaceName);
@@ -160,10 +175,11 @@ This tool creates a new release for a project. The space name and project name a
                   releaseId: response.ReleaseId,
                   releaseVersion: response.ReleaseVersion,
                   versionControlReference,
+                  selectedPackages,
                   resourceUri,
                   message: `Release ${response.ReleaseVersion} created successfully`,
                   helpText:
-                    "Read resourceUri for the full release body (includes releaseNotes). Use deploy_release to deploy this release to environments.",
+                    "selectedPackages shows the resolved package versions bound to this release. Read resourceUri for the full release body (includes releaseNotes). Use deploy_release to deploy this release to environments.",
                 },
                 null,
                 2,

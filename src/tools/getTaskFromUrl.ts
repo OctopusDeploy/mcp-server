@@ -64,6 +64,8 @@ export function registerGetTaskFromUrlTool(server: McpServer) {
       title: 'Get task details from an Octopus Deploy URL',
       description: `Get task details from an Octopus Deploy task URL. Returns full task details including execution logs and state.
 
+This tool is a URL-to-ID resolver that returns the **same body** as the \`octopus://spaces/{spaceName}/tasks/{taskId}/details\` resource — no need to dereference the URI afterward. If you only need lightweight metadata for polling (state, timing, completion flags) use the smaller \`octopus://spaces/{spaceName}/tasks/{taskId}\` resource instead.
+
 Accepts task URLs like:
 https://your-octopus.com/app#/Spaces-1/tasks/ServerTasks-456
 

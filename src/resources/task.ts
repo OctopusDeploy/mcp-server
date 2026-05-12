@@ -17,7 +17,7 @@ registerResourceDescriptor({
   toolset: "tasks",
   title: "Octopus task summary",
   description:
-    "Lightweight task metadata: state, timing, completion flags, and arguments. Cheap to fetch — use this for polling or status checks. For step timings and embedded log entries use the /details URI; to search the raw activity log call the grep_task_log tool.",
+    "Lightweight task metadata: state, timing, completion flags, and arguments. Cheap to fetch — use this for polling or status checks. For the full ActivityLogs tree and step timings use the /details URI (same body returned by get_task_from_url when starting from a portal URL); to search the raw activity log call the grep_task_log tool.",
   mimeType: "application/json",
   read: async ({ spaceName, taskId }) => {
     validateEntityId(taskId, "task", ENTITY_PREFIXES.task);
@@ -51,7 +51,7 @@ registerResourceDescriptor({
   toolset: "tasks",
   title: "Octopus task details (structured activity tree)",
   description:
-    "Full ServerTaskDetails payload: the task summary plus Progress, PhysicalLogSize, and the hierarchical ActivityLogs tree (each step's children, status, and embedded log entries). Heavier than the /task summary — fetch when you need step-by-step timings or programmatic access to log entries.",
+    "Full ServerTaskDetails payload: the task summary plus Progress, PhysicalLogSize, and the hierarchical ActivityLogs tree (each step's children, status, and embedded log entries). Heavier than the /task summary — fetch when you need step-by-step timings or programmatic access to log entries. `get_task_from_url` returns this same body when starting from a portal URL; don't double-fetch.",
   mimeType: "application/json",
   read: async ({ spaceName, taskId }) => {
     validateEntityId(taskId, "task", ENTITY_PREFIXES.task);
