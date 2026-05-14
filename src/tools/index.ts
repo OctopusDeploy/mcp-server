@@ -29,6 +29,7 @@ import "./findDeploymentTargets.js";
 import "./findCertificates.js";
 import "./findAccounts.js";
 import "./findInterruptions.js";
+import "./findEvents.js";
 
 // Feature toggles
 import "./findFeatureToggles.js";
