@@ -132,6 +132,49 @@ describe("dispatchOctopusUri", () => {
     expect(descriptor.read).not.toHaveBeenCalled();
   });
 
+  it("routes DB and CaC runbook URIs to their distinct descriptors without cross-talk (different segment counts)", async () => {
+    const dbRunbook = makeDescriptor({
+      name: "runbook",
+      toolset: "runbooks",
+      uriTemplate: "octopus://spaces/{spaceName}/runbooks/{runbookId}",
+    });
+    const cacRunbook = makeDescriptor({
+      name: "runbook-git",
+      toolset: "runbooks",
+      uriTemplate:
+        "octopus://spaces/{spaceName}/projects/{projectSlug}/{gitRef}/runbooks/{runbookSlug}",
+    });
+    registerResourceDescriptor(dbRunbook);
+    registerResourceDescriptor(cacRunbook);
+
+    // DB URI matches only the DB descriptor.
+    const dbPayload = await dispatchOctopusUri(
+      "octopus://spaces/Default/runbooks/Runbooks-7",
+    );
+    expect(dbPayload).not.toBeNull();
+    expect(JSON.parse(dbPayload!.text)).toEqual({
+      spaceName: "Default",
+      runbookId: "Runbooks-7",
+    });
+    expect(dbRunbook.read).toHaveBeenCalledTimes(1);
+    expect(cacRunbook.read).not.toHaveBeenCalled();
+
+    // CaC URI matches only the CaC descriptor.
+    const cacPayload = await dispatchOctopusUri(
+      "octopus://spaces/Default/projects/cac-proj/main/runbooks/provision-db",
+    );
+    expect(cacPayload).not.toBeNull();
+    expect(JSON.parse(cacPayload!.text)).toEqual({
+      spaceName: "Default",
+      projectSlug: "cac-proj",
+      gitRef: "main",
+      runbookSlug: "provision-db",
+    });
+    expect(cacRunbook.read).toHaveBeenCalledTimes(1);
+    // DB descriptor was not called a second time.
+    expect(dbRunbook.read).toHaveBeenCalledTimes(1);
+  });
+
   describe("toolset filtering", () => {
     afterEach(() => {
       // Reset to "all enabled" so other test files aren't affected by leaked state.

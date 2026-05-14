@@ -9,6 +9,7 @@ import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
+import { hasVariablesInGit } from "../helpers/vcsProjectHelpers.js";
 import type {ResourceCollection} from "@octopusdeploy/api-client/dist/resourceCollection.js";
 
 export function registerGetVariablesTool(server: McpServer) {
@@ -169,26 +170,6 @@ async function loadProjectVariableSet(
     apiClient: Client,
     spaceId: string
 ): Promise<VariableSetResponse | undefined> {
-
-    // This is a bit hacky,  but gets around the limitations of our ts client types without having to define
-    // a heap of new types.
-    // We are expecting the type to match { ConversionState: { VariablesAreInGit: true } }
-    // If the variables are stored in git.
-    function hasVariablesInGit(value: unknown): boolean {
-        if (typeof value !== 'object' || value === null || !('ConversionState' in value)) {
-            return false;
-        }
-
-        const obj = value as Record<string, unknown>;
-        const conversionState = obj.ConversionState;
-
-        return (
-            typeof conversionState === 'object' &&
-            conversionState !== null &&
-            'VariablesAreInGit' in conversionState &&
-            (conversionState as Record<string, unknown>).VariablesAreInGit === true
-        );
-    }
 
     // Check if project has git persistence
     const hasGitVariables = hasVariablesInGit(project.PersistenceSettings);
