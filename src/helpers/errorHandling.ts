@@ -118,4 +118,5 @@ export const ENTITY_PREFIXES = {
   deployment: "Deployments-",
   deploymentProcess: "DeploymentProcesses-",
   interruption: "Interruptions-",
+  event: "Events-",
 } as const;

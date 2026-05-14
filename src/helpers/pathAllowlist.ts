@@ -131,6 +131,16 @@ const TOOLSET_PATH_PATTERNS: Record<Toolset, readonly string[]> = {
     "/api/spaces/*/projects/*/featuretoggles",
     "/api/spaces/*/projects/*/featuretoggles/**",
   ],
+  events: [
+    // Space-scoped audit log endpoints.
+    ...spaceScoped("events"),
+    // Unscoped metadata endpoints (categories, groups, agents, documenttypes).
+    // These are server-wide constants with no space prefix. They live in the
+    // `events` toolset rather than `core` so disabling `--toolsets ... events`
+    // is a real kill switch.
+    "/api/events",
+    "/api/events/**",
+  ],
 };
 
 // Specificity = count of literal (non-wildcard) segments in the pattern.
