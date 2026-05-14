@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.3.0](https://github.com/OctopusDeploy/mcp-server/compare/v2.2.0...v2.3.0) (2026-05-14)
+
+
+### Features
+
+* add find_events tool to search the audit log ([#92](https://github.com/OctopusDeploy/mcp-server/issues/92)) ([fee1913](https://github.com/OctopusDeploy/mcp-server/commit/fee19134abac87162ad4a2c111f3d722413b9b0e))
+
+
+### Bug Fixes
+
+* support Config-as-Code projects in runbook tools ([#93](https://github.com/OctopusDeploy/mcp-server/issues/93)) ([351a3ad](https://github.com/OctopusDeploy/mcp-server/commit/351a3ad81143bab6ec1873f417d0020c33a927dc))
+
 ## [2.2.0](https://github.com/OctopusDeploy/mcp-server/compare/v2.1.2...v2.2.0) (2026-05-12)
 
 
