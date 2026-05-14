@@ -123,15 +123,17 @@ const SINGLE_EVENT_CONFLICTS = [
   "take",
 ] as const;
 
-// IMPORTANT: this is a ZodRawShape (flat object of schemas), not a refined
-// ZodObject. Refinements (`.superRefine`, `.refine`) produce a ZodEffects
-// wrapper, and @modelcontextprotocol/sdk@1.29 does not unwrap ZodEffects in
+// SDK workaround: we publish a plain `z.object(...)` as `inputSchema` because
+// `.superRefine(...)` produces a ZodEffects wrapper that lacks `.shape`, and
+// @modelcontextprotocol/sdk@1.29 does not unwrap ZodEffects in
 // `normalizeObjectSchema` — the published inputSchema collapses to
 // `EMPTY_OBJECT_JSON_SCHEMA`, so MCP clients see no field types and the LLM
-// stringifies arrays/booleans/numbers. The SDK still validates correctly
-// because it falls through to the original schema, but bad cross-field combos
-// would slip past if we relied on the SDK alone. Cross-field invariants are
-// enforced in `validateCrossFields` at handler entry instead.
+// stringifies arrays/booleans/numbers. Cross-field invariants live on the
+// separate `findEventsValidationSchema` (the same fields wrapped in
+// `.superRefine`) and run inside the handler via `safeParse`. When the SDK
+// fix in modelcontextprotocol/typescript-sdk#1865 ships we can pass
+// `findEventsValidationSchema` directly as `inputSchema` and drop the
+// in-handler `safeParse`.
 const findEventsRawShape = {
     mode: z
       .enum([
@@ -161,7 +163,10 @@ const findEventsRawShape = {
       .string()
       .optional()
       .describe(
-        "Fetch a single event by ID (form 'Events-NNN'). Mutually exclusive with all filter arguments.",
+        "Fetch a single event by ID (form 'Events-NNN'). Mutually exclusive with list and pagination filters " +
+          "(regarding, regardingAny, users, projects, environments, tenants, projectGroups, eventCategories, " +
+          "eventGroups, eventAgents, documentTypes, tags, from, to, skip, take). " +
+          "Compatible with excludeDifference (still honoured) and includeInternalEvents (no-op for single fetches).",
       ),
     regarding: z
       .array(z.string())
@@ -273,43 +278,67 @@ const findEventsRawShape = {
 };
 
 /**
- * Cross-field validation that would have lived in `.superRefine` if the SDK
- * unwrapped ZodEffects. Returns null when args are valid; otherwise returns a
- * structured error response the handler can return directly to the client.
+ * Plain ZodObject passed to `server.registerTool` as `inputSchema`. The MCP
+ * SDK requires a schema whose `.shape` is reachable — see the SDK-workaround
+ * comment above `findEventsRawShape`. Refinements go on
+ * `findEventsValidationSchema` (below) and run inside the handler.
  */
-function validateCrossFields(
-  args: Record<string, unknown>,
-): { content: { type: "text"; text: string }[]; isError: true } | null {
-  const issues: string[] = [];
-  const mode: EventMode = (args.mode as EventMode | undefined) ?? "search";
+export const findEventsInputSchema = z.object(findEventsRawShape);
 
-  if (mode === "search") {
-    if (!args.spaceName) {
-      issues.push("spaceName is required when mode='search'.");
-    }
-    if (args.eventId) {
-      for (const key of SINGLE_EVENT_CONFLICTS) {
-        if (args[key] !== undefined) {
-          issues.push(
-            `${key} cannot be combined with eventId. Drop eventId to use list filters, or drop ${key} to fetch a single event.`,
-          );
+/**
+ * Same fields plus cross-field invariants: required `spaceName` for search
+ * mode, mutually-exclusive eventId vs. list/pagination filters, metadata
+ * modes reject every search-only field. Used only inside the handler via
+ * `safeParse`; not published to clients.
+ */
+export const findEventsValidationSchema = findEventsInputSchema.superRefine(
+  (args, ctx) => {
+    const mode: EventMode = args.mode ?? "search";
+
+    if (mode === "search") {
+      if (!args.spaceName) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "spaceName is required when mode='search'.",
+          path: ["spaceName"],
+        });
+      }
+      if (args.eventId) {
+        for (const key of SINGLE_EVENT_CONFLICTS) {
+          if ((args as Record<string, unknown>)[key] !== undefined) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: `${key} cannot be combined with eventId. Drop eventId to use list filters, or drop ${key} to fetch a single event.`,
+              path: [key],
+            });
+          }
         }
       }
+      return;
     }
-  } else {
+
     // Metadata modes: spaceName is allowed (harmless), every search filter is rejected.
     for (const key of SEARCH_ONLY_FIELDS) {
       if (key === "spaceName") continue;
-      if (args[key] !== undefined) {
-        issues.push(
-          `${key} is only valid when mode='search'. Drop it to call mode='${mode}'.`,
-        );
+      if ((args as Record<string, unknown>)[key] !== undefined) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `${key} is only valid when mode='search'. Drop it to call mode='${mode}'.`,
+          path: [key],
+        });
       }
     }
-  }
+  },
+);
 
-  if (issues.length === 0) return null;
+/** Resolved (post-validation) argument type for the handler. */
+export type FindEventsParams = z.infer<typeof findEventsValidationSchema>;
 
+/**
+ * Wrap a Zod parse error in the structured tool-response shape used elsewhere
+ * for argument-validation failures.
+ */
+function zodErrorResponse(error: z.ZodError) {
   return {
     content: [
       {
@@ -318,14 +347,17 @@ function validateCrossFields(
           {
             success: false,
             error: "Invalid argument combination",
-            issues,
+            issues: error.issues.map((i) => ({
+              path: i.path,
+              message: i.message,
+            })),
           },
           null,
           2,
         ),
       },
     ],
-    isError: true,
+    isError: true as const,
   };
 }
 
@@ -335,6 +367,134 @@ function eventSummary(event: EventResource, excludeDifference?: boolean) {
     delete stripped.ChangeDetails;
   }
   return stripped;
+}
+
+/**
+ * Handler body, exported so tests can call it directly with already-validated
+ * params. The `registerTool` wrapper below runs `findEventsValidationSchema`
+ * first and only invokes this if validation succeeds.
+ */
+export async function findEventsHandler(args: FindEventsParams) {
+  const mode: EventMode = args.mode ?? "search";
+  const client = await Client.create(getClientConfigurationFromEnvironment());
+
+  // --- Metadata modes (unscoped, no permission required) -----------------
+  if (mode !== "search") {
+    const path = (() => {
+      switch (mode) {
+        case "listCategories":
+          return "~/api/events/categories";
+        case "listGroups":
+          return "~/api/events/groups";
+        case "listAgents":
+          return "~/api/events/agents";
+        case "listDocumentTypes":
+          return "~/api/events/documenttypes";
+      }
+    })();
+
+    try {
+      const result = await client.get<unknown>(path);
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify({ mode, items: result }),
+          },
+        ],
+      };
+    } catch (error) {
+      handleOctopusApiError(error, {
+        helpText:
+          "The events metadata endpoints (categories/groups/agents/documenttypes) require no permissions; an error here usually means OCTOPUS_SERVER_URL is wrong or the API key is invalid.",
+      });
+    }
+  }
+
+  // --- Search mode -------------------------------------------------------
+  // spaceName presence is enforced by `findEventsValidationSchema`; assert
+  // for the type checker.
+  const spaceName = args.spaceName as string;
+  const spaceId = await resolveSpaceId(client, spaceName);
+
+  // Single-event fast path
+  if (args.eventId) {
+    validateEntityId(args.eventId, "event", ENTITY_PREFIXES.event);
+
+    try {
+      const event = await client.get<EventResource>(
+        "~/api/{spaceId}/events/{id}",
+        { spaceId, id: args.eventId },
+      );
+      return {
+        content: [
+          {
+            type: "text" as const,
+            text: JSON.stringify(eventSummary(event, args.excludeDifference)),
+          },
+        ],
+      };
+    } catch (error) {
+      handleOctopusApiError(error, {
+        entityType: "event",
+        entityId: args.eventId,
+        spaceName,
+        helpText:
+          "Call find_events without eventId to list valid event IDs in this space.",
+      });
+    }
+  }
+
+  // List/search path
+  try {
+    const response = await client.get<ResourceCollection<EventResource>>(
+      "~/api/{spaceId}/events{?skip,take,from,to,regarding,regardingAny,users,projects,environments,tenants,projectGroups,eventCategories,eventGroups,eventAgents,documentTypes,tags,includeInternalEvents,excludeDifference}",
+      {
+        spaceId,
+        skip: args.skip,
+        take: args.take,
+        from: args.from,
+        to: args.to,
+        regarding: args.regarding,
+        regardingAny: args.regardingAny,
+        users: args.users,
+        projects: args.projects,
+        environments: args.environments,
+        tenants: args.tenants,
+        projectGroups: args.projectGroups,
+        eventCategories: args.eventCategories,
+        eventGroups: args.eventGroups,
+        eventAgents: args.eventAgents,
+        documentTypes: args.documentTypes,
+        tags: args.tags,
+        includeInternalEvents: args.includeInternalEvents,
+        excludeDifference: args.excludeDifference,
+      },
+    );
+
+    return {
+      content: [
+        {
+          type: "text" as const,
+          text: JSON.stringify({
+            totalResults: response.TotalResults,
+            itemsPerPage: response.ItemsPerPage,
+            numberOfPages: response.NumberOfPages,
+            lastPageNumber: response.LastPageNumber,
+            items: response.Items.map((event) =>
+              eventSummary(event, args.excludeDifference),
+            ),
+          }),
+        },
+      ],
+    };
+  } catch (error) {
+    handleOctopusApiError(error, {
+      spaceName,
+      helpText:
+        "Verify the space name is correct and the API key has EventView permission for this space.",
+    });
+  }
 }
 
 export function registerFindEventsTool(server: McpServer) {
@@ -352,7 +512,7 @@ export function registerFindEventsTool(server: McpServer) {
 - \`listDocumentTypes\` — enumerate entity-prefix metadata (\`Projects-\`, \`Releases-\`, ...).
 
 **Search modes** (within \`mode='search'\`, picked by argument shape):
-- \`eventId\` → fetch that single event (mutually exclusive with every filter argument).
+- \`eventId\` → fetch that single event. Mutually exclusive with list and pagination filters; \`excludeDifference\` is still honoured.
 - otherwise → list events matching the filters, paginated.
 
 **Performance tip:** the per-event \`ChangeDetails\` field (the before/after diff for Modified events) is by far the heaviest payload field. Pass \`excludeDifference: true\` whenever scanning many events; fetch a single event without the flag when you need the diff.
@@ -364,136 +524,17 @@ export function registerFindEventsTool(server: McpServer) {
 - \`from\` (inclusive) and \`to\` (exclusive) accept ISO 8601 datetimes.
 
 **Permissions:** requires \`EventView\` on the calling user's space scope. The server filters results further based on per-document permissions.`,
-      inputSchema: findEventsRawShape,
+      inputSchema: findEventsInputSchema,
       annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async (args) => {
-      // Cross-field validation (would live in .superRefine if the SDK unwrapped
-      // ZodEffects; see the comment on findEventsRawShape above).
-      const validationError = validateCrossFields(
-        args as unknown as Record<string, unknown>,
-      );
-      if (validationError) return validationError;
+      // Cross-field validation. Lives here (not on `inputSchema`) because the
+      // refined version is a ZodEffects that the SDK collapses to an empty
+      // published schema — see the comment on `findEventsRawShape`.
+      const parsed = findEventsValidationSchema.safeParse(args);
+      if (!parsed.success) return zodErrorResponse(parsed.error);
 
-      const mode: EventMode = args.mode ?? "search";
-      const client = await Client.create(getClientConfigurationFromEnvironment());
-
-      // --- Metadata modes (unscoped, no permission required) -------------------
-      if (mode !== "search") {
-        const path = (() => {
-          switch (mode) {
-            case "listCategories":
-              return "~/api/events/categories";
-            case "listGroups":
-              return "~/api/events/groups";
-            case "listAgents":
-              return "~/api/events/agents";
-            case "listDocumentTypes":
-              return "~/api/events/documenttypes";
-          }
-        })();
-
-        try {
-          const result = await client.get<unknown>(path);
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify({ mode, items: result }),
-              },
-            ],
-          };
-        } catch (error) {
-          handleOctopusApiError(error, {
-            helpText:
-              "The events metadata endpoints (categories/groups/agents/documenttypes) require no permissions; an error here usually means OCTOPUS_SERVER_URL is wrong or the API key is invalid.",
-          });
-        }
-      }
-
-      // --- Search mode --------------------------------------------------------
-      // spaceName presence is enforced by superRefine; assert for the type checker.
-      const spaceName = args.spaceName as string;
-      const spaceId = await resolveSpaceId(client, spaceName);
-
-      // Single-event fast path
-      if (args.eventId) {
-        validateEntityId(args.eventId, "event", ENTITY_PREFIXES.event);
-
-        try {
-          const event = await client.get<EventResource>(
-            "~/api/{spaceId}/events/{id}",
-            { spaceId, id: args.eventId },
-          );
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify(eventSummary(event, args.excludeDifference)),
-              },
-            ],
-          };
-        } catch (error) {
-          handleOctopusApiError(error, {
-            entityType: "event",
-            entityId: args.eventId,
-            spaceName,
-            helpText:
-              "Call find_events without eventId to list valid event IDs in this space.",
-          });
-        }
-      }
-
-      // List/search path
-      try {
-        const response = await client.get<ResourceCollection<EventResource>>(
-          "~/api/{spaceId}/events{?skip,take,from,to,regarding,regardingAny,users,projects,environments,tenants,projectGroups,eventCategories,eventGroups,eventAgents,documentTypes,tags,includeInternalEvents,excludeDifference}",
-          {
-            spaceId,
-            skip: args.skip,
-            take: args.take,
-            from: args.from,
-            to: args.to,
-            regarding: args.regarding,
-            regardingAny: args.regardingAny,
-            users: args.users,
-            projects: args.projects,
-            environments: args.environments,
-            tenants: args.tenants,
-            projectGroups: args.projectGroups,
-            eventCategories: args.eventCategories,
-            eventGroups: args.eventGroups,
-            eventAgents: args.eventAgents,
-            documentTypes: args.documentTypes,
-            tags: args.tags,
-            includeInternalEvents: args.includeInternalEvents,
-            excludeDifference: args.excludeDifference,
-          },
-        );
-
-        return {
-          content: [
-            {
-              type: "text",
-              text: JSON.stringify({
-                totalResults: response.TotalResults,
-                itemsPerPage: response.ItemsPerPage,
-                numberOfPages: response.NumberOfPages,
-                lastPageNumber: response.LastPageNumber,
-                items: response.Items.map((event) =>
-                  eventSummary(event, args.excludeDifference),
-                ),
-              }),
-            },
-          ],
-        };
-      } catch (error) {
-        handleOctopusApiError(error, {
-          spaceName,
-          helpText:
-            "Verify the space name is correct and the API key has EventView permission for this space.",
-        });
-      }
+      return findEventsHandler(parsed.data);
     },
   );
 }
