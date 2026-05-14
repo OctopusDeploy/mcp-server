@@ -123,8 +123,16 @@ const SINGLE_EVENT_CONFLICTS = [
   "take",
 ] as const;
 
-const findEventsSchema = z
-  .object({
+// IMPORTANT: this is a ZodRawShape (flat object of schemas), not a refined
+// ZodObject. Refinements (`.superRefine`, `.refine`) produce a ZodEffects
+// wrapper, and @modelcontextprotocol/sdk@1.29 does not unwrap ZodEffects in
+// `normalizeObjectSchema` — the published inputSchema collapses to
+// `EMPTY_OBJECT_JSON_SCHEMA`, so MCP clients see no field types and the LLM
+// stringifies arrays/booleans/numbers. The SDK still validates correctly
+// because it falls through to the original schema, but bad cross-field combos
+// would slip past if we relied on the SDK alone. Cross-field invariants are
+// enforced in `validateCrossFields` at handler entry instead.
+const findEventsRawShape = {
     mode: z
       .enum([
         "search",
@@ -262,44 +270,64 @@ const findEventsSchema = z
       .describe(
         "Pagination page size (search mode only). Server default is 30.",
       ),
-  })
-  .superRefine((args, ctx) => {
-    const mode: EventMode = args.mode ?? "search";
+};
 
-    if (mode === "search") {
-      if (!args.spaceName) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "spaceName is required when mode='search'.",
-          path: ["spaceName"],
-        });
-      }
-      if (args.eventId) {
-        for (const key of SINGLE_EVENT_CONFLICTS) {
-          if ((args as Record<string, unknown>)[key] !== undefined) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: `${key} cannot be combined with eventId. Drop eventId to use list filters, or drop ${key} to fetch a single event.`,
-              path: [key],
-            });
-          }
+/**
+ * Cross-field validation that would have lived in `.superRefine` if the SDK
+ * unwrapped ZodEffects. Returns null when args are valid; otherwise returns a
+ * structured error response the handler can return directly to the client.
+ */
+function validateCrossFields(
+  args: Record<string, unknown>,
+): { content: { type: "text"; text: string }[]; isError: true } | null {
+  const issues: string[] = [];
+  const mode: EventMode = (args.mode as EventMode | undefined) ?? "search";
+
+  if (mode === "search") {
+    if (!args.spaceName) {
+      issues.push("spaceName is required when mode='search'.");
+    }
+    if (args.eventId) {
+      for (const key of SINGLE_EVENT_CONFLICTS) {
+        if (args[key] !== undefined) {
+          issues.push(
+            `${key} cannot be combined with eventId. Drop eventId to use list filters, or drop ${key} to fetch a single event.`,
+          );
         }
       }
-      return;
     }
-
+  } else {
     // Metadata modes: spaceName is allowed (harmless), every search filter is rejected.
     for (const key of SEARCH_ONLY_FIELDS) {
       if (key === "spaceName") continue;
-      if ((args as Record<string, unknown>)[key] !== undefined) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: `${key} is only valid when mode='search'. Drop it to call mode='${mode}'.`,
-          path: [key],
-        });
+      if (args[key] !== undefined) {
+        issues.push(
+          `${key} is only valid when mode='search'. Drop it to call mode='${mode}'.`,
+        );
       }
     }
-  });
+  }
+
+  if (issues.length === 0) return null;
+
+  return {
+    content: [
+      {
+        type: "text" as const,
+        text: JSON.stringify(
+          {
+            success: false,
+            error: "Invalid argument combination",
+            issues,
+          },
+          null,
+          2,
+        ),
+      },
+    ],
+    isError: true,
+  };
+}
 
 function eventSummary(event: EventResource, excludeDifference?: boolean) {
   const stripped = stripLinks(event) as Record<string, unknown>;
@@ -336,10 +364,17 @@ export function registerFindEventsTool(server: McpServer) {
 - \`from\` (inclusive) and \`to\` (exclusive) accept ISO 8601 datetimes.
 
 **Permissions:** requires \`EventView\` on the calling user's space scope. The server filters results further based on per-document permissions.`,
-      inputSchema: findEventsSchema,
+      inputSchema: findEventsRawShape,
       annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
     async (args) => {
+      // Cross-field validation (would live in .superRefine if the SDK unwrapped
+      // ZodEffects; see the comment on findEventsRawShape above).
+      const validationError = validateCrossFields(
+        args as unknown as Record<string, unknown>,
+      );
+      if (validationError) return validationError;
+
       const mode: EventMode = args.mode ?? "search";
       const client = await Client.create(getClientConfigurationFromEnvironment());
 
