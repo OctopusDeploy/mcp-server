@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.1](https://github.com/OctopusDeploy/mcp-server/compare/v2.3.0...v2.3.1) (2026-05-17)
+
+
+### Bug Fixes
+
+* stop array/boolean/number args collapsing on tools using superRefine ([#95](https://github.com/OctopusDeploy/mcp-server/issues/95)) ([be60daf](https://github.com/OctopusDeploy/mcp-server/commit/be60dafb41c7547ee40b53b0bdc7543487867d9b))
+
 ## [2.3.0](https://github.com/OctopusDeploy/mcp-server/compare/v2.2.0...v2.3.0) (2026-05-14)
 
 
