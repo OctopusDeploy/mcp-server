@@ -9,6 +9,7 @@ import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfi
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { stripLinks } from "../helpers/stripLinks.js";
+import { zodErrorResponse } from "../helpers/zodErrorResponse.js";
 import {
   validateEntityId,
   handleOctopusApiError,
@@ -333,33 +334,6 @@ export const findEventsValidationSchema = findEventsInputSchema.superRefine(
 
 /** Resolved (post-validation) argument type for the handler. */
 export type FindEventsParams = z.infer<typeof findEventsValidationSchema>;
-
-/**
- * Wrap a Zod parse error in the structured tool-response shape used elsewhere
- * for argument-validation failures.
- */
-function zodErrorResponse(error: z.ZodError) {
-  return {
-    content: [
-      {
-        type: "text" as const,
-        text: JSON.stringify(
-          {
-            success: false,
-            error: "Invalid argument combination",
-            issues: error.issues.map((i) => ({
-              path: i.path,
-              message: i.message,
-            })),
-          },
-          null,
-          2,
-        ),
-      },
-    ],
-    isError: true as const,
-  };
-}
 
 function eventSummary(event: EventResource, excludeDifference?: boolean) {
   const stripped = stripLinks(event) as Record<string, unknown>;

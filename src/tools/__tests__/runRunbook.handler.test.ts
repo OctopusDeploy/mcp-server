@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { z } from "zod";
 
 const projectList = vi.fn();
 const runbookRunCreate = vi.fn();
@@ -32,7 +33,11 @@ vi.mock("@octopusdeploy/api-client", async (importOriginal) => {
 });
 
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { runRunbookHandler, runRunbookSchema } from "../runRunbook.js";
+import {
+  runRunbookHandler,
+  runRunbookInputSchema,
+  runRunbookValidationSchema,
+} from "../runRunbook.js";
 import { assertToolResponse, parseToolResponse } from "./testSetup.js";
 
 function makeServer(opts: {
@@ -216,7 +221,7 @@ describe("runRunbookHandler", () => {
 
   describe("schema-level rejections", () => {
     it("rejects gitRef + runbookSnapshotId (the two version-pin mechanisms are mutually exclusive)", () => {
-      const result = runRunbookSchema.safeParse({
+      const result = runRunbookValidationSchema.safeParse({
         spaceName: "Default",
         projectName: "CaCProj",
         runbookName: "Provision DB",
@@ -233,13 +238,71 @@ describe("runRunbookHandler", () => {
     });
 
     it("requires environmentNames to be non-empty (existing rule, unchanged)", () => {
-      const result = runRunbookSchema.safeParse({
+      const result = runRunbookValidationSchema.safeParse({
         spaceName: "Default",
         projectName: "Anything",
         runbookName: "Anything",
         environmentNames: [],
       });
       expect(result.success).toBe(false);
+    });
+
+    it("accepts environmentNames as a real array (regression: bug where the published schema collapsed and arrays arrived stringified)", () => {
+      const result = runRunbookValidationSchema.safeParse({
+        spaceName: "Default",
+        projectName: "Feedz.io",
+        runbookName: "Run E2E Tests",
+        gitRef: "dc073e56b32e9d01c3c5de70bc3ba80e1de87855",
+        environmentNames: ["Test"],
+      });
+      expect(result.success).toBe(true);
+    });
+  });
+
+  // The MCP SDK at 1.29 publishes the inputSchema by reading `.shape` off the
+  // passed Zod schema. If `runRunbookInputSchema` regresses to a refined
+  // ZodEffects wrapper (e.g. someone re-applies `.superRefine` directly to the
+  // exported schema once the upstream fix lands prematurely), `.shape` will go
+  // away and clients will see an empty schema — arrays/booleans/numbers will
+  // be stringified by clients. These tests guard against that regression.
+  describe("published inputSchema shape (SDK workaround guard)", () => {
+    it("exposes a Zod object .shape directly (no ZodEffects wrapper)", () => {
+      expect(runRunbookInputSchema).toBeInstanceOf(z.ZodObject);
+      expect(runRunbookInputSchema.shape).toBeDefined();
+    });
+
+    it("declares the array-typed fields the LLM otherwise stringifies", () => {
+      const shape = runRunbookInputSchema.shape;
+
+      // environmentNames is required (no .optional()), so it's a ZodArray directly.
+      expect(shape.environmentNames).toBeInstanceOf(z.ZodArray);
+
+      for (const arrayField of [
+        "tenants",
+        "tenantTags",
+        "specificMachineNames",
+        "excludedMachineNames",
+        "skipStepNames",
+      ]) {
+        const field = shape[arrayField as keyof typeof shape];
+        expect(field, `missing field: ${arrayField}`).toBeInstanceOf(
+          z.ZodOptional,
+        );
+        const inner = (field as z.ZodOptional<z.ZodArray<z.ZodString>>)._def
+          .innerType;
+        expect(inner, `${arrayField} inner type`).toBeInstanceOf(z.ZodArray);
+      }
+    });
+
+    it("useGuidedFailure and forcePackageDownload are typed as booleans (not strings)", () => {
+      const shape = runRunbookInputSchema.shape;
+      const guided = (shape.useGuidedFailure as z.ZodOptional<z.ZodBoolean>)
+        ._def.innerType;
+      const force = (
+        shape.forcePackageDownload as z.ZodOptional<z.ZodBoolean>
+      )._def.innerType;
+      expect(guided).toBeInstanceOf(z.ZodBoolean);
+      expect(force).toBeInstanceOf(z.ZodBoolean);
     });
   });
 });

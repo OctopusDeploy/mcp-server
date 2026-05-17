@@ -14,6 +14,7 @@ import { registerToolDefinition } from "../types/toolConfig.js";
 import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
 import { handleOctopusApiError } from "../helpers/errorHandling.js";
 import { hasRunbooksInGit } from "../helpers/vcsProjectHelpers.js";
+import { zodErrorResponse } from "../helpers/zodErrorResponse.js";
 
 function runbookSummary(
   runbook: Runbook,
@@ -78,40 +79,46 @@ function defaultBranchOf(project: Project): string | undefined {
   return undefined;
 }
 
-export const findRunbooksSchema = z
-  .object({
-    spaceName: z.string().describe("Space name."),
-    projectName: z
-      .string()
-      .describe(
-        "Project name. Runbooks are scoped to a project, so this is required for both single fetch and listing.",
-      ),
-    runbookId: z
-      .string()
-      .optional()
-      .describe(
-        "Fetch a single DB-backed runbook by ID (e.g. 'Runbooks-123'). Mutually exclusive with partialName/skip/take and with gitRef/runbookSlug.",
-      ),
-    runbookSlug: z
-      .string()
-      .optional()
-      .describe(
-        "Config-as-Code only. Fetch a single CaC runbook by slug at the given gitRef. Requires gitRef.",
-      ),
-    gitRef: z
-      .string()
-      .optional()
-      .describe(
-        "For Config-as-Code projects only. A branch name (e.g. 'main'), tag, or commit SHA. Use get_branches to list available branches.",
-      ),
-    partialName: z
-      .string()
-      .optional()
-      .describe("Filter listing by partial runbook name (case-insensitive)."),
-    skip: z.number().optional().describe("Pagination offset."),
-    take: z.number().optional().describe("Pagination page size."),
-  })
-  .superRefine((args, ctx) => {
+// SDK workaround: publish a plain `z.object(...)` as `inputSchema`; refinements
+// live on `findRunbooksValidationSchema` and run inside the handler. See the
+// comment on run_runbook / find_events for the underlying reason.
+const findRunbooksRawShape = {
+  spaceName: z.string().describe("Space name."),
+  projectName: z
+    .string()
+    .describe(
+      "Project name. Runbooks are scoped to a project, so this is required for both single fetch and listing.",
+    ),
+  runbookId: z
+    .string()
+    .optional()
+    .describe(
+      "Fetch a single DB-backed runbook by ID (e.g. 'Runbooks-123'). Mutually exclusive with partialName/skip/take and with gitRef/runbookSlug.",
+    ),
+  runbookSlug: z
+    .string()
+    .optional()
+    .describe(
+      "Config-as-Code only. Fetch a single CaC runbook by slug at the given gitRef. Requires gitRef.",
+    ),
+  gitRef: z
+    .string()
+    .optional()
+    .describe(
+      "For Config-as-Code projects only. A branch name (e.g. 'main'), tag, or commit SHA. Use get_branches to list available branches.",
+    ),
+  partialName: z
+    .string()
+    .optional()
+    .describe("Filter listing by partial runbook name (case-insensitive)."),
+  skip: z.number().optional().describe("Pagination offset."),
+  take: z.number().optional().describe("Pagination page size."),
+};
+
+export const findRunbooksInputSchema = z.object(findRunbooksRawShape);
+
+export const findRunbooksValidationSchema = findRunbooksInputSchema.superRefine(
+  (args, ctx) => {
     if (args.runbookId && args.partialName) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -144,9 +151,10 @@ export const findRunbooksSchema = z
         path: ["runbookSlug"],
       });
     }
-  });
+  },
+);
 
-export type FindRunbooksParams = z.infer<typeof findRunbooksSchema>;
+export type FindRunbooksParams = z.infer<typeof findRunbooksValidationSchema>;
 
 export async function findRunbooksHandler(params: FindRunbooksParams) {
   const {
@@ -361,10 +369,14 @@ Modes:
 - neither               → list DB runbooks in the project (optionally filtered by partialName).
 
 Each summary includes multiTenancyMode and environmentScope so callers can determine which environments and tenants are valid targets before invoking run_runbook.`,
-      inputSchema: findRunbooksSchema,
+      inputSchema: findRunbooksInputSchema,
       annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
-    findRunbooksHandler,
+    async (args) => {
+      const parsed = findRunbooksValidationSchema.safeParse(args);
+      if (!parsed.success) return zodErrorResponse(parsed.error);
+      return findRunbooksHandler(parsed.data);
+    },
   );
 }
 
