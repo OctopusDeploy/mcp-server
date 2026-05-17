@@ -15,82 +15,95 @@ import {
   unconfirmedResponse,
 } from "../helpers/requireConfirmation.js";
 import { hasRunbooksInGit } from "../helpers/vcsProjectHelpers.js";
+import { zodErrorResponse } from "../helpers/zodErrorResponse.js";
 
-export const runRunbookSchema = z
-  .object({
-    spaceName: z.string().describe("The space name"),
-    projectName: z.string().describe("The project name"),
-    runbookName: z
-      .string()
-      .describe("The runbook name (within the project)"),
-    environmentNames: z
-      .array(z.string())
-      .min(1)
-      .describe(
-        "Array of environment names. At least one environment must be provided.",
-      ),
-    tenants: z
-      .array(z.string())
-      .optional()
-      .describe("Array of tenant names for tenanted runs (optional)"),
-    tenantTags: z
-      .array(z.string())
-      .optional()
-      .describe(
-        "Array of tenant tags for tenanted runs (e.g., ['Region/US-West', 'Tier/Production'])",
-      ),
-    runbookSnapshotId: z
-      .string()
-      .optional()
-      .describe(
-        "DB-backed runbooks only. Specific snapshot ID. Defaults to the runbook's published snapshot if omitted. Not applicable to Config-as-Code runbooks.",
-      ),
-    gitRef: z
-      .string()
-      .optional()
-      .describe(
-        "Config-as-Code runbooks only. A branch name (e.g. 'main'), tag, or commit SHA. Use get_branches to list available refs. Mutually exclusive with runbookSnapshotId.",
-      ),
-    promptedVariableValues: z
-      .record(z.string())
-      .optional()
-      .describe("Prompted variable values as key-value pairs"),
-    useGuidedFailure: z
-      .boolean()
-      .optional()
-      .describe("Use guided failure mode"),
-    forcePackageDownload: z
-      .boolean()
-      .optional()
-      .describe("Force package download"),
-    specificMachineNames: z
-      .array(z.string())
-      .optional()
-      .describe("Run on specific machines only"),
-    excludedMachineNames: z
-      .array(z.string())
-      .optional()
-      .describe("Exclude specific machines from the run"),
-    skipStepNames: z
-      .array(z.string())
-      .optional()
-      .describe("Skip specific runbook steps"),
-    runAt: z
-      .string()
-      .optional()
-      .describe("Schedule run for later (ISO 8601 date string)"),
-    noRunAfter: z
-      .string()
-      .optional()
-      .describe("Don't run after this time (ISO 8601 date string)"),
-    confirm: z
-      .boolean()
-      .optional()
-      .describe(
-        "Required only when the MCP client does not support elicitation. Set to true to confirm the run; otherwise the tool aborts.",
-      ),
-  })
-  .superRefine((args, ctx) => {
+// SDK workaround: publish a plain `z.object(...)` as `inputSchema`.
+// `.superRefine(...)` produces a ZodEffects wrapper that lacks `.shape`, and
+// @modelcontextprotocol/sdk's `normalizeObjectSchema` does not unwrap
+// ZodEffects — the published inputSchema collapses to a single-field opaque
+// schema, so MCP clients see no field types and the LLM stringifies
+// arrays/booleans/numbers (e.g. `environmentNames: ["Test"]` arrives as the
+// string `'["Test"]'`). Cross-field invariants live on
+// `runRunbookValidationSchema` below and run inside the handler via
+// `safeParse`. See find_events for the same pattern.
+const runRunbookRawShape = {
+  spaceName: z.string().describe("The space name"),
+  projectName: z.string().describe("The project name"),
+  runbookName: z
+    .string()
+    .describe("The runbook name (within the project)"),
+  environmentNames: z
+    .array(z.string())
+    .min(1)
+    .describe(
+      "Array of environment names. At least one environment must be provided.",
+    ),
+  tenants: z
+    .array(z.string())
+    .optional()
+    .describe("Array of tenant names for tenanted runs (optional)"),
+  tenantTags: z
+    .array(z.string())
+    .optional()
+    .describe(
+      "Array of tenant tags for tenanted runs (e.g., ['Region/US-West', 'Tier/Production'])",
+    ),
+  runbookSnapshotId: z
+    .string()
+    .optional()
+    .describe(
+      "DB-backed runbooks only. Specific snapshot ID. Defaults to the runbook's published snapshot if omitted. Not applicable to Config-as-Code runbooks.",
+    ),
+  gitRef: z
+    .string()
+    .optional()
+    .describe(
+      "Config-as-Code runbooks only. A branch name (e.g. 'main'), tag, or commit SHA. Use get_branches to list available refs. Mutually exclusive with runbookSnapshotId.",
+    ),
+  promptedVariableValues: z
+    .record(z.string())
+    .optional()
+    .describe("Prompted variable values as key-value pairs"),
+  useGuidedFailure: z
+    .boolean()
+    .optional()
+    .describe("Use guided failure mode"),
+  forcePackageDownload: z
+    .boolean()
+    .optional()
+    .describe("Force package download"),
+  specificMachineNames: z
+    .array(z.string())
+    .optional()
+    .describe("Run on specific machines only"),
+  excludedMachineNames: z
+    .array(z.string())
+    .optional()
+    .describe("Exclude specific machines from the run"),
+  skipStepNames: z
+    .array(z.string())
+    .optional()
+    .describe("Skip specific runbook steps"),
+  runAt: z
+    .string()
+    .optional()
+    .describe("Schedule run for later (ISO 8601 date string)"),
+  noRunAfter: z
+    .string()
+    .optional()
+    .describe("Don't run after this time (ISO 8601 date string)"),
+  confirm: z
+    .boolean()
+    .optional()
+    .describe(
+      "Required only when the MCP client does not support elicitation. Set to true to confirm the run; otherwise the tool aborts.",
+    ),
+};
+
+export const runRunbookInputSchema = z.object(runRunbookRawShape);
+
+export const runRunbookValidationSchema = runRunbookInputSchema.superRefine(
+  (args, ctx) => {
     if (args.gitRef && args.runbookSnapshotId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -99,9 +112,10 @@ export const runRunbookSchema = z
         path: ["runbookSnapshotId"],
       });
     }
-  });
+  },
+);
 
-export type RunRunbookParams = z.infer<typeof runRunbookSchema>;
+export type RunRunbookParams = z.infer<typeof runRunbookValidationSchema>;
 
 function defaultBranchOf(project: Project): string | undefined {
   if (project.PersistenceSettings.Type === "VersionControlled") {
@@ -346,10 +360,17 @@ Runbooks execute operational processes (DB backups, smoke tests, environment ref
 Two project kinds:
 - DB-backed projects: by default the runbook's published snapshot is used; pass runbookSnapshotId to pick a specific snapshot.
 - Config-as-Code projects: pass gitRef (branch name like 'main', tag, or commit SHA). Snapshots don't apply — the gitRef is the version pin. Use find_runbooks with the same gitRef to discover runbook names.`,
-      inputSchema: runRunbookSchema,
+      inputSchema: runRunbookInputSchema,
       annotations: DESTRUCTIVE_WRITE_TOOL_ANNOTATIONS,
     },
-    (params) => runRunbookHandler(server, params),
+    async (params) => {
+      // Cross-field validation. Lives here (not on `inputSchema`) because the
+      // refined version is a ZodEffects that the SDK collapses to an empty
+      // published schema — see the comment on `runRunbookRawShape`.
+      const parsed = runRunbookValidationSchema.safeParse(params);
+      if (!parsed.success) return zodErrorResponse(parsed.error);
+      return runRunbookHandler(server, parsed.data);
+    },
   );
 }
 

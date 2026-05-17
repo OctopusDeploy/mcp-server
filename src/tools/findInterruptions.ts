@@ -9,6 +9,7 @@ import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfi
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { getPublicUrl } from "../helpers/getPublicUrl.js";
 import { getCurrentUserCached } from "../helpers/userCache.js";
+import { zodErrorResponse } from "../helpers/zodErrorResponse.js";
 import {
   validateEntityId,
   handleOctopusApiError,
@@ -91,44 +92,50 @@ export interface FindInterruptionsParams {
   take?: number;
 }
 
-const findInterruptionsSchema = z
-  .object({
-    spaceName: z.string().describe("Space name."),
-    interruptionId: z
-      .string()
-      .optional()
-      .describe(
-        "Fetch the slim summary for a single interruption by ID (e.g. Interruptions-1). " +
-          "Mutually exclusive with regarding/assignedToMe/pendingOnly. " +
-          "For the full body (form definition, instructions, button options, submitted values) dereference the returned resourceUri.",
-      ),
-    pendingOnly: z
-      .boolean()
-      .optional()
-      .default(true)
-      .describe("Return only unprocessed (pending) interruptions. Defaults to true. Ignored when interruptionId is set."),
-    assignedToMe: z
-      .boolean()
-      .optional()
-      .describe(
-        "Limit to interruptions the authenticated user can act on (CanTakeResponsibility or HasResponsibility, " +
-          "or where the user is the explicit ResponsibleUserId). When true, /users/me is resolved (cached per session). " +
-          "Octopus has no responsibleUserId query parameter, so the tool pages through the server result set and " +
-          "post-filters; pages are scanned up to a safety cap (filteredAs.scanComplete signals whether the entire " +
-          "result set was inspected). totalResults reflects the post-filter count; the unfiltered server total is " +
-          "exposed under filteredAs. Ignored when interruptionId is set.",
-      ),
-    regarding: z
-      .string()
-      .optional()
-      .describe(
-        "Native server-side filter to interruptions related to a specific entity ID " +
-          "(e.g. ServerTasks-1234, Deployments-5678). Ignored when interruptionId is set.",
-      ),
-    skip: z.number().optional().describe("Pagination offset. Ignored when interruptionId is set."),
-    take: z.number().optional().describe("Pagination page size. Ignored when interruptionId is set."),
-  })
-  .superRefine((args, ctx) => {
+// SDK workaround: publish a plain `z.object(...)` as `inputSchema`; refinements
+// live on `findInterruptionsValidationSchema` and run inside the handler. See
+// the comment on run_runbook / find_events for the underlying reason.
+const findInterruptionsRawShape = {
+  spaceName: z.string().describe("Space name."),
+  interruptionId: z
+    .string()
+    .optional()
+    .describe(
+      "Fetch the slim summary for a single interruption by ID (e.g. Interruptions-1). " +
+        "Mutually exclusive with regarding/assignedToMe/pendingOnly. " +
+        "For the full body (form definition, instructions, button options, submitted values) dereference the returned resourceUri.",
+    ),
+  pendingOnly: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe("Return only unprocessed (pending) interruptions. Defaults to true. Ignored when interruptionId is set."),
+  assignedToMe: z
+    .boolean()
+    .optional()
+    .describe(
+      "Limit to interruptions the authenticated user can act on (CanTakeResponsibility or HasResponsibility, " +
+        "or where the user is the explicit ResponsibleUserId). When true, /users/me is resolved (cached per session). " +
+        "Octopus has no responsibleUserId query parameter, so the tool pages through the server result set and " +
+        "post-filters; pages are scanned up to a safety cap (filteredAs.scanComplete signals whether the entire " +
+        "result set was inspected). totalResults reflects the post-filter count; the unfiltered server total is " +
+        "exposed under filteredAs. Ignored when interruptionId is set.",
+    ),
+  regarding: z
+    .string()
+    .optional()
+    .describe(
+      "Native server-side filter to interruptions related to a specific entity ID " +
+        "(e.g. ServerTasks-1234, Deployments-5678). Ignored when interruptionId is set.",
+    ),
+  skip: z.number().optional().describe("Pagination offset. Ignored when interruptionId is set."),
+  take: z.number().optional().describe("Pagination page size. Ignored when interruptionId is set."),
+};
+
+export const findInterruptionsInputSchema = z.object(findInterruptionsRawShape);
+
+export const findInterruptionsValidationSchema =
+  findInterruptionsInputSchema.superRefine((args, ctx) => {
     if (!args.interruptionId) return;
     const conflicting: Array<keyof typeof args> = [
       "regarding",
@@ -381,10 +388,14 @@ Each summary includes:
 - taskResourceUri  → octopus://spaces/{spaceName}/tasks/{taskId} for the surrounding deployment/runbook task.
 - publicUrl        → Octopus portal deep link to take action.
 - formElementNames → just the field names (e.g. Instructions, Notes, Result). Field values are NOT in the slim summary; fetch resourceUri for those.`,
-      inputSchema: findInterruptionsSchema,
+      inputSchema: findInterruptionsInputSchema,
       annotations: { readOnlyHint: true },
     },
-    findInterruptionsHandler,
+    async (args) => {
+      const parsed = findInterruptionsValidationSchema.safeParse(args);
+      if (!parsed.success) return zodErrorResponse(parsed.error);
+      return findInterruptionsHandler(parsed.data);
+    },
   );
 }
 

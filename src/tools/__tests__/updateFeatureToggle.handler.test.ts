@@ -24,7 +24,7 @@ vi.mock("@octopusdeploy/api-client", async (importOriginal) => {
 import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   updateFeatureToggleHandler,
-  updateFeatureToggleSchema,
+  updateFeatureToggleValidationSchema,
 } from "../updateFeatureToggle.js";
 import { assertToolResponse } from "./testSetup.js";
 import { type FeatureToggleResource } from "../../types/featureToggleTypes.js";
@@ -156,7 +156,7 @@ describe("updateFeatureToggleHandler", () => {
     // patch while the confirmation diff overwrote earlier entries with later
     // ones — the user could approve one change and a different one would go
     // through. Catch it before it reaches the handler.
-    const result = updateFeatureToggleSchema.safeParse({
+    const result = updateFeatureToggleValidationSchema.safeParse({
       spaceName: "Default",
       projectId: "Projects-123",
       slug: "checkout-redesign",

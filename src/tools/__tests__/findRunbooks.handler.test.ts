@@ -38,7 +38,7 @@ vi.mock("@octopusdeploy/api-client", async (importOriginal) => {
 
 import {
   findRunbooksHandler,
-  findRunbooksSchema,
+  findRunbooksValidationSchema,
 } from "../findRunbooks.js";
 import { parseToolResponse } from "./testSetup.js";
 
@@ -281,7 +281,7 @@ describe("findRunbooksHandler", () => {
 
   describe("schema-level rejections", () => {
     it("rejects runbookId + gitRef (a runbook ID belongs to a DB project; gitRef belongs to a CaC project)", () => {
-      const result = findRunbooksSchema.safeParse({
+      const result = findRunbooksValidationSchema.safeParse({
         spaceName: "Default",
         projectName: "Anything",
         runbookId: "Runbooks-1",
@@ -296,7 +296,7 @@ describe("findRunbooksHandler", () => {
     });
 
     it("rejects runbookSlug without gitRef (CaC slugs aren't unique without a ref)", () => {
-      const result = findRunbooksSchema.safeParse({
+      const result = findRunbooksValidationSchema.safeParse({
         spaceName: "Default",
         projectName: "Anything",
         runbookSlug: "provision-db",
@@ -310,7 +310,7 @@ describe("findRunbooksHandler", () => {
     });
 
     it("rejects runbookId + runbookSlug (the two ID forms are mutually exclusive)", () => {
-      const result = findRunbooksSchema.safeParse({
+      const result = findRunbooksValidationSchema.safeParse({
         spaceName: "Default",
         projectName: "Anything",
         runbookId: "Runbooks-1",
@@ -326,7 +326,7 @@ describe("findRunbooksHandler", () => {
     });
 
     it("still rejects runbookId + partialName (existing rule, unchanged)", () => {
-      const result = findRunbooksSchema.safeParse({
+      const result = findRunbooksValidationSchema.safeParse({
         spaceName: "Default",
         projectName: "Anything",
         runbookId: "Runbooks-1",

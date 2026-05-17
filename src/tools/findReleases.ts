@@ -4,6 +4,7 @@ import { type McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getClientConfigurationFromEnvironment } from "../helpers/getClientConfigurationFromEnvironment.js";
 import { registerToolDefinition } from "../types/toolConfig.js";
 import { READ_ONLY_TOOL_ANNOTATIONS } from "../types/toolAnnotations.js";
+import { zodErrorResponse } from "../helpers/zodErrorResponse.js";
 import {
   validateEntityId,
   handleOctopusApiError,
@@ -36,27 +37,33 @@ function releaseSummary(release: Release, spaceName: string) {
   };
 }
 
-const findReleasesSchema = z
-  .object({
-    spaceName: z.string().describe("Space name."),
-    releaseId: z
-      .string()
-      .optional()
-      .describe(
-        "Fetch a single release by ID. Mutually exclusive with projectId and searchByVersion.",
-      ),
-    projectId: z
-      .string()
-      .optional()
-      .describe("Restrict listing to a single project. Mutually exclusive with releaseId."),
-    searchByVersion: z
-      .string()
-      .optional()
-      .describe("Filter by version string. Requires projectId."),
-    skip: z.number().optional().describe("Pagination offset."),
-    take: z.number().optional().describe("Pagination page size."),
-  })
-  .superRefine((args, ctx) => {
+// SDK workaround: publish a plain `z.object(...)` as `inputSchema`; refinements
+// live on `findReleasesValidationSchema` and run inside the handler. See the
+// comment on run_runbook / find_events for the underlying reason.
+const findReleasesRawShape = {
+  spaceName: z.string().describe("Space name."),
+  releaseId: z
+    .string()
+    .optional()
+    .describe(
+      "Fetch a single release by ID. Mutually exclusive with projectId and searchByVersion.",
+    ),
+  projectId: z
+    .string()
+    .optional()
+    .describe("Restrict listing to a single project. Mutually exclusive with releaseId."),
+  searchByVersion: z
+    .string()
+    .optional()
+    .describe("Filter by version string. Requires projectId."),
+  skip: z.number().optional().describe("Pagination offset."),
+  take: z.number().optional().describe("Pagination page size."),
+};
+
+export const findReleasesInputSchema = z.object(findReleasesRawShape);
+
+export const findReleasesValidationSchema = findReleasesInputSchema.superRefine(
+  (args, ctx) => {
     if (args.releaseId && args.projectId) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -80,7 +87,8 @@ const findReleasesSchema = z
         path: ["searchByVersion"],
       });
     }
-  });
+  },
+);
 
 export function registerFindReleasesTool(server: McpServer) {
   server.registerTool(
@@ -96,10 +104,14 @@ export function registerFindReleasesTool(server: McpServer) {
 
   Each summary includes a resourceUri for fetching the full release body
   (release notes, packages, build information, custom fields).`,
-      inputSchema: findReleasesSchema,
+      inputSchema: findReleasesInputSchema,
       annotations: READ_ONLY_TOOL_ANNOTATIONS,
     },
-    async ({ spaceName, releaseId, projectId, searchByVersion, skip, take }) => {
+    async (args) => {
+      const parsed = findReleasesValidationSchema.safeParse(args);
+      if (!parsed.success) return zodErrorResponse(parsed.error);
+      const { spaceName, releaseId, projectId, searchByVersion, skip, take } =
+        parsed.data;
       const client = await Client.create(getClientConfigurationFromEnvironment());
       const releaseRepository = new ReleaseRepository(client, spaceName);
 

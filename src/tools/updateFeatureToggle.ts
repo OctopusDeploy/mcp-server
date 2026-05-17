@@ -9,6 +9,7 @@ import {
   requireConfirmation,
   unconfirmedResponse,
 } from "../helpers/requireConfirmation.js";
+import { zodErrorResponse } from "../helpers/zodErrorResponse.js";
 import {
   type FeatureToggleResource,
   type FeatureToggleEnvironmentResource,
@@ -40,39 +41,47 @@ const environmentPatchSchema = z.object({
     .describe("Client-side fractional rollout evaluated by the SDK [0, 100]."),
 });
 
-export const updateFeatureToggleSchema = z
-  .object({
-    spaceName: z.string().describe("Space name."),
-    projectId: z
-      .string()
-      .describe("Project ID (e.g. Projects-123). Feature toggles are scoped per project."),
-    slug: z
-      .string()
-      .describe("The toggle's Slug (not its Id). Find it via find_feature_toggles."),
-    defaultIsEnabled: z
-      .boolean()
-      .optional()
-      .describe(
-        "Toggle-level default. The value returned for environments that have no explicit per-environment configuration.",
-      ),
-    description: z
-      .string()
-      .optional()
-      .describe("Toggle-level description (max 1000 chars). Markdown supported in the UI."),
-    environments: z
-      .array(environmentPatchSchema)
-      .optional()
-      .describe(
-        "Per-environment patches. Environments not listed here are preserved as-is. Each entry must reference a deploymentEnvironmentId that already exists on the toggle; unknown environments are rejected rather than silently added. Each environment may appear at most once in this array — duplicates are rejected.",
-      ),
-    confirm: z
-      .boolean()
-      .optional()
-      .describe(
-        "Required only when the MCP client does not support elicitation. Set to true to confirm the update; otherwise the tool aborts.",
-      ),
-  })
-  .superRefine((args, ctx) => {
+// SDK workaround: publish a plain `z.object(...)` as `inputSchema`; refinements
+// live on `updateFeatureToggleValidationSchema` and run inside the handler.
+// See the comment on run_runbook / find_events for the underlying reason.
+const updateFeatureToggleRawShape = {
+  spaceName: z.string().describe("Space name."),
+  projectId: z
+    .string()
+    .describe("Project ID (e.g. Projects-123). Feature toggles are scoped per project."),
+  slug: z
+    .string()
+    .describe("The toggle's Slug (not its Id). Find it via find_feature_toggles."),
+  defaultIsEnabled: z
+    .boolean()
+    .optional()
+    .describe(
+      "Toggle-level default. The value returned for environments that have no explicit per-environment configuration.",
+    ),
+  description: z
+    .string()
+    .optional()
+    .describe("Toggle-level description (max 1000 chars). Markdown supported in the UI."),
+  environments: z
+    .array(environmentPatchSchema)
+    .optional()
+    .describe(
+      "Per-environment patches. Environments not listed here are preserved as-is. Each entry must reference a deploymentEnvironmentId that already exists on the toggle; unknown environments are rejected rather than silently added. Each environment may appear at most once in this array — duplicates are rejected.",
+    ),
+  confirm: z
+    .boolean()
+    .optional()
+    .describe(
+      "Required only when the MCP client does not support elicitation. Set to true to confirm the update; otherwise the tool aborts.",
+    ),
+};
+
+export const updateFeatureToggleInputSchema = z.object(
+  updateFeatureToggleRawShape,
+);
+
+export const updateFeatureToggleValidationSchema =
+  updateFeatureToggleInputSchema.superRefine((args, ctx) => {
     // Reject duplicate deploymentEnvironmentIds up front. Without this,
     // the merge picks the FIRST patch for the env while the confirmation
     // diff overwrites earlier entries with later ones using the same key —
@@ -96,7 +105,9 @@ export const updateFeatureToggleSchema = z
     }
   });
 
-export type UpdateFeatureToggleParams = z.infer<typeof updateFeatureToggleSchema>;
+export type UpdateFeatureToggleParams = z.infer<
+  typeof updateFeatureToggleValidationSchema
+>;
 
 interface PatchedEnvironment {
   current: FeatureToggleEnvironmentResource;
@@ -390,10 +401,14 @@ Narrow surface — flip an environment on/off, change rollout percentages, or up
 Deliberately not exposed: name/slug rename, tag changes, rollout group attach/detach, tenant targeting, segments, minimum version, adding or removing environment configurations entirely. For those, use the Octopus UI.
 
 Patches that reference an environment not already configured on the toggle are rejected with reason: environment_not_configured. The tool does not add new environment configurations.`,
-      inputSchema: updateFeatureToggleSchema,
+      inputSchema: updateFeatureToggleInputSchema,
       annotations: DESTRUCTIVE_WRITE_TOOL_ANNOTATIONS,
     },
-    (args) => updateFeatureToggleHandler(server, args),
+    async (args) => {
+      const parsed = updateFeatureToggleValidationSchema.safeParse(args);
+      if (!parsed.success) return zodErrorResponse(parsed.error);
+      return updateFeatureToggleHandler(server, parsed.data);
+    },
   );
 }
 
