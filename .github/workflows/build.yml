@@ -10,7 +10,9 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
+        # Node 24 bundles npm >= 11.12, which honors the `min-release-age`
+        # setting in .npmrc. Node 22 ships npm 10.9 and would silently ignore it.
+        node-version: [24.x]
 
     steps:
     - name: Checkout code
