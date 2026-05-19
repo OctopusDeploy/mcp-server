@@ -10,7 +10,9 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [22.x]
+        # Node 24 bundles npm >= 11.12, which honors the `min-release-age`
+        # setting in .npmrc. Node 22 ships npm 10.9 and would silently ignore it.
+        node-version: [24.x]
 
     steps:
     - name: Checkout code
@@ -24,6 +26,12 @@ jobs:
 
     - name: Install dependencies
       run: npm ci
+
+    # Verify every installed package has a valid registry signature before any
+    # of its code is allowed to run (lint, build, test). Catches tarball swaps
+    # like the TanStack Mini Shai-Hulud compromise on the consumer side.
+    - name: Verify dependency signatures
+      run: npm audit signatures
 
     - name: Run linting
       run: npm run lint
