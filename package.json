@@ -41,7 +41,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.5",
-    "@octopusdeploy/api-client": "^3.8.0",
+    "@octopusdeploy/api-client": "^3.11.3",
     "axios": "^1.15.2",
     "commander": "^14.0.0",
     "dotenv": "^17.2.2",
