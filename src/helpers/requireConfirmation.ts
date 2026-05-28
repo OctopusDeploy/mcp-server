@@ -141,12 +141,18 @@ export type ConfirmationResult =
  *
  * Resolution order:
  *   1. `OCTOPUS_SKIP_ELICITATION=true` env var → bypass (automation/CI).
- *   2. Client advertises elicitation capability → SDK emits `elicitation/create`
+ *   2. Explicit `fallbackConfirm: true` from the caller → accepted. The LLM is
+ *      asserting the user approved out-of-band; trust it whether or not the
+ *      client also advertises elicitation. Some clients advertise the
+ *      capability but cannot actually render a usable prompt, which previously
+ *      meant `confirm: true` could never take effect on those clients despite
+ *      the tool's input schema saying it should.
+ *   3. Client advertises elicitation capability → SDK emits `elicitation/create`
  *      and we map `result.action` to accepted/declined/cancelled.
- *   3. Client does not advertise elicitation → fall back to the `confirm` arg
- *      the tool surfaced in its own input schema. Distinguishes between
- *      explicit `false` (declined) and missing (confirmationRequired) so the
- *      caller can surface the latter as a hard error.
+ *   4. Client does not advertise elicitation → fall back to the explicit
+ *      `false` / missing values of `confirm`. Distinguishes between explicit
+ *      `false` (declined) and missing (confirmationRequired) so the caller
+ *      can surface the latter as a hard error.
  */
 export async function requireConfirmation(
   server: McpServer,
@@ -154,6 +160,10 @@ export async function requireConfirmation(
 ): Promise<ConfirmationResult> {
   if (env["OCTOPUS_SKIP_ELICITATION"] === "true") {
     return { confirmed: true, reason: "envSkip" };
+  }
+
+  if (opts.fallbackConfirm === true) {
+    return { confirmed: true, reason: "fallbackConfirm" };
   }
 
   const capabilities = server.server.getClientCapabilities();
@@ -175,9 +185,6 @@ export async function requireConfirmation(
     }
   }
 
-  if (opts.fallbackConfirm === true) {
-    return { confirmed: true, reason: "fallbackConfirm" };
-  }
   if (opts.fallbackConfirm === false) {
     return { confirmed: false, reason: "declined" };
   }

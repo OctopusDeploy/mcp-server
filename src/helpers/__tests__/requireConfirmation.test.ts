@@ -222,13 +222,27 @@ describe("requireConfirmation", () => {
       expect(call.message).toBe("Plain prompt?");
     });
 
-    it("ignores fallbackConfirm when elicitation is used", async () => {
-      stub.elicitInput.mockResolvedValue({ action: "decline" });
+    it("honours fallbackConfirm: true before attempting elicitation", async () => {
+      // Some clients advertise elicitation capability but cannot actually render
+      // a usable prompt (or auto-decline). When the LLM explicitly passes
+      // `confirm: true` it's asserting the user approved out-of-band, so we
+      // must short-circuit before sending a doomed elicitation request.
       const result = await requireConfirmation(makeServer(stub), {
         message: "x",
         fallbackConfirm: true,
       });
-      expect(result).toEqual({ confirmed: false, reason: "declined" });
+      expect(result).toEqual({ confirmed: true, reason: "fallbackConfirm" });
+      expect(stub.elicitInput).not.toHaveBeenCalled();
+    });
+
+    it("falls through to elicitation when fallbackConfirm is false", async () => {
+      stub.elicitInput.mockResolvedValue({ action: "accept" });
+      const result = await requireConfirmation(makeServer(stub), {
+        message: "x",
+        fallbackConfirm: false,
+      });
+      expect(result).toEqual({ confirmed: true, reason: "accepted" });
+      expect(stub.elicitInput).toHaveBeenCalledOnce();
     });
 
     it("propagates errors from elicitInput", async () => {
