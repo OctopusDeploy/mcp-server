@@ -197,7 +197,7 @@ Available toolsets:
 - **certificates** - Certificate operations
 - **accounts** - Account operations
 - **interruptions** - Manual intervention and approval operations
-- **featureToggles** - Inspect and lightly adjust customer feature toggles
+- **featureToggles** - Inspect and adjust customer feature toggles
 - **context** - Authenticated user and project context (current user, Git branches)
 
 #### Read-Only Mode
