@@ -1,5 +1,14 @@
 # Changelog
 
+## [2.3.2](https://github.com/OctopusDeploy/mcp-server/compare/v2.3.1...v2.3.2) (2026-06-18)
+
+
+### Bug Fixes
+
+* bump axios and add npm audit signatures to CI ([#97](https://github.com/OctopusDeploy/mcp-server/issues/97)) ([9af12c7](https://github.com/OctopusDeploy/mcp-server/commit/9af12c7f9b214bd6e0aecb36f453e297b9fc9eb1))
+* pin hono to 4.12.18 to satisfy min-release-age cooldown ([#100](https://github.com/OctopusDeploy/mcp-server/issues/100)) ([40b47ce](https://github.com/OctopusDeploy/mcp-server/commit/40b47ce019f8fd03f285d3e65141e512dcee32fc))
+* skip elicitations when clients lie about their capabilities ([#103](https://github.com/OctopusDeploy/mcp-server/issues/103)) ([250dc57](https://github.com/OctopusDeploy/mcp-server/commit/250dc5796581f46e2f7dc016f37c304624b31a67))
+
 ## [2.3.1](https://github.com/OctopusDeploy/mcp-server/compare/v2.3.0...v2.3.1) (2026-05-17)
 
 
