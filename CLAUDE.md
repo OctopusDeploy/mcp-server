@@ -48,6 +48,15 @@ Each tool file exports a registration that includes:
 
 #### MCP SDK: use `registerTool`, not `tool`
 
+> **Minimum SDK is `^1.22.0` — do not lower it.** Six tools (`find_releases`, `find_runbooks`,
+> `find_interruptions`, `find_events`, `update_feature_toggle`, `run_runbook`) pass a full
+> `z.object(...)` as `inputSchema` rather than a raw shape. SDK releases before 1.22.0 mistake that
+> ZodObject instance for a raw shape and re-wrap it with `z.object(...)`, dragging the instance's own
+> internals — including the `_cached: null` field every zod v3 ZodObject carries — into the shape.
+> JSON Schema conversion then dies on `null._def` and **`tools/list` fails outright** with
+> `-32603 Cannot read properties of null (reading '_def')`, taking every tool down with it.
+> `src/tools/__tests__/toolsList.test.ts` guards both the floor and the published schemas.
+
 `server.tool(...)` is **deprecated** in `@modelcontextprotocol/sdk` and only accepts a `ZodRawShapeCompat` (a flat object of zod schemas) as its input schema. Refined schemas (`z.object(...).superRefine(...)`, `z.discriminatedUnion(...)`, etc.) cannot be used with `tool()` — TypeScript will reject the assignment.
 
 New tools must use `server.registerTool(name, config, handler)`:
