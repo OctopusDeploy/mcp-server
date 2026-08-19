@@ -88,6 +88,31 @@ Full example configuration (for Claude Desktop, Claude Code, and Cursor):
 }
 ```
 
+**Optional local guardrail:**
+```json
+{
+  "mcpServers": {
+    "octopusdeploy": {
+      "type": "stdio",
+      "command": "armorer-guard",
+      "args": [
+        "mcp-proxy",
+        "--",
+        "npx",
+        "-y",
+        "@octopusdeploy/mcp-server"
+      ],
+      "env": {
+        "OCTOPUS_SERVER_URL": "https://your-octopus.com",
+        "OCTOPUS_API_KEY": "YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+This optional configuration uses [Armorer Guard](https://github.com/ArmorerLabs/Armorer-Guard) as a local MCP proxy. It inspects Octopus tool-call arguments for prompt injection, credential leakage, exfiltration risk, and dangerous actions before forwarding safe calls to the Octopus MCP Server.
+
 **Read-only mode (recommended for production):**
 ```json
 {
