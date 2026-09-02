@@ -1,3 +1,6 @@
+> [!WARNING]
+> **Deprecated:** This MCP server is deprecated. The Remote MCP Server is available in Octopus Server 2026.3 and later. See the [Remote MCP Server documentation](https://octopus.com/docs/octopus-ai/mcp/remote).
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://github.com/octopusdeploy/mcp-server/blob/main/images/OctopusDeploy_Logo_DarkMode.png?raw=true">
   <source media="(prefers-color-scheme: light)" srcset="https://github.com/octopusdeploy/mcp-server/blob/main/images/OctopusDeploy_Logo_LightMode.png?raw=true">
