@@ -1,6 +1,4 @@
 # Build stage
-# Node 24.22.1 is the first 24.x release with the NSS 3.131.1 root certificates
-# (https://github.com/nodejs/node/pull/66877). Don't go below it.
 FROM node:24.22.1-alpine AS builder
 
 WORKDIR /app
