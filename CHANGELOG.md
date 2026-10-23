@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.3.3](https://github.com/OctopusDeploy/mcp-server/compare/v2.3.2...v2.3.3) (2026-10-23)
+
+
+### Bug Fixes
+
+* ship Node 24.22.1 root certificates in Docker image and mark it deprecated on Docker Hub ([#112](https://github.com/OctopusDeploy/mcp-server/issues/112)) ([64d9040](https://github.com/OctopusDeploy/mcp-server/commit/64d9040318cbe12a38ba23918238281e02565bd4))
+
 ## [2.3.2](https://github.com/OctopusDeploy/mcp-server/compare/v2.3.1...v2.3.2) (2026-08-04)
 
 
