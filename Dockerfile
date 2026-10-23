@@ -20,7 +20,13 @@ COPY package*.json ./
 
 RUN npm ci --only=production && npm cache clean --force
 
-FROM gcr.io/distroless/nodejs24-debian12 AS production
+# The debian12 distroless image stopped receiving Node updates at 24.14.0; use debian13.
+FROM gcr.io/distroless/nodejs24-debian13 AS production
+
+LABEL org.opencontainers.image.title="Octopus Deploy MCP Server (deprecated)" \
+      org.opencontainers.image.description="Deprecated. Use the Remote MCP Server in Octopus Server 2026.3 and later: https://octopus.com/docs/octopus-ai/mcp/remote" \
+      org.opencontainers.image.source="https://github.com/OctopusDeploy/mcp-server" \
+      org.opencontainers.image.documentation="https://octopus.com/docs/octopus-ai/mcp/remote"
 
 WORKDIR /app
 
