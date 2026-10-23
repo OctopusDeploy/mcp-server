@@ -476,6 +476,135 @@ describe("execute tool — path validation (Gate 0)", () => {
   });
 });
 
+describe("execute tool — query parameters", () => {
+  beforeEach(() => {
+    dispatchRequest.mockReset();
+    resolveUrl.mockClear();
+    getClientCapabilities.mockReset();
+    elicitInput.mockReset();
+    setActiveToolsetConfig({
+      enabledToolsets: "all",
+      readOnlyMode: true,
+      allowDeletes: false,
+    });
+  });
+
+  it("forwards query parameters as a query string instead of dropping them", async () => {
+    // Regression test for #108: resolveUrl is a URI-template expander, so the
+    // query object used to reach it as template arguments and be silently
+    // discarded for every literal path. Pagination and filters never arrived.
+    dispatchRequest.mockResolvedValue({ Items: [] });
+    const handler = getHandler();
+
+    await handler({
+      method: "GET",
+      path: "/api/Spaces-1/projects",
+      query: { take: "1" },
+    });
+
+    expect(resolveUrl).toHaveBeenCalledWith("/api/Spaces-1/projects");
+    expect(dispatchRequest).toHaveBeenCalledWith(
+      "GET",
+      "https://octopus.example/api/Spaces-1/projects?take=1",
+      null,
+    );
+  });
+
+  it("serialises several parameters in order", async () => {
+    dispatchRequest.mockResolvedValue({ Items: [] });
+    const handler = getHandler();
+
+    await handler({
+      method: "GET",
+      path: "/api/Spaces-1/artifacts",
+      query: { skip: "0", take: "30", regarding: "ServerTasks-1234" },
+    });
+
+    expect(dispatchRequest).toHaveBeenCalledWith(
+      "GET",
+      "https://octopus.example/api/Spaces-1/artifacts?skip=0&take=30&regarding=ServerTasks-1234",
+      null,
+    );
+  });
+
+  it("percent-encodes values so they cannot corrupt the url", async () => {
+    dispatchRequest.mockResolvedValue({ Items: [] });
+    const handler = getHandler();
+
+    await handler({
+      method: "GET",
+      path: "/api/Spaces-1/projects",
+      query: { name: "A&B =C", partialName: "a b" },
+    });
+
+    expect(dispatchRequest).toHaveBeenCalledWith(
+      "GET",
+      "https://octopus.example/api/Spaces-1/projects?name=A%26B+%3DC&partialName=a+b",
+      null,
+    );
+  });
+
+  it("leaves the url untouched when the query is absent or empty", async () => {
+    dispatchRequest.mockResolvedValue({ Items: [] });
+    const handler = getHandler();
+
+    await handler({ method: "GET", path: "/api/spaces" });
+    await handler({ method: "GET", path: "/api/spaces", query: {} });
+
+    expect(dispatchRequest).toHaveBeenNthCalledWith(
+      1,
+      "GET",
+      "https://octopus.example/api/spaces",
+      null,
+    );
+    expect(dispatchRequest).toHaveBeenNthCalledWith(
+      2,
+      "GET",
+      "https://octopus.example/api/spaces",
+      null,
+    );
+  });
+
+  it("requests csv output through the query string when asCsv is set", async () => {
+    dispatchRequest.mockResolvedValue("a,b");
+    const handler = getHandler();
+
+    await handler({
+      method: "GET",
+      path: "/api/Spaces-1/projects",
+      query: { take: "1" },
+      asCsv: true,
+    });
+
+    expect(dispatchRequest).toHaveBeenCalledWith(
+      "GET",
+      "https://octopus.example/api/Spaces-1/projects?take=1&format=csv",
+      null,
+    );
+  });
+
+  it("forwards query parameters on write calls too", async () => {
+    setActiveToolsetConfig({ enabledToolsets: "all", readOnlyMode: false });
+    getClientCapabilities.mockReturnValue({ elicitation: {} });
+    elicitInput.mockResolvedValue({ action: "accept" });
+    dispatchRequest.mockResolvedValue({});
+    const handler = getHandler();
+
+    await handler({
+      method: "POST",
+      path: "/api/Spaces-1/projects",
+      query: { ignoreIfExists: "true" },
+      body: { Name: "X" },
+    });
+
+    expect(dispatchRequest).toHaveBeenCalledWith(
+      "POST",
+      "https://octopus.example/api/Spaces-1/projects?ignoreIfExists=true",
+      { Name: "X" },
+    );
+  });
+});
+
 describe("execute tool — registration metadata", () => {
   it("registers as DESTRUCTIVE_WRITE so well-behaved clients confirm before run", () => {
     const { server, registered } = makeServerStub();

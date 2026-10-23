@@ -112,12 +112,39 @@ function resolveEnabledToolsets(): readonly Toolset[] {
 }
 
 interface DispatchableClient {
-  resolveUrl: (path: string, args?: unknown) => string;
+  resolveUrl: (path: string) => string;
   dispatchRequest: (
     method: string,
     url: string,
     body?: unknown,
   ) => Promise<unknown>;
+}
+
+/**
+ * Serialise the `query` input onto a resolved URL.
+ *
+ * `Client.resolveUrl` performs RFC 6570 URI-template expansion, not query
+ * serialisation: for a literal path — the only shape `validateExecutePath`
+ * accepts — any second argument is silently discarded. The parameters are
+ * therefore appended here, where they reach the server as a real query
+ * string. `URLSearchParams` does the percent-encoding.
+ */
+function withQueryString(
+  url: string,
+  query: Record<string, string> | undefined,
+): string {
+  if (!query) {
+    return url;
+  }
+  const parameters = new URLSearchParams();
+  for (const [name, value] of Object.entries(query)) {
+    parameters.append(name, value);
+  }
+  const serialized = parameters.toString();
+  if (serialized.length === 0) {
+    return url;
+  }
+  return url.includes("?") ? `${url}&${serialized}` : `${url}?${serialized}`;
 }
 
 async function dispatchExecute(
@@ -128,7 +155,7 @@ async function dispatchExecute(
   body: unknown,
 ): Promise<unknown> {
   const dispatchable = client as unknown as DispatchableClient;
-  const url = dispatchable.resolveUrl(path, query);
+  const url = withQueryString(dispatchable.resolveUrl(path), query);
   return dispatchable.dispatchRequest(method, url, body ?? null);
 }
 
