@@ -39,6 +39,22 @@ describe("validateExecutePath", () => {
     expect(validateExecutePath("/api/foo..bar")).toMatchObject({ ok: true });
   });
 
+  it("rejects dot segments the URL parser would resolve, encoded or not", () => {
+    // axios resolves each of these to /api/users/me/apikeys, which is on the
+    // sensitive denylist. The literal path strings do not match the denylist.
+    for (const path of [
+      "/api/projects/%2e%2e/users/me/apikeys",
+      "/api/projects/.%2E/users/me/apikeys",
+      "/api/projects/.\t./users/me/apikeys",
+      "/api/./users/me/apikeys",
+    ]) {
+      expect(validateExecutePath(path)).toMatchObject({
+        ok: false,
+        reason: expect.stringContaining("'/api/users/me/apikeys'"),
+      });
+    }
+  });
+
   it("rejects backslashes (Windows path injection)", () => {
     expect(validateExecutePath("/api/spaces\\..\\users")).toMatchObject({
       ok: false,

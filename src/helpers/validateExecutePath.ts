@@ -86,5 +86,19 @@ export function validateExecutePath(raw: string): PathValidation {
       };
     }
   }
+  // Backstop for normalisations the literal checks above cannot see. axios
+  // parses the request URL with the WHATWG URL parser, which treats `%2e%2e`
+  // and `.%2E` as `..`, drops `.` segments, and strips tabs and newlines. A
+  // path like `/api/projects/%2e%2e/users/me/apikeys` would otherwise pass
+  // the denylist while reaching `/api/users/me/apikeys`. Reject any path the
+  // parser would rewrite; the denylist and allowlist then match exactly the
+  // path the server receives.
+  const canonical = new URL(raw, "http://execute-path.invalid").pathname;
+  if (canonical !== raw) {
+    return {
+      ok: false,
+      reason: `Path is not in canonical form; it would be sent as '${canonical}'. Use percent-encoding for special characters and do not use '.' or '..' segments, encoded or not.`,
+    };
+  }
   return { ok: true, path: raw };
 }
