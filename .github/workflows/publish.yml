@@ -76,14 +76,3 @@ jobs:
           context: .
           push: true
           tags: octopusdeploy/mcp-server:latest,octopusdeploy/mcp-server:${{ steps.release.outputs.tag_name }}
-      # Docker Hub shows the repository overview, not image labels. Push the overview and short
-      # description on every push to main; the deprecation notice then appears without waiting for a
-      # release. The overview is a separate file because README.md exceeds Docker Hub's 25,000-byte limit.
-      - name: Update Docker Hub description
-        uses: peter-evans/dockerhub-description@v4
-        with:
-          username: octopusdeploy
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: octopusdeploy/mcp-server
-          short-description: "DEPRECATED: use the Remote MCP Server in Octopus Server 2026.3 and later."
-          readme-filepath: ./docs/DOCKERHUB.md
