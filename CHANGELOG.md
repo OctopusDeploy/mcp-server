@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.3.3](https://github.com/OctopusDeploy/mcp-server/compare/v2.3.2...v2.3.3) (2026-10-26)
+
+
+### Bug Fixes
+
+* **deps:** bump axios to 1.20.0 and follow-redirects to 1.16.1 ([#117](https://github.com/OctopusDeploy/mcp-server/issues/117)) ([bad88c2](https://github.com/OctopusDeploy/mcp-server/commit/bad88c26bc5c1ac8273da8462f7e146d8cadcb5a))
+* forward execute query parameters to the server ([#114](https://github.com/OctopusDeploy/mcp-server/issues/114)) ([047016a](https://github.com/OctopusDeploy/mcp-server/commit/047016aac67a10299f56609f3da9d7505ad8b53b))
+* reject execute paths the URL parser would normalise ([#116](https://github.com/OctopusDeploy/mcp-server/issues/116)) ([0da8739](https://github.com/OctopusDeploy/mcp-server/commit/0da87394de6daac9beef8a16c21f59879a25aabc))
+* remove Docker Hub description step ([#115](https://github.com/OctopusDeploy/mcp-server/issues/115)) ([e6bccdd](https://github.com/OctopusDeploy/mcp-server/commit/e6bccdd06665fd369f60bf2fb36d567e9b4db77f))
+* ship Node 24.22.1 root certificates in Docker image and mark it deprecated on Docker Hub ([#112](https://github.com/OctopusDeploy/mcp-server/issues/112)) ([64d9040](https://github.com/OctopusDeploy/mcp-server/commit/64d9040318cbe12a38ba23918238281e02565bd4))
+
 ## [2.3.2](https://github.com/OctopusDeploy/mcp-server/compare/v2.3.1...v2.3.2) (2026-08-04)
 
 
