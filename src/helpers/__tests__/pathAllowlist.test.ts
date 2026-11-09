@@ -48,6 +48,20 @@ describe("matchPath", () => {
     ).toMatchObject({ matched: true, toolset: "projects" });
   });
 
+  it("allows space-scoped task paths through the tasks toolset", () => {
+    expect(matchPath("/api/Spaces-1/tasks", ["tasks"])).toMatchObject({
+      matched: true,
+      toolset: "tasks",
+    });
+    expect(
+      matchPath("/api/spaces/Spaces-1/tasks/ServerTasks-1/details", ["tasks"]),
+    ).toMatchObject({ matched: true, toolset: "tasks" });
+    expect(matchPath("/api/Spaces-1/tasks", ["projects"])).toMatchObject({
+      matched: false,
+    });
+    expect(findOwningToolset("/api/spaces/Spaces-1/tasks")).toBe("tasks");
+  });
+
   it("`**` matches across multiple segments", () => {
     expect(
       matchPath(

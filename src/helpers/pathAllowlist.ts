@@ -88,7 +88,7 @@ const TOOLSET_PATH_PATTERNS: Record<Toolset, readonly string[]> = {
     ...spaceScoped("runbookprocesses"),
     ...spaceScoped("runbooksnapshots"),
   ],
-  tasks: ["/api/tasks", "/api/tasks/**"],
+  tasks: ["/api/tasks", "/api/tasks/**", ...spaceScoped("tasks")],
   tenants: [
     ...spaceScoped("tenants"),
     ...spaceScoped("tenantvariables"),
